@@ -1,0 +1,1349 @@
+\documentclass[a4paper, 10pt]{article}
+\usepackage[italian]{babel}
+\usepackage[T1]{fontenc}	%per >>
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{frontespizio}
+\usepackage{booktabs}
+
+\usepackage{listings}	%per lstset
+\usepackage{amsthm}
+\usepackage{amssymb}	%per la tilde
+
+
+\lstset{inputencoding=utf8,
+	language = MATLAB,
+	basicstyle=\ttfamily,
+	tabsize=4,
+	showstringspaces=false,
+	literate={à}{{\`a}}1
+}
+
+\begin{document}
+	
+	\begin{frontespizio}
+		\Preambolo{\usepackage{datetime}}
+		\Istituzione{Università degli Studi di Verona}
+		\Divisione{Dipartimento di informatica}
+		\Scuola{Laurea in Informatica}
+		\Titolo{Riassunto di MATLAB}
+		\Sottotitolo{Basato sulle diapositive del corso}
+		\Candidato{Edoardo Righi}
+		\NCandidato{Autore}
+		\Annoaccademico{2017/2018}
+	\end{frontespizio}
+	
+	\newpage
+
+	\tableofcontents
+	\thispagestyle{empty}
+		
+	\newpage
+	
+	\section{Introduzione a MATLAB}
+	MATLAB sta per MATrix LABoratory. \'{E} un programma nato per gestire le matrici, ma ha molte applicazioni matematiche e grafiche. Nonostante abbia costrutti tipici della programmazione \textbf{NON} è un linguaggio di programmazione. Ha inoltre molte funzioni incorporate.
+	
+	MATLAB può essere utilizzato con la sua \textit{Command Window} (come un terminale) ma è anche possibile creare dei programmi.\\
+	Nella \textit{Command Window} il '\lstinline|>>|' indica il prompt, dove inserire il comando o l'espressione, a cui MATLAB risponderà con un risultato.
+	
+	\subsection{Ambiente Desktop}
+	Le finestre dell'ambiente del programma sono:
+	\begin{itemize}
+	\item Cartella corrente: mostra il contenuto della cartella impostata come \textit{Corrente}, dove i file verranno salvati;
+	\item \textit{Workspace}: mostra le variabili;
+	\item Cronologia comandi: mostra gli ultimi comandi inseriti
+	\end{itemize}
+	La parte superiore dello schermo ha 3 schede: HOME (default), PLOTS e APPS.\\
+	HOME è divisa in sezioni funzionali: FILE, VARIABLE, CODE, ENVIRONMENT, RESOURCES. Sotto ENVIRONMENT, con Layout è comunque possibile modificare l'ambiente Desktop.
+	
+	\subsection{Variabili}
+	Per salvare un valore, si utilizza una variabile. Un modo per inserire un valore in una variabile è attraverso una \textit{dichiarazione di assegnamento}. \\
+	Forma generale:
+	\begin{lstlisting}
+	variabile = espressione
+	\end{lstlisting}
+L'ordine è importante:
+\begin{itemize}
+\item Nome della \textbf{variabile} a sinistra;
+\item Operatore di assegnamento '\lstinline|=|' (non rappresenta l'uguaglianza!);
+\item \textbf{espressione} a destra.
+\end{itemize}
+Ad esempio, inserendo nella \textit{Command Window}:
+	\begin{lstlisting}
+	>> mynum = 6
+	mynum =
+		6
+	>>
+	\end{lstlisting}
+Il risultato sarà l'assegnamento del risultato dell'espressione, 6, alla variabile \textit{mynum}. \\
+Un punto e virgola alla fine del comando sopprime l'output ma esegue comunque l'assegnamento:
+	\begin{lstlisting}
+	>> mynum = 6;
+	>>
+	\end{lstlisting}
+Infine, inserendo soltanto un espressione nel prompt, il risultato verrà salvato in una variabile di default chiamata \textit{ans} che viene riutilizzata ogni volta che si inserisce un'espressione.
+	\begin{lstlisting}
+	>> 7 + 4
+	ans =
+		11
+	>>
+	\end{lstlisting}
+	
+	\subsubsection{Modifica di variabili}
+	\begin{itemize}
+	\item Inizializzare una varibile (inserire il suo primo valore):
+	\begin{lstlisting}
+	>> mynum = 5;
+	\end{lstlisting}
+	\item Incrementare una variabile di 1:
+	\begin{lstlisting}
+	>> mynum = mynum + 1;
+	\end{lstlisting}
+	\item Decrementare una variabile di 2:
+	\begin{lstlisting}
+	>> mynum = mynum - 2;
+	\end{lstlisting}
+	\end{itemize}
+	
+	\subsubsection{Nomi delle variabili}
+	I nomi di una variabile \textbf{devono} iniziare con una lettera dell'alfabeto. In seguito i nomi possono contenere lettere, numeri, e il carattere underscore '\lstinline|_|'.\\
+	MATLAB è case-sensitive.\\
+	La funzione inclusa \lstinline|namelengthmax| riporta il limite di lunghezza per il nome di una variabile.
+	I comandi \lstinline|who| e \lstinline|whos| invece mostrano le variabili create (il secondo con maggior dettaglio), che possono poi essere eliminate con \lstinline|clear|.
+	
+	\subsubsection{Tipi delle variabili}
+	Ogni espressione e variabile è associata ad un \textit{tipo}, o \textit{classe}.
+	\begin{itemize}
+	\item Numeri reali: \textbf{single}, \textbf{double}
+	\item Interi (i numeri nei nomi sono i numeri di bits usati per salvare il valore di quel tipo)
+		\begin{itemize}
+		\item Signed: \textbf{int8}, \textbf{int16}, \textbf{int32}, \textbf{int64}
+		\item Unsigned: \textbf{uint8}, \textbf{uint16}, \textbf{uint32}, \textbf{uint64}
+		\end{itemize}
+	\item Caratteri e stringhe: \textbf{char}
+	\item True/False: \textbf{logical}
+	\end{itemize}
+	Il tipo di default è \textbf{double}.
+	
+	\subsection{Espressioni}
+	Le espressioni possono contenere valori, variabili che sono già state create, operatori, funzioni integrate e parentesi. \\
+	Gli operatori includono:
+	\begin{itemize}
+	\item[+] Addizione
+	\item[-] Sottrazione
+	\item[*] Moltiplicazione
+	\item[/] Divisione ($10/5=2$)
+	\item[\textbackslash] Divisione opposta ($5$\textbackslash$10=2$)
+	\item[\textasciicircum] Esponenziale ($5^2=25$)
+	\end{itemize}
+	
+\bigskip\noindent
+La precedenza degli operatori è:
+
+\begin{itemize}
+\item[()] Parentesi
+\item[\textasciicircum] Elevazioni a potenze
+\item[-] Negazione
+\item[*,/,\textbackslash] Moltiplicazione e division
+\item[+,-] Addizione e sottrazione
+\end{itemize}
+
+\subsection{Funzioni e Help}
+Esistono molte funzioni integrate in MATLAB. Funzioni correlate sono raggruppate in \textit{help topics}.\\
+Per vedere una lista degli \textit{help topics}, basta scrivere "\lstinline|help|" nel prompt:
+
+	\begin{lstlisting}
+	>> help
+	\end{lstlisting}
+Per trovare le funzioni in un \textit{help topic}, ad esempio in elfun:
+
+	\begin{lstlisting}
+	>> help elfun
+	\end{lstlisting}
+Per invece cercare a proposito di una particolare funzione, ad esempio sin:
+
+	\begin{lstlisting}
+	>> help sin
+	\end{lstlisting}
+Per usare una funzione, basta \textit{chiamarla}.
+Per chiamare una funzione, si scrive il suo nome seguito dagli argomenti che si vogliono passare dentro a delle parentesi. 
+Molte funzioni calcolano valori e ritornano il risultato.\\
+Ad esempio, per trovare il valore assoluto di -4:
+
+	\begin{lstlisting}
+	>> abs(-4)
+	ans =
+		4
+	\end{lstlisting}
+
+Il nome della funzione è abs, a cui viene passato un argomento, -4. La funzione trova il valore assoluto e ritorna il risultato, 4.
+
+Tutti gli operatori hanno inoltre una forma come funzione. Ad esempio un'espressione come $2+5$ può essere scritta usando la funzione \textbf{plus} e passandovi 2 e 5 come argomenti:
+
+	\begin{lstlisting}
+	>> plus(2,5)
+	ans =
+		7
+	\end{lstlisting}
+	
+\subsection{Costanti}
+Nella programmazione, le variabili sono usate per valori che possono cambiare, o che non sono conosciuti in anticipo.\\
+Le \textit{costanti} sono usate quando il valore è conosciuto e non può cambiare.
+
+Esempi di costanti in MATLAB (sono effettivamente funzioni che ritornano valori costanti):
+
+\begin{itemize}
+\item[\textbf{pi}] 3.14159...
+\item[\textbf{i,j}] $\sqrt{-1}$
+\item[\textbf{inf}] infinito
+\item[\textbf{NaN}] significa "Not a Number" (risultato di 0/0)
+\end{itemize}
+
+\subsection{Numeri random}
+Diverse funzioni integrate generano numeri random (pseudo-random in realtà). Funzioni di numeri random, o generatori di numeri random, iniziano con un numero chiamato seme (\textbf{seed}); questo è o un valore predeterminato o dipendente dall'ora corrente.
+Di default MATLAB usa un valore predeterminato, quindi sarà sempre lo stesso. \\
+Per impostare il seme usando l'ora:
+
+	\begin{lstlisting}
+	rng('shuffle')
+	\end{lstlisting}
+	
+\subsubsection{Numeri random reali}
+La funzione \textbf{rand} genera numeri reali uniformamente distribuiti nell'intervallo aperto (0,1). Chiamandola senza argomenti ritorna un numero random reale. \\
+Per generare un numero reale nell'intervallo aperto (0,N) basta moltiplicare questa funzione per N:
+
+	\begin{lstlisting}[escapeinside={(^}{^)}]
+	rand(^ $^{*}$ ^)N
+	\end{lstlisting}
+\textbf{randn} viene usato per generare una distribuzione normale di numeri random reali.
+
+\subsubsection{Numeri random interi}
+Arrotondare un numero random reale potrebbe essere usato per produrre un intero, ma questi interi non verrebbero distribuiti uniformemente nell'intervallo.
+
+La funzione \textbf{randi(imax)} genera un intero random nell'intervallo tra 1 e imax, incluso.\\
+\'{E} anche possibile passare un intervallo:
+
+	\begin{lstlisting}
+	randi([m,n],1)
+	\end{lstlisting}
+che genera un intero nell'intervallo tra m e n.
+
+\subsection{Caratteri e stringhe}
+Un \textbf{character} è un singolo carattere tra apici.
+Tutti i caratteri nel set di caratteri di un computer sono ordinati usando una \textbf{codifica di caratteri}.
+I set di caratteri includono tutte le lettere dell'alfabeto, i numeri, i segni di punteggiatura, gli spazi, ecc. 
+
+Le stringhe di caratteri sono sequenze di caratteri tra doppie virgolette (ad esempio, "ciao, come stai?"). Nella sequenza di codifica di caratteri, le lettere dell'alfabeto sono in ordine (ad esempio, 'a' viene prima di 'b'). 
+
+La comune codifica ASCII ha 128 caratteri (0-127 gli equivalenti interi), ma MATLAB supporta sequenze di codifica molto più grandi.\\
+Il range dei tipi interi può essere trovata con \textbf{intmin}/\textbf{intmax} (ad esempio, intmin('int8') è -128, intmax('int128') è 127).
+
+Convertire da un tipo all'altro, usando qualsiasi nome di tipo come funzione, è chiamato \textit{casting} o \textit{casting di tipo}. Ad esempio:
+
+	\begin{lstlisting}
+	>> num = 6 + 3;
+	>> numi = int32(num);
+	>> whos
+	   Name		Size	Bytes	Class	Attributes
+
+	   num		1x1		8		double
+	   numi		1x1		4		int32
+	\end{lstlisting}
+\medskip
+La funzione \textbf{class} ritorna il tipo di una variabile.\\
+La codifica ASCII standard ha 128 caratteri, i cui equivalenti interi sono 0-127.\\
+Ogni funzione di numero può convertire un carattere nell'equivalente intero:
+
+	\begin{lstlisting}
+	>> numequiv = double('a')
+	numequiv =
+		97
+	\end{lstlisting}
+La funzione \textbf{char} invece converte un intero nel carattere equivalente.
+
+
+\subsection{Espressioni relazionali}
+
+Gli operatori relazionali in MATLAB sono:
+
+\begin{itemize}
+\item[>] maggiore di
+\item[<] minore di
+\item[>=] maggiore o uguale
+\item[<=] minore o uguale
+\item[==] uguaglianza
+\item[$\sim$=] disuguaglianza
+\end{itemize}
+Il tipo del risultato è \textbf{logical}: 1 per Vero o 0 per falso. \\
+Gli operatori logici sono:
+\begin{itemize}
+\item[||] OR per gli scalari
+\item[\&\&] AND per gli scalari
+\item[$\sim$] NOT
+\end{itemize}
+In più la funzione \textbf{XOR}, che ritorna Vero logico solamente se uno solo degli argomenti è Vero.\\
+
+
+\begin{table}[!h]
+	\centering
+	\begin{tabular}{l|c}
+		\toprule 
+		Operatori & Precedenza \\
+		\midrule
+		parentesi: ( ) & maggiore \\
+		potenza: \^ & \\
+		unari: negazione (-) e not ($\sim$) \\
+		moltiplicazione, divisione: *, /, \textbackslash \\
+		addizione, sottrazione: +, - \\
+		relazioniali: <, <=, >, >=, ==, $\sim$= \\
+		AND: \&\& \\
+		OR: || \\
+		assegnamento: = & minore \\
+		\bottomrule	
+	\end{tabular}
+\caption{Tabella delle precedenze espansa}
+\end{table}
+
+\subsection{Altre funzioni}
+Altre funzioni di MATLAB sono:
+\begin{itemize}
+\item Le funzioni trigonometriche come \textbf{sin}, \textbf{cos}, \textbf{tan} (in radianti).
+	\begin{itemize}
+	\item Anche arcoseno \textbf{asin} , sendo iperbolico \textbf{hsin}, ecc.
+	\item Funzioni che usano i gradi: \textbf{sind}, \textbf{cosd}, \textbf{asind}, ecc.
+	\end{itemize}
+\item Funzioni di arrotondamento e resto:
+	\begin{itemize}
+	\item \textbf{fix}, \textbf{floor}, \textbf{ceil}, \textbf{round}
+	\item \textbf{rem}, \textbf{mod} ritornano il resto
+	\item sign ritorna il segno come -1, 0 o 1
+	\end{itemize}
+\item Funzioni \textbf{sqrt} e \textbf{nthroot}.
+\item \textbf{deg2rad} e \textbf{rad2deg} convertono tra radianti e gradi, o viceversa.
+\item Funzioni logaritmiche:
+	\begin{itemize}
+	\item \textbf{log(x)} ritorna l'algoritmo naturale (base $e$)
+	\item \textbf{log2(x)} ritorna l'algoritmo di base 2
+	\item \textbf{log10(x)} ritorna l'algoritmo di base 10
+	\end{itemize}
+\item Funzione esponenziale exp(n) che ritorna la costante $e^n$.
+	\begin{itemize}
+	\item Nota: non esiste nessuna costante integrata per rappresentare $e$; si usa \textbf{exp} per ottenerla.
+	\item Non confondere con la notazione esponenziale $e$.
+	\end{itemize}
+\end{itemize}
+
+\newpage
+
+\section{Matrici}
+Una \textbf{matrice} viene usata per salvare un set di valori dello stesso tipo; ogni valore è salvato in un \textbf{elemento} della matrice.\\
+Una matrice assomiglia ad una tabella, con righe e colonne; una matrice di \textit{m} righe e \textit{n} colonne viene chiamata \textit{m x n}; questi due valori sono chiamati le \textbf{dimensioni} della matrice. Ad esempio una matrice 2x3 è:\\
+
+\begin{tabular}{|c|c|c|}
+\hline
+9 & 6 & 3 \\ \hline
+5 & 7 & 2 \\ \hline
+\end{tabular} \bigskip \\
+Il termine \textbf{array} viene frequentemente usato in MATLAB per riferirsi genericamente ad una matrice o ad un vettore.
+
+\subsection{Vettori e Scalari}
+Un \textbf{vettore} è un caso speciale di matrice dove una delle dimensioni è 1.
+
+\begin{itemize}
+
+	\item Un vettore con n elementi è 1xn, ad esempio 1x4:
+		\begin{tabular}{|c|c|c|c|}
+		\hline
+		5 & 88 & 3 & 11 \\ \hline
+		\end{tabular} \bigskip
+		
+	\item Un vettore con m elementi è mx1, ad esempio 3x1:
+		\begin{tabular}{|c|}
+		\hline
+		3 \\ \hline
+		7 \\ \hline
+		4 \\ \hline
+		\end{tabular} \bigskip
+
+\end{itemize}
+Uno \textbf{scalare} è un caso ancora più speciale: corrisponde ad una matrice 1x1, cioè ad un singolo valore.
+
+\subsubsection{Creare righe di vettori}
+\begin{itemize}
+\item Metodo diretto: mettere i valori desiderati tra parentesi quadrate, separati o da spazi o da virgole
+	\begin{lstlisting}
+	>> v = [1 2 3 4]
+	v =
+		1 2 3 4
+	>> v = [1,2,3,4]
+	v =
+		1 2 3 4
+	\end{lstlisting}
+\item Operatore "\textbf{due punti}": itera attraverso i valori con la forma \emph{first:step:last}. \\ Ad esempio 5:3:14 ritorna il vettore [5 8 11 14]
+	\begin{itemize}
+	\item Se non specificato, \textit{step} vale 1
+	\item Si può andare al contrario, ad esempio 4:-1:1 crea [4 3 2 1]
+	\end{itemize}
+\end{itemize}
+
+\subsubsection{Funzioni linspace e logspace}
+La funzione \textbf{linspace} crea un vettore "linearmente spaziato"; \textbf{linspace(x,y,n)} crea un vettore con n valori nel range inclusivo da x a y.\\
+Ad esempio linspace(4,7,3) crea un vettore con 3 valori, inclusi il 4 e il 7, cioè il vettore: [4  5.5  7]. \\
+Se n non è definito, vale 100 punti. \medskip\\
+La funzione \textbf{logspace} crea invece un vettore "logaritmicamente spaziato"; \textbf{logspace(x,y,n)} crea un vettore con n valori nel range inclusivo tra $10^x$ e $10^y$. \\
+Ad esempio logspace(2,4,3) ritorna [100 1000 10000]. \\
+Se n non è definito vale 50 punti.
+
+\subsubsection{Concatenazione}
+I vettori possono essere creati dall'unione di vettori esistenti, o aggiungendo valori a vettori esistenti: questo viene detto \textbf{concatenazione}.\\
+Per esempio:\\
+	\begin{lstlisting}
+	>> v = 2:5;
+	>> x = [33 11 2];
+	>> w = [v x]
+	w =
+		2 3 4 5 33 11
+	>> newv = [v 44]
+	newv =
+		2 3 4 5 44
+	\end{lstlisting}
+
+\subsubsection{Riferirsi ad elementi}
+Gli elementi in un vettore sono numerati sequenzialmente; ogni numero di elemento è detto \textbf{indice}. Sono indicati sopra gli elementi nell'esempio di seguito:\\
+
+\begin{tabular}{|c|c|c|c|c|}
+\multicolumn{1}{c}{1} & \multicolumn{1}{c}{2} &
+\multicolumn{1}{c}{3} & \multicolumn{1}{c}{4} &
+\multicolumn{1}{c}{5} \\ \hline
+5 & 33 & 11 & -4 & 2 \\ \hline
+\end{tabular} \bigskip
+
+\noindent
+Si può fare riferimento ad un elemento usando il suo indice tra parentesi; ad esempio vec(4) è il quarto elemento del vettore \textit{vec}.\\
+Si può inoltre fare riferimento ad una parte di un vettore usando un \textit{vettore indice}: vec([2 5]) si riferisce al secondo e al quinto elemento di vec; vec([1:4]) si riferisce ai primi 4 elementi del vettore.
+
+\subsubsection{Modifica di vettori}
+Elementi di un vettore possono essere cambiati; ad esempio con 
+$$vec(3)=11$$ il terzo elemento di vec viene sostituito con 11.
+Un vettore può essere esteso riferendosi ad elementi che non esistono ancora; se c'è un vuoto tra la fine del vettore e il nuovo elemento specificato(/i nuovi elementi specificati), viene colmato da zeri. Ad esempio:
+\begin{lstlisting}
+	>> vec = [3 9];
+	>> vec(4:6) = [33 2 7]
+	vec =
+		3 9 0 33 2 7
+\end{lstlisting}
+L'estensione dei vettori non è una buona idea se può essere evitata comunque.
+
+\subsubsection{Creare colonne di vettori}
+Un vettore colonna è un vettore mx1.
+
+\begin{itemize}
+\item Metodo diretto: mettere i valori desiderati tra parentesi quadrate, separati da un punto e virgola, ad esempio [4;7;2]
+\item Non è possibile creare direttamente un vettore colonna usando metodi come l'operatore "due punti", ma si può creare utilizzando questo operatore un vettore riga e poi farne la \textbf{trasposizione} (trasposta di A con A').
+\end{itemize}
+Il riferimento agli elementi funziona allo stesso modo dei vettori riga.
+
+\subsection{Creare variabili matrici}
+Per creare matrici si separano i valori tra righe con spazi o virgole, e si separano le diverse righe con un punto e virgola. Si può utilizzare qualsiasi metodo per ottenere i valori in ogni riga (cioè ad ottenere un vettore riga, quindi anche l'operatore "doppi punti").
+
+\begin{lstlisting}
+	>> mat = [1:3; 6 11 -2]
+	mat =
+		1  2  3
+		6 11 -2
+\end{lstlisting}
+\emph{Devono sempre esserci gli stessi numeri di valori in ogni riga!}
+
+\subsubsection{Funzioni che creano matrici}
+Esistono molte funzioni integrate per creare matrici:
+
+\begin{itemize}
+\item \textbf{rand(n)} crea una matrice nxn di reali random
+\item \textbf{rand(n,m)} crea una matrice nxm di reali random
+\item \textbf{randi([range],n,m)} crea una matrice nxm di interi random nell'intervallo \textit{range} specificato
+\item \textbf{zeros(n)} crea una matrice nxn di zeri
+\item \textbf{zeros(n,m)} crea una matrice nxm di zeri
+\item \textbf{ones(n)} crea una matrice nxn di uni
+\item \textbf{ones(n,m)} crea una matrice nxm di uni
+\end{itemize}
+
+\subsubsection{Elementi di una matrice}
+Per riferirsi ad un elemento all'interno di una matrice, si usa il nome della matrice seguito da indice della riga e della colonna tra parentesi, divisi da una virgola:
+
+\begin{lstlisting}
+	>> mat = [1:3; 6 11 -2]
+	mat =
+		1  2  3
+		6 11 -2
+	>> mat(2,1)
+	ans =
+		6
+\end{lstlisting}
+\emph{Riferirsi sempre prima alla riga e poi alla colonna!}
+
+Ci si può inoltre riferire ad un sottoinsieme di una matrice:
+\begin{itemize}
+\item Per riferirsi all'intera m-esima riga: \textbf{mat(m,:)}
+\item Per riferirsi all'intera n-esima colonna: \textbf{mat(:,n)}
+\end{itemize}
+Inoltre per riferirsi alle ultime righe o colonne si può usare \textbf{end}; ad esempio mat(end,m) è la colonna m-esima dell'ultima riga. 
+
+\subsubsection{Modifica di matrici}
+Un elemento individuale in una matrice può essere modificato assegnandoli un nuovo valore; anche intere righe e colonne possono essere modificate allo stesso modo.\\
+Ogni sottoinsieme di una matrice può essere modificato, finchè il nuovo sottoinsieme assegnato abbia la stessa dimensione dell'originale.\\
+Un'eccezione: uno scalare può essere assegnato ad un sottoinsieme di qualsiasi dimensione: lo stesso scalare viene assegnato ad ogni elemento nel sottoinsieme.
+
+\subsubsection{Dimensione delle matrici}
+Esistono diverse funzioni per determinare la dimensione di vettori o matrici:
+
+\begin{itemize}
+\item \textbf{length(vec)} ritorna il numero di elementi in un vettore
+\item \textbf{length(mat)} ritorna la dimensione maggiore (tra righe e colonne) di una matrice
+\item \textbf{size} ritorna il numero di righe e colonne di un vettore o una matrice. \\
+Nel caso di una matrice, bisogna catturare entrambi i risultati: 	\begin{lstlisting}
+	[r c] = size(mat)
+	\end{lstlisting}
+\item \textbf{numel} ritorna il numero totale di elementi in un vettore o una matrice
+\end{itemize}
+Rimanere generici nella programmazione è molto importante: invece che assumere di conoscere la dimensione di vettori o matrici, meglio usare \textbf{length} o \textbf{size} per scoprirlo.\\
+\\
+Molte funzioni permettono di modificare la dimensione delle matrici:
+\begin{itemize}
+\item \textbf{reshape} cambia le dimensioni di una matrice in una con lo stesso numero di elementi
+\item \textbf{rot90} ruota una matrice di 90 gradi (senso anti-orario)
+\item \textbf{fliplr} ribalta le colonne di una matrice da sinistra a destra
+\item \textbf{flipud} ribalta le righe di una matrice dall'alto verso il basso
+\item \textbf{flip} ribalta un vettore riga da sinistra a destra, vettore colonna o matrice dall'alto verso il basso
+\end{itemize}
+
+\subsubsection{Replicare matrici}
+\begin{itemize}
+\item \textbf{repmat} replica un'intera matrice; crea \textit{m x n} copie della matrice
+\item \textbf{repelem} replica ogni elemento di una matrice nelle dimensioni specificate
+
+\begin{lstlisting}
+	>> mymat = [33 11; 4 2]
+	mymat =
+		33 11
+		 4  2
+	>> repmat(mymat, 2,3)
+	ans =
+		33 11 33 11 33 11
+		 4  2  4  2  4  2
+		33 11 33 11 33 11
+		 4  2  4  2  4  2
+	>> repelem(mymat,2,3)
+	ans =
+		33 33 33 11 11 11
+		33 33 33 11 11 11
+		 4  4  4  2  2  2
+		 4  4  4  2  2  2
+\end{lstlisting}
+
+\end{itemize}
+
+\subsection{Vettori vuoti}
+Un vettore vuoto è un vettore senza elementi; un vettore vuoto può essere creato usando le parentesi quadre con niente all'interno. \\
+Per eliminare un elemento da un vettore, basta assegnare un vettore vuoto a quell'elemento.  Nel caso di una matrice non è possibile eliminare un singolo elemento, ma si può eliminare una riga o una colonna intera assegnandovi [ ].\\
+Vettori vuoti possono anche essere utilizzati per "accrescere" un vettore, iniziando con nulla e aggiungendogli valori attraverso concatenazione (di solito in un loop, che verrà trattato più avanti). \\
+Questo tuttavia non è efficiente, e andrebbe evitato quando possibile.
+
+\subsection{Matrici 3D}
+Una matrice tridimensionale ha grandezza \textit{m x n x p}.\\
+Possono essere create utilizzando funzioni integrate; ad esempio di seguito viene creata una matrice 3x5x2 di interi random: ci sono 2 strati, ognuno di dimensioni 3x5
+
+\begin{lstlisting}
+	>> randi([0 50], 3,5,2)
+	ans(:,:,1) =
+		36  34   6  17  38
+		38  33  25  29  13
+		14   8  48  11  25
+		
+	ans(:,:,2) =
+		35  27  13  41  17
+		45   7  42  12  10
+		48   7  12  47  12
+\end{lstlisting}
+
+\subsection{Array come argomenti di funzioni}
+Interi array (vettori o matrici) possono essere passati come argomenti di funzioni. Il risultato avrà la stessa dimensione dell'input.\\
+Ad esempio:
+
+\begin{lstlisting}
+	>> vec = randi([-5 5], 1, 4)
+	vec =
+		-3 0 5 1
+	>> av = abs(vec)
+	av =
+		3 0 5 1
+\end{lstlisting}
+
+\subsection{Funzioni su array}
+Esistono numerose funzioni integrate molto utili per operare su vettori, o su colonne di matrici:
+\begin{itemize}
+\item \textbf{min} ritorna il minimo valore
+\item \textbf{max} ritorna il massimo valore
+\item \textbf{sum} ritorna la somma degli elementi
+\item \textbf{prod} ritorna il prodotto degli elementi
+\item \textbf{cumprod} prodotto cumulativo
+\item \textbf{cumsum} somma cumulativa
+\item \textbf{cummin} minimo cumulativo
+\item \textbf{cummax} massimo cumulativo
+\end{itemize} 
+
+\subsubsection{Esempi con min, max}
+
+\begin{lstlisting}
+	>> vec = [4 -2 5 11];
+	>> min(vec)
+	ans =
+		-2
+	>> mat = randi([1, 10], 2,4)
+	mat =
+		6  5  7  4
+		3  7  4 10
+	>> max(mat)
+	ans =
+		6  7  7 10
+\end{lstlisting}
+
+\subsubsection{Esempi con sum, cumsum}
+
+La funzione \textbf{sum} ritorna la somma degli elementi; la funzione \textbf{cumsum} mostra la somma mentre itera attraverso gli elementi ($4$, poi $4+-2$, poi $4-2+5$ e infine $4-2+5+11$):
+
+\begin{lstlisting}
+	>> vec = [4 -2 5 11];
+	>> sum(vec)
+	ans =
+		18
+	>> cumsum(vec)
+	ans =
+		4  2  7 18
+\end{lstlisting}
+
+\subsubsection{Esempi con prod, cumprod}
+
+Queste funzioni hanno lo stesso formato di \textbf{sum}/\textbf{cumsum}, ma calcolano i prodotti:
+
+\begin{lstlisting}
+	>> v = [2:4 10]
+	v =
+		2  3  4 10
+	>> cumprod(v)
+	ans =
+		2  6 24 240
+	>> mat = randi([1, 10], 2,4)
+	mat =
+		2  2  5  8
+		8  7  8 10
+	>> prod(mat)
+	ans =
+		16 14 40 80
+\end{lstlisting}
+
+\subsection{Funzioni generali su matrici}
+
+Visto che queste funzioni operano secondo colonne per matrici, è necessario annidare per colonne le chiamate, in modo da ottenere la funzione per tutti gli elementi di una matrice:
+
+\begin{lstlisting}
+	>> mat = randi([1, 10], 2,4)
+	mat =
+		9  7  1  6
+		4  2  8  5
+	>> min(mat)
+	ans =
+		4  2  1  5
+	>> min(min(mat))
+	ans =
+		1
+\end{lstlisting}
+
+\subsection{Funzione diff}
+
+La funzione \textbf{diff} ritorna la differenza tra elementi consecutivi in un vettore. \\
+Per un vettore di lunghezza \textit{n}, la lunghezzza del risultato sarà \textit{n-1}:
+
+\begin{lstlisting}
+	>> diff([4 7 2 32])
+	ans =
+		3 -5 30
+\end{lstlisting}
+Nel caso di una matrice, la funzione diff trova le differenze per colonne.
+
+\subsection{Operazioni scalari}
+Operazioni numeriche possono essere eseguite su ogni elemento in un vettore o una matrice.
+Per esempio, le \textbf{moltiplicazioni scalari}: moltiplicare ogni elemento per uno scalare:
+
+\begin{lstlisting}
+	>> [4 0 11] * 3
+	ans =
+		12  0 33
+\end{lstlisting}
+Un altro esempio: addizioni scalari; aggiungere uno scalare ad ogni elemento:
+
+\begin{lstlisting}
+	>> zeros(1,3) + 5
+	ans =
+		5  5  5
+\end{lstlisting}
+
+\subsection{Operazioni su array}
+
+Su due matrici A e B vengono applicate termine per termine, o elemento per elemento: questo significa  che le matrici devono avere le stesse dimensioni.
+\begin{itemize}
+\item addizione di matrici: $A+B$
+\item sottrazione di matrici: $A-B$ o $B-A$
+\end{itemize}
+
+Per operazioni basate sulla moltiplicazione (moltiplicazione, divisione, esponenziale), è necessario posizionare un operatore davanti all'operatore.
+
+\begin{itemize}
+\item moltiplicazione di array: $A.^{*} B$
+\item divisione di array: $A./B$ o $A.\setminus B$
+\item esponziale di array:  $A. \char`\^ 2$ 
+\end{itemize}
+La moltiplicazione di matrici NON è un operazione su array.
+
+\subsection{Vettori logici}
+Usare operatori relazionali su un vettore o una matrice risulta in un vettore o una matrice logici.
+
+\begin{lstlisting}
+	>> vec = [44 3 2 9 11 6];
+	>> logv = vec > 6
+	logv =
+		1  0  0  1  1  0
+\end{lstlisting}
+Si può usare questo per indicizzare un vettore o una matrice (solo se il vettore indice è di tipo logico):
+
+\begin{lstlisting}
+	>> vec(logv)
+	ans =
+		44  9 11
+\end{lstlisting}
+
+\subsubsection{True/False}
+
+Gli operatori logici sono:
+
+\begin{itemize}
+\item \textbf{false} equivale a logical(0)
+\item \textbf{true} equivale a logical(1)
+\end{itemize}
+\textbf{false} e \textbf{true} sono anche funzioni che creano matrici di valori false o true.\\
+Da R2016a questo può essere fatto anche con \textbf{ones} e \textbf{zeros}.
+
+\subsubsection{Funzioni logiche}
+\begin{itemize}
+\item \textbf{any} ritorna true se almeno un argomento in input è vero
+\item \textbf{all} ritorna true solo se l'intero argomento in input è vero
+\item \textbf{find} trova le locazioni e ritorna gli indici 
+\end{itemize}
+
+\begin{lstlisting}
+	>> vec
+	vec =
+		44  3  2  9 11  6
+	>> find(vec>6)
+	ans =
+		 1  4  5
+\end{lstlisting}
+
+\subsubsection{Comparazione di array}
+La funzione \textbf{isequal} compara due array, e ritorna \textbf{true} se sono uguali (cioè se tutti gli elementi corrispondono) o \textbf{false} altrimenti.
+
+\begin{lstlisting}
+	>> v1 = 1:4;
+	>> v2 = [1 0 3 4];
+	>> isequal(v1,v2)
+	ans =
+		0
+	>> v1 == v2
+	ans =
+		1  0  1  1
+	>> all(v1 == v2)
+	ans =
+		0
+\end{lstlisting}
+
+\subsubsection{Operatori su elementi}
+\begin{itemize}
+\item $\vert$ e \& sono usati per matrici: passano elemento per elemento e ritornano i valori logici 1 o 0
+\item $\vert\vert$ e \&\& sono usati per gli scalari
+\end{itemize}
+
+\subsection{Moltiplicazione matriciale}
+La moltiplicazione matriciale NON è un operazione per array: non significa moltiplicare termine per termine.\\
+In MATLAB, l'operatore di moltiplicazione $^{*}$ esegue una moltiplicazione matriciale. Affinchè sia possibile moltiplicare una matrice A per una matrice B è necessario che il numero di colonne di A sia lo stesso del numero di righe di B. 
+
+Ad esempio se A ha dimensioni $mxn$, significa che B dovrà avere dimensioni $nxp$: la dimensione interiore deve essere la stessa.
+La matrice risultante C ha lo stesso numero di righe di A e di colonne di B ($mxp$).\\
+Gli elementi della matrice C sono calcolati dalla somma dei prodotti di elementi corrispondenti nelle righe di A e nelle colonne di B:
+$$c_{ij}=\sum\limits_{k=1}^n a_{ik}b_{kj}$$
+
+\begin{figure}[!h]
+\begin{center}
+\includegraphics[width=300px, height=90px]{matrice.png}
+\caption{Esempio di moltiplicazione matriciale.}
+\end{center}
+\end{figure}
+
+\subsection{Operazioni su vettori}
+Dato che i vettori sono casi speciali di matrici, le operazioni su matrici descritte, incluse addizione, sottrazione, moltiplicazione scalare, moltiplicazione e trasposta, funzionano anche su vettori, se le dimensioni sono corrette.\\
+Operazioni specifiche su vettori sono:
+\begin{itemize}
+\item Il \textbf{prodotto scalare} o prodotto interiore di due vettori a e b è definito come $a_1b_1+a_2b_2+...+a_nb_n$.
+\begin{itemize}
+\item La funzione integrata \textbf{dot} esegue questa operazione
+\end{itemize}
+
+\item Inoltre, \textbf{cross} esegue il prodotto vettoriale
+\end{itemize}
+
+\newpage
+
+\section{Script e funzioni}
+
+Un algoritmo è una sequenza di passi necessaria a risolvere un problema.\\
+Un approcio alla programmazione di tipo \textbf{top-down} consiste nel frammentare la soluzione in passi, per poi rifinirne ognuno.\\
+Un algoritmo generico per molti programmi è:
+
+\begin{enumerate}
+\item Prendere l'input
+\item Calcolare il risultato (o i risultati)
+\item Mostrare il risultato (o i risultati)
+\end{enumerate}
+Un programma modulare consiste in funzioni che implementano ogni passo.
+
+Gli script sono file in MATLAB che contengono una sequenza di istruzioni MATLAB, implementando un algoritmo.
+Gli script vengono interpretati, e sono salvati in file di codice (con estensione \textit{.m}).\\
+Nel momento in cui uno script viene salvato, è possibile eseguirlo inserendo il suo nome nel prompt. Il comando \textbf{type} può essere utilizzato per mostrare uno script nella finestra dei comandi.
+Uno script dovrebbe sempre essere \textbf{documentato} usando \textbf{commenti}. I commenti descrivono cosa fa uno script e in quale modo; vengono ignorati da MATLAB. Per commentare si può:
+
+\begin{itemize}
+\item Aggiungere il simbolo \textit{\%} prima dell'inizio di un commento, che finisce al termine della riga
+\item Inserire il commento tra \textit{\%\{ } e \textit{\%\} } per commenti di più righe
+\end{itemize}
+
+In particolare, la prima linea di commento in uno script è detta 'H1 line' ed è quello che viene mostrato con il comando \textbf{help}.
+
+\subsection{Input e Output}
+La funzione \textbf{input} fa due cose: richiede all'utente un valore e lo legge.
+\begin{itemize}
+\item Forma generale di lettura di un numero:
+	\begin{lstlisting}
+	variablename = input('prompt string')
+	\end{lstlisting}
+\item Forma generale di lettura di una stringa o un carattere:
+	\begin{lstlisting}
+	variablename = input('prompt string', 's')
+	\end{lstlisting}
+\end{itemize}
+Per leggere più valori sono necessari altrettante funzioni input. \bigskip \\
+Per l'output esistono due funzioni base:
+\begin{itemize}
+\item \textbf{disp}, che è un modo veloce per visualizzare cose
+\item \textbf{fprintf}, che permette la formattazione
+\end{itemize}
+La funzione \textbf{fprintf} usa formattazione delle stringhe che include placeholders; questi hanno caratteri di conversione:
+
+\begin{itemize}
+\item[\%d] interi
+\item[\%f] float (numeri reali)
+\item[\%c] caratteri singoli
+\item[\%s] stringhe
+\end{itemize}
+Usando \textit{\%\#x}, dove \# è un intero e x il carattere di conversione, è possibile specificare la larghezza del campo pari a \#.\\
+Con \textit{\%\#.\#x} è invece possibile specificare la larghezza del campo e il numero di valori decimali.\\
+\textit{\%.\#x} specifica solo il numero dei decimali (o caratteri in una stringa); la larghezza di campo verrà invece espansa di quanto necessaria.\medskip \\ 
+Altra formattazione:
+\begin{itemize}
+\item \textbackslash{}n è il carattere per passare ad una nuova linea
+\item \textbackslash{}t è il carattere di tabulazione
+\item la giustificazione a sinistra è possibile con '-' (esempio: \%-5d)
+\item per stampare uno slash: \textbackslash{}\textbackslash{}
+\item per stampare un singolo apice: \lq{}\lq{} (due virgolette singole)
+\end{itemize}
+La stampa di vettori e matrici è solitamente più facile con \textbf{disp}.
+
+\subsection{Grafici semplici}
+Usando \textbf{plot} è possibile creare semplici grafici di punti di dati.\\
+Per iniziare, si creano variabili per salvare i dati (possono contenere uno o più punti ma devono essere della stessa lunghezza); ad esempio presi due vettori chiamati x e y (o senza x se i suoi valori sono 1,2,3,ecc):
+\begin{lstlisting}
+	plot(x,y)	o solo	plot(y)
+\end{lstlisting}
+Di default i punti individuali sono tracciati con segmenti che li uniscono, ma altre opzioni possono essere specificate con un argomento aggiuntivo che è una stringa. Le opzioni possono includere colori (ad esempio 'b' per blu, 'g' per verde, ecc), simboli di grafico o marcatori (ad esempio 'o' per cerchi, '+', '*'), tipi di linea (ad esempio '--' per la tratteggiata).\\
+\begin{figure}[!h]
+\begin{center}
+\includegraphics[width=100px, height=100px]{plot.png}
+\caption{Esempio di plot(x,y, 'g*--') con x=[1,2,3,4,5] e y=sin(x)}
+\end{center}
+\end{figure}
+
+Di default non ci sono labels sugli assi o titoli nel grafico. Per aggiungerli si possono usare le funzioni:
+\begin{itemize}
+\item xlabel('stringa')
+\item ylabel('stringa')
+\item title('stringa')
+\end{itemize}
+Gli assi sono creati di default usando il minimo e il massimo valore nei vettori dati x e y. Per specificare range differenti si usa la funzione \textbf{axis}:
+\begin{itemize}
+\item axis([xmin xmax ymin ymax])
+\end{itemize}
+Altre funzioni utili per un grafico:
+\begin{itemize}
+\item \textbf{clf}, per pulire la finestra della figura
+\item \textbf{figure}, crea una nuova finestra figura
+\item \textbf{hold}, mantiene il grafico corrente nella finestra figura
+\item \textbf{legend}, mostra la legenda
+\item \textbf{grid}, mostra le linee della griglia
+\item \textbf{bar}, crea un grafico a barre
+\end{itemize}
+
+\subsection{File I/O}
+Esistono 3 modalità o operazioni su file:
+\begin{itemize}
+\item read from
+\item write to (assumendo che cominci dall'inizio)
+\item append to (come write to, ma iniziando dalla fine)
+\end{itemize} 
+Esistono semplice comandi per salvare una matrice in un file e leggere da un file in una matrice: \textbf{save} e \textbf{load}.
+Per leggere o scrivere qualcosa di diverso da una matrice, sono necessarie funzioni I/O di più basso livello.
+
+\subsubsection{load e save}
+Per leggere da un file in una variabile matrice:
+\begin{lstlisting} 
+	load filename.ext
+\end{lstlisting}
+Questo creerà una variabile matrice chiamata "filename". Può essere usata se il file ha lo stesso numero di valori su ogni linea nel file; ogni linea è letta in una riga nella matrice variabile.\\
+Per scrivere il contenuto di una variabile matrice in un file:
+\begin{lstlisting}
+	save filename matrixvariablename -ascii
+\end{lstlisting}
+Per appendere il contenuto di una variabile matrice in un file esistente:
+\begin{lstlisting}
+	save filename matrixvariablename -ascii -append
+\end{lstlisting}
+
+\subsection{Funzioni definite dall'utente}
+Esistono diversi tipi di funzioni che possono essere create dall'utente. Nel caso di una funzione che calcola e ritorna un valore, si scrive la definizione della funzione (salvata in un codice con estensione \textit{.m}) e, allo stesso modo delle funzioni incluse, la si chiama passando uno o più argomenti tra parentesi, che la funzione elaborerà per ottenere il risultato, che viene poi ritornato.
+
+\begin{lstlisting}
+	function outarg = fnname(argomenti input)
+		del codice qui
+		outarg = un valore;
+	end
+\end{lstlisting}
+La definizione include:
+\begin{itemize}
+\item la funzione header (prima linea)
+\item la funzione body (tutto il resto)
+\end{itemize}
+
+\subsubsection{Header}
+L'header inizia sempre con la parola riservata \textit{function}, poi c'è il nome di un argomento di output, seguito dall'operatore assegnamento e il nome della funzione (dovrebbe essere lo stesso del nome del file) con gli argomenti tra parentesi (corrispondenti uno a uno con gli argomenti che si passano con la chiamata).
+
+\subsubsection{Esempio funzione}
+\begin{lstlisting}
+	function area = calcarea(rad)
+		% Questa funzione calcola l'area di un cerchio
+		area = pi * rad * rad;
+	end
+\end{lstlisting}
+Questa funzione potrebbe essere chiamata in diversi modi:
+\begin{itemize}
+\item >>calcarea(4)\\
+Questo salva il risultato nella variabile di default \textit{ans}
+\item >>myarea = calcarea(4)\\
+Questo salva il risultato nella variabile myarea
+\item >>disp(calcarea(4))\\
+Questo mostra il risultato, ma non lo salva per uso successivo
+\end{itemize}
+N.B.: questa funzione non accetta arrey a causa dell'operatore prodotto, per permetterlo basta modificarlo in '.*'.
+\newpage
+
+\section{Simulink}
+Boooooooooooooo
+\newpage
+
+\section{Istruzioni di selezione}
+\subsection{IF}
+L'istruzione \textbf{if} viene usata per determinare se un istruzione o un gruppo di istruzioni deve essere eseguito:
+\begin{lstlisting}
+	if condizione
+		azione
+	end
+\end{lstlisting}
+\subsection{IF-ELSEIF-ELSE}
+Le istruzioni \textbf{if-elseif-else} permettono di decidere tra due o più azioni:
+\begin{lstlisting}
+	if condizione1
+		azione1
+	elseif condizione2
+		azione2
+	else
+		azione3
+	end
+\end{lstlisting}
+\subsection{SWITCH}
+L'istruzione \textbf{switch} può essere usata frequentemente al posto di una serie di if annidati:
+\begin{lstlisting}
+	switch espressione_switch
+		case caso1
+			azione1
+		case caso2
+			azione2
+		case caso3
+			azione3
+		otherwise
+			azione4
+
+	end
+\end{lstlisting}
+\subsection{funzioni IS}
+Esistono diverse funzioni "is" in MATLAB che essenzialmente chiedono se una cosa è vera/falsa, e ritornano il logico 1 (true) o 0 (false):
+\begin{itemize}
+\item \textbf{isletter} ritorna 1 o 0 se il carattere della stringa è una lettera o meno
+\item \textbf{isempty} ritorna 1 se l'argomento è una variabile vuota
+\item \textbf{iskeyword} ritorna 1 se la stringa argomento è una keyword
+\item \textbf{isa\_} determina se l'argomento è uno specificato tipo (\_)
+\end{itemize}
+\newpage
+
+\section{Istruzioni di loop}
+\subsection{FOR loop}
+Usato come loop contato, ripete un'azione uno specificato numero di volte. Un iteratore specifica quante volte ripetere l'azione:
+\begin{lstlisting}
+	for loopvar = range
+		Azione
+	end
+\end{lstlisting}
+Il range viene specificato da un vettore (numInizio:numFine).\\
+Altre funzioni che operano con vettori sono: \textbf{prod},
+\textbf{cumsum}, \textbf{cumprod}, \textbf{min}, \textbf{max},\textbf{cummin}, \textbf{cummax}.
+
+\subsection{subplot}
+La funzione \textbf{subplot} crea una matrice (o vettore) in una finestra Figure così da poter mostrare più grafici contemporaneamente. Se la matrice è mxn, la chiamata della funzione \textbf{subplot(m,n,i)} si riferisce all'elemento \textit{i} ( che deve essere un intero nel range da 1 a m*n).
+A volte è possibile usare un for loop per iterare tra i diversi valori di subplot.
+
+\subsection{WHILE loop}
+Usato come loop condizionale, ripete un'azione finchè la condizione non diventa falsa:
+
+\begin{lstlisting}
+	while condition
+		action
+	end
+\end{lstlisting}
+\newpage
+
+\section{Programmi MATLAB}
+Categorie di funzioni:
+\begin{itemize}
+\item funzioni che calcolano e ritornano un valore
+\item funzioni che calcolano e ritornano più di un valore
+\item funzioni che compiono semplicemente un compito, senza ritornare valori
+\end{itemize}
+Sono diversi nel:
+\begin{itemize}
+\item modo in cui sono chiamate
+\item aspetto dell'header
+\end{itemize}
+Sono tutte salvate in file con estensione '.m'.
+
+\subsection{Funzioni che ritornano >1 valori}
+Forma generale: hanno molteplici argomenti di output nell'header. Questi argomenti sono separati da virgole. \\
+Per salvare tutti i valori ritornati, la chiamata dovrebbe essere assegnata ad un vettore contenente lo stesso numero di valori.
+Altrimenti alcuni di essi verranno persi.\\
+Ad esempio una funzione con header:
+\begin{lstlisting}
+	function [x,y,z] = fnname(a,b)
+\end{lstlisting}
+ritorna 3 valori, quindi una chiamata a questa funzione dovrebbe essere qualcosa come:
+\begin{lstlisting}
+	[g,h,t] = fnname(11, 4.3);
+\end{lstlisting}
+Si possono anche usare gli stessi nomi nell'header.
+Una chiamata a funzione come la seguente salverebbe solo il primo valore ritornato:
+\begin{lstlisting}
+	result = fnname(11, 4.3);
+\end{lstlisting}
+
+\subsection{Funzioni che non ritornano valori}
+Una funzione che non ritorna valori non ha valori di output nell'header, nè l'operatore di assegnamento:
+
+\begin{lstlisting}
+	function functionname(input argomenti)
+		azioni
+	end
+\end{lstlisting}
+Allo stesso modo una chiamata a questa funzione è un'istruzione. Ad esempio con la funzione esempio precedente, una chiamata sarebbe:
+\begin{lstlisting}
+	functionname(x,y)
+\end{lstlisting}
+La presenza di un assegnamento invaliderebbe la chiamata!
+
+\subsection{Sottofunzioni}
+Quando una funzione chiama un'altra funzion, le due possono essere salvate nello stesso file con il nome della funzione principale. La sottofunzione potrà essere chiamata solo dalla funzione principale.
+
+\subsection{Tipi di errore}
+\begin{itemize}
+\item \textit{Errori di sintassi}: errori nel linguaggio
+\item \textit{Run-time} (a tempo di esecuzione): errori trovati durante l'esecuzione di uno script o funzione
+\item \textit{Errori logici}: errori nel ragionamento sul funzionamento
+\end{itemize}
+
+\subsubsection{Metodi di debug}
+Esistono diversi metodi oer trovare gli errori:
+\begin{itemize}
+\item Tracing: usare \textbf{echo} per vedere come sono eseguite le istruzioni
+\item Usando il Debugger/Editor di MATLB
+\item Posizionando breakpoint per poter esaminare i valori di variabili ed espressioni in vari punti
+	\begin{itemize}
+	\item \textbf{dbstop} per posizionare un breakpoint
+	\item \textbf{dbcont} per continuare l'esecuzione
+	\item \textbf{dbquit} per uscire dalla modalità debug
+	\end{itemize}
+\end{itemize}
+
+\subsection{Code Cells}
+Il codice negli script può essere separato in sezioni chiamate \textbf{code cells}. È possibile eseguire un code cell alla volta. Queste celle vengono create con un commento che inizia con due percentuali '\%\%'.
+
+\newpage
+
+\section{Strutture dati}
+\subsection{Cell arrays}
+Un \textbf{cell array} è un tipo di struttura dati che può immagazzinare diversi tipi di valori nei suoi elementi. Un cell array può essere un vettore (riga o colonna) o una matrice. Essendo un array, utilizza indici per riferirsi ai propri elementi.\\
+Un'ottima applicazione dei cell arrays: salvare stringhe di diversa lunghezza.
+
+\subsubsection{Creare Cell arryas}
+La sintassi per creare un cell array è con le parentesi graffe invece delle quadre. Il metodo diretto è di aggiungere valori nella riga (o nelle righe) separati da virgole o spazi, e di separare le righe con punti e virgola (come negli array).\\
+La funzione \textbf{cell} può essere usata per preallocare passando la dimensione del cell array:
+\begin{lstlisting}
+	cell(4,2)
+\end{lstlisting} 
+
+\subsubsection{Riferirsi agli elementi}
+Gli elementi in un cell array sono celle.\\
+Esistono due metodi di riferirsi alle parti di un cell array:
+\begin{itemize}
+\item riferirsi alla cella (\textbf{cell indexing}); si usano le parentesi tonde 
+\item riferirsi al contenuto della cella (\textbf{content indexing}); si usano le graffe
+\end{itemize}
+\begin{lstlisting}
+	>> ca = {2:4, 'hello'};
+
+	>> ca(1)	%cell indexing
+	ans =
+		[1x3 double]
+
+	>> ca{1}	%content indexing
+	ans =
+		2 3 4
+\end{lstlisting}
+
+\subsubsection{Funzioni Cell arrays}
+\begin{itemize}
+\item \textbf{celldisp}: mostra il contenuto di tutti gli elementi del cell array
+\item \textbf{cellplot}: apre un grafico delle celle (non del contenuto!)
+\item \textbf{cellstr}: converte da una matrice di caratteri ad un cell array di stringhe
+\item \textbf{iscellstr}: ritorna 1 se un cell array contiene solo stringhe
+\item \textbf{strjoin}: concatena tutte le stringhe in un cell array in una stringa, separate da un delimitatore (spazio di default ma altri possono essere specificati)
+\item \textbf{strspit}: split di una stringa negli elementi di in un cell array usando uno spazio come delimitatore di default (altri specificabili)
+\end{itemize}
+
+\subsection{Strutture}
+Le strutture salvano valori di tipo diverso in \textbf{fields} (campi).
+I campi sono caratterizzati da nomi; ci si può riferire a loro attraverso \textbf{l'operatore punto} (structurename.fieldname).
+Le strutture possono essere inizializzate con la funzione \textbf{struct}, che prende coppie di argomenti (nome del campo come stringa, seguito dal valore di quel campo).\\
+Per stampare, \textbf{disp} mostra tutti i campi, mentre \textbf{fprintf} può stampare solo i campi individuali.
+\begin{lstlisting}
+	>> subjvar = struct('SubjNo',123,'Height',62.5);
+	>> subjvar.Height
+	ans =
+		62.5000
+	>> disp(subjvar)
+		SubjNo: 123
+		Height: 62.5000
+	>> fprintf('The subject # is %d\n', subjvar.SubjNo)
+	The subject # is 123
+\end{lstlisting}
+
+\subsection{Funzioni Strutture}
+\begin{itemize}
+\item \textbf{rmfield}: rimuove un campo ma non altera la variabile
+\item \textbf{isstruct}: ritorna 1 se l'argomento è una variabile struttura
+\item \textbf{isfield}: riceve una variabile struttura e una stringa, ritorna 1 se la stringa è il nome di un campo della struttura
+\item \textbf{fieldnames}: riceve una variabile struttura e ritorna i nomi di tutti i suoi campi come cell array
+\end{itemize}
+
+\subsection{Cell arrays vs Strutture}
+\begin{itemize}
+\item I Cell arrays sono array, quindi sono indicizzati (e quindi è possibile iterare sui loro elementi con un ciclo
+\item Le strutture non son indicizzate, tuttavia i nomi dei campi sono mnemonici quindi è più chiaro cosa si sta salvando in una struttura
+\end{itemize}
+
+\subsection{Vettore di strutture}
+Un database di informazioni può essere salvato in MATLAB in un vettore di strutture, cioè un vettore in cui ogni elemento è una struttura.\\
+Un esempio con dati medici:
+\begin{lstlisting}
+	>> subjvar(2) = struct('SubjNo', 123, 'Height', 
+		62.5, 'Weight', 133.3);
+	>> subjvar(1) = struct('SubjNo', 345, 'Height', 
+		77.7, 'Weight', 202.5);
+\end{lstlisting}
+In questo caso si crea un vettore con 2 strutture. La seconda struttura viene creata per prima così da preallocare per 2 elementi.\\
+Un set di campi può essere creato, ad esempio:
+\begin{lstlisting}
+	>> [subjvar.Weight]
+	ans =
+		202.5000 133.3000
+\end{lstlisting}
+
+\subsection{Strutture annidate}
+Una struttura annidata è una struttura nella quale almeno un campo è un'altra struttura. Per riferirsi  alla struttura "interna", l'operatore punto deve essere usato due volte (es.: structurename.innerstruct.fieldname).
+Per creare una struttura annidata basta annidare le chiamate alla funzione \textbf{struct}.\\
+Esempio con nome e cognomi salvati separati in una struttura separata:
+\begin{lstlisting}
+	>> contactinfo = struct('cname', 
+			struct('last', 'Smith', 'first', 'Abe'),
+			'phoneExt', '3456');
+	>> contactinfo.cname.last
+	ans =
+		Smith
+\end{lstlisting}
+
+\subsection{Tabelle}
+È possibile salvare informazioni nel formato di una tabella con righe e colonne, entrambe mnemonicamente etichettate. Le tabelle si possono creare con la funzione \textbf{table} che specifica variabili (le colonne) e nomi delle righe (cell array di stringhe). L'indicizzazione nella tabella può essere eseguita con indici interi o utilizzando le stringhe che sono la riga o i nomi della variabile.
+La funzione \textbf{summary} mostra i dati statistici (min, mediana, max) per ogni variabile.
+
+\subsection{Ordinamento}
+L'ordinamento può essere ascendente (dal minore al maggiore) o discendente (dal maggiore al minore). MATLAB ha incluse funzioni per ordinare. Esistono diversi algoritmi, come il \textit{selection sort}.\\
+Per ordinare è possibile usare la funzione \textbf{sort}, che ordina in senso ascendente (default) o discendente.
+\begin{lstlisting}
+	>> vec = randi([1, 20],1,7)
+	vec =
+		17 3 9 19 16 20 14
+	>> sort(vec)
+	ans =
+		3 9 14 16 17 19 20
+	>> sort(vec, 'descend')
+	ans =
+		20 19 17 16 14 9 3
+\end{lstlisting}
+Per una matrice, ogni colonna viene ordinata in modo individuale.\\
+sort(mat,2) ordina sulle righe invece che sulle colonne.
+
+\subsubsection{Ordinamento di stringhe}
+Per ordinare un Cell array di stringhe alfabeticamente si usa \textbf{sort}:
+\begin{lstlisting}
+	>> sciences = {'Physics', 'Biology', 'Chemistry'};
+	>> sort(sciences)
+	ans =
+		'Biology' 'Chemistry' 'Physics'
+\end{lstlisting}
+Per una matrice di caratteri, tuttavia, questo non funzionerà perchè sort ordinerà semplicemente ogni colonna.
+La funzione \textbf{sortrows} ordinerà le righe in un vettore di colonne. 
+
+\subsection{Indicizzazione}
+Invece che ordinare l'intero vettore ogni volta su un particolare campo, è frequentemente più efficiente creare vettori indice basati sui diversi campi. I vettori indice danno l'ordine in cui il vettore dovrebbe essere attraversato.\\
+Ad esempio vec([3 1 2]) dice "attraversa il vettore in questo ordine: il terzo elemento, poi il primo, poi il secondo".
+
+\subsubsection{Indicizzazione in un vettore di strutture}
+Tabella non ho tempo di farla.\\
+Esempio (iterare attraverso il vettore nell'ordine definito dal vettore codice indice ci):
+\begin{lstlisting}
+	for i = 1:length(parts)
+		do something with parts(ci(i))
+	end
+\end{lstlisting}
+Per creare un vettore indice, si usa una funzione sort.
+\newpage
+
+\section{Immagini}
+MATLAB può importare immagini in diversi formati.
+Le immagini sono rappresentate come matrici mxn in cui ogni elemento corrisponde ad un \textbf{pixel}. Tutti gli operatori in MATLAB definiti sulle matrici possono essere usati sulle immagini: +, -, *, /, \textasciicircum , sqrt, sin, cos, ecc.
+Ogni elemento che rappresenta un pixel contiene il colore per quel pixel.\\
+I tipi di immagine in MATLAB sono:
+\begin{itemize}
+\item immagini binarie: {0,1}
+\item immagini di intensità: [0,1] o uint8, double, ecc
+\item immagini RGB: m-by-n-by3
+\item immagini indicizzate: p-by-3 color map
+\item immagini multidimensionali: m-by-n-by-p (p è il numero di conche).
+\end{itemize}
+
+\subsection{Rappresentazione del colore}
+Ci sono due vie base per rappresentare il colore in un pixel
+\begin{itemize}
+\item \textbf{true color}, o \textbf{RGB}, dove i 3 componenti di colore sono salvati (rosso, verde, blu, in questo ordine) $\rightarrow$ la matrice è mxnx3
+\item indice in una \textbf{colormap}: il valore salvato in ogni elemento della matrice mxn è un intero che si riferisce ad una riga in un'altra matrice chiamata colormap (che ha una grandezza px3 perchè contiene i valori di rosso,verde e blu)
+\end{itemize}
+La funzione \textbf{image} mostra la matrice dell'immagine usando la corrente colormap:
+\begin{lstlisting}
+	image(mat)
+\end{lstlisting}
+La funzione \textbf{colormap} può essere usata in due modi: senza argomenti ritorna la colormap corrente, se una matrice px3 viene passata, seleziona quella matrice come colormap corrente.
+
+Esistono diverse colormap incluse, come parula (default), jet, autumn, pink, ecc. Tutte queste hanno 64 colori quindi la dimensione della colormap è 64x3.
+
+\subsection{Funzioni utili}
+La funzione \textbf{imread} può leggere un file immagine, per esempio un file JPG. La funzione legge immagini di colore in una matrice 3D:
+\begin{lstlisting}
+	>> myimage1 = imread('xyz.JPG');
+\end{lstlisting}
+La funzione image mostra questo:
+\begin{lstlisting}
+	>> image(myimage1)
+\end{lstlisting}
+Altre funzioni sono:
+\begin{itemize}
+\item \textbf{imshow} mostra un'immagine
+\item \textbf{rgb2gray} converte da RGB in scala di grigio
+\item \textbf{im2double} converte una matrice immagine in \textbf{double}
+\end{itemize}
+
+\subsubsection{Importazione e esportazione immagini}
+Leggere e scrivere immagini in MATLAB:
+\begin{lstlisting}
+	>> I=imread('ngc6543a.jpg');
+	>> imshow(I)
+	>> size(I)
+	ans = 479 600 3		(RGB image)
+	>> Igrey=rgb2gray(I);
+	>> imshow(Igrey)
+	>> imwrite(lgrey, 'cell_gray.tif', 'tiff')
+\end{lstlisting}
+Alternative a imshow:
+\begin{lstlisting}
+	>>imagesc(I)
+	>>imtool(I)
+	>>image(I)
+\end{lstlisting}
+
+\subsection{Istogrammi}
+L'istogramma traccia il numero di pixel nell'immagine (asse verticale) con un particolare valore di luminosità (asse orizzontale).\\
+Algoritmi nell'editor digitale consentono all'utente di regolare visivamente il valore di luminosità di ciascun pixel e di visualizzare dinamicamente i risultati man mano che le regolazioni sono fatte. Miglioramenti della luminosità e del contrasto dell'immagine possono quindi essere ottenute.\\
+Nel campo della visione artificiale, gli istogrammi delle immagini possono essere strumenti utili per la soglia. Poichè le informazioni contenute nel grafico sono una rappresentazione della distribuzione dei pixel in funzione della variazione tonale, gli istogrammi delle immagini possono essere analizzati per i picchi e/ le valli. Questo valore di soglia può quindi essere utilizzato per il rilevamento dei bordi,
+segmentazione dell'immagine e matrici di co-occorrenza.
+\begin{itemize}
+\item \textbf{imhist(I)} calcola l'istogramma per l'intensità di immagine I e mostra il grafico dell'istogramma. Il numero di bins nell'istogramma è determinato dal tipo di immagine.
+\item \textbf{imhist(I,n)} calcola l'istogramma, dove I specifica il numero di bins usato nell'istogramma, n specifica la lunghezza della colorbar mostrata alla base del grafico istogramma.
+\item \textbf{imhist(X,map)} mostra un istogramma per l'immagine indicizzata X; l'istogramma mostra la distribuzione di pixel sopra una colorbar della colormap.
+\end{itemize}
+Argomenti di input:
+\begin{itemize}
+\item I: input intensità immagine
+\item n: numero di 
+\item X: input immagine indicizzata
+\item map: colormap associata con immagine indicizzata specificata come array p-by-3.
+\end{itemize}
+Esempio istogramma immagine:
+\begin{lstlisting}
+	>>I = imread('pout.tif');
+	>>imhist(I)
+	>> imhist(I,40)
+	>>[X,map] = imread('trees.tif');
+	>>imshow(X,map)
+	>>Imhist(X,map)
+\end{lstlisting}
+
+\end{document}
