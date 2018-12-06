@@ -1,0 +1,2336 @@
+\documentclass[a4paper, 10pt, titlepage]{article}
+\usepackage[italian]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage[makeroom]{cancel}
+\usepackage{ulem}
+\usepackage{parcolumns}
+\usepackage{multicol}
+\setlength{\columnseprule}{0.4pt}
+\usepackage{lipsum}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{frontespizio}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\hypersetup{hidelinks,
+	colorlinks = true,
+	urlcolor = black, 
+	linkcolor = black}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=3cm]{geometry}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{listings}
+\lstset{inputencoding=utf8,
+	language = SQL,
+	basicstyle=\ttfamily,
+	tabsize=4,
+	showstringspaces=false,
+	keywordstyle=\color{blue}\bfseries,
+	morekeywords={REFERENCES, BOOLEAN, REAL, DOUBLE, PRECISION, TEXT, VARBIT, SIMILAR, TO},
+	stringstyle=\color{Purple},
+	literate={à}{{\`a}}1
+}
+\usepackage{fancyvrb}
+\pagestyle{fancy}
+\lhead{\nouppercase{\leftmark}}
+\rhead{\nouppercase{\rightmark}}
+
+\newcommand{\mail}[1]{\href{mailto:#1}{\texttt{#1}}}
+
+
+\begin{document}
+	\begin{frontespizio}
+		\Preambolo{\usepackage{datetime}}
+		\Istituzione{Università degli Studi di Verona}
+		\Divisione{Dipartimento di informatica}
+		\Facolta{Scienze e Ingegneria}
+		\Scuola{Laurea in Informatica}
+		\Titolo{Basi di Dati}
+		\Sottotitolo{Programma di laboratorio}
+		\Candidato{Davide Bianchi}
+		\Candidato{Matteo Danzi}
+		\NCandidati{Autori}
+		\Annoaccademico{2016/2017}
+	\end{frontespizio}
+
+	\tableofcontents
+		
+	\newpage
+	
+	\section{Gestione base di dati con Postgresql}
+	Di seguito si trova una panoramica dei comandi Postgres più comuni per la gestione di una base di dati.
+	
+	\subsection{Comando CREATE TABLE}
+	Il comando \lstinline{CREATE TABLE} è usato per creare tabelle nella base di dati.
+	La sintassi generale è:
+	\begin{lstlisting}
+CREATE TABLE nomeTabella (
+	nomeAttributo dominioAttributo vincoli,
+	...
+);
+	\end{lstlisting}
+	dove \lstinline|nomeAttributo| è il nome dell'attributo nella tabella, \lstinline|dominioAttributo| è il dominio dell'attributo da aggiungere alla tabella.
+	
+	\subsubsection{Domini elementari}
+	I domini di default disponibili in Postgres sono:
+	\begin{itemize}
+		\item \lstinline|BOOLEAN|: valori booleani (true/false);
+		\item \lstinline|INTEGER|: valori interi a 4 byte;
+		\item \lstinline|SMALLINT|: valori interi a 2 bit;
+		\item \lstinline|NUMERIC(p, s)|: valori decimali approssimati, dove \lstinline|p| è la precisione del numero (cifre a sinistra e a destra della virgola) e \lstinline|s| la scala (numero di cifre decimali dopo la virgola);
+		\item \lstinline|DECIMAL(p, s)|: valori deciamli approssimati, con i parametri uguali a \lstinline|NUMERIC|.
+		\item \lstinline|REAL|: valori in virgola mobile a 6 cifre decimali;
+		\item \lstinline|DOUBLE PRECISION|: valori in virgola mobile approssimati a 15 cifre decimali;
+	\end{itemize}
+	\textbf{Nota:} Se si devono rappresentare importi di denaro che contengono anche
+	decimali, \textbf{MAI} usare \lstinline|REAL| o \lstinline|DOUBLE PRECISION| ma usare \lstinline|NUMERIC|!
+
+	\subsubsection{Domini di caratteri}
+	\begin{itemize}
+		\item \lstinline|CHAR/CHARACTER|: singoli caratteri;
+		\item \lstinline|CHAR(n)/CHARACTER(n)|:stringa di caratteri di lunghezza n;
+		\item \lstinline|VARCHAR(n)|: stringhe di caratteri di lunghezza variabile con limite n;
+		\item \lstinline|TEXT|: testo libero (solo Postgres).
+	\end{itemize}
+
+	\subsubsection{Domini di bit/booleani}
+	\begin{itemize}
+		\item \lstinline|BIT|: singoli bit;
+		\item \lstinline|VARBIT(n)|: stringa di bit di lunghezza fissa;
+		\item \lstinline|VARBIT|: stringa di bit di lunghezza arbitraria.
+		\item \lstinline|BOOLEAN|: valori booleani, possono essere solo singoli.
+	\end{itemize}
+	\textbf{Nota:} non sono ammesse stringhe di booleani.
+	
+	\subsubsection{Domini di tempo}
+	\begin{itemize}
+		\item \lstinline|DATE|: date rappresentate tra apici e nel formato \verb|YYYY-MM-DD|;
+		\item \lstinline|TIME(precisione)|: misure di tempo nel formato \verb|hh:mm:ss:[precisione]|;
+		\item \lstinline|INTERVAL|: intervalli di tempo.
+		\item \lstinline|TIME/TIMESTAMP WITH TIME ZONE|: con tutti i dati per il tempo, con indicazioni sul fuso.
+	\end{itemize}
+	\begin{lstlisting}
+	DATE : '2016-01-15'
+	TIME(3) : '04:05:06.789'
+	INTERVAL : '3 hours 25 minutes'
+	TIME WITH TIME ZONE : '04:05:06-08:00' o '12:01:01 CET'
+	TIMESTAMP WITH TIME ZONE : '2016-01-24 00:00:00+01'
+	\end{lstlisting}
+	
+	\subsection{Comando CREATE DOMAIN}
+	Questo comando è usato per creare un dominio utente \textbf{invariabile nel tempo}.
+	\begin{lstlisting}
+CREATE DOMAIN nome AS tipoBase [default]
+	[vincolo]
+	\end{lstlisting} \medskip
+	I valori di default e i vincoli sono opzionali.
+
+	\begin{lstlisting}
+CREATE DOMAIN giorniSettimana AS CHAR(3)
+	CHECK( VALUE IN ('LUN','MAR','MER','GIO','VEN','SAB','DOM') );
+	\end{lstlisting}
+
+	\subsection{Vincoli di attributo e di tabella}
+	Vincoli di attributo/intrarelazionali specificano proprietà che devono
+	essere soddisfatte da ogni tupla di una singola relazione della base di
+	dati.
+	
+	\begin{lstlisting}
+[ CONSTRAINT vincolo ]
+{ NOT NULL |
+  CHECK ( espressione ) [ NO INHERIT ] |
+  DEFAULT valore |
+  UNIQUE |
+  PRIMARY KEY |
+  REFERENCES tabella [ ( attributo ) ]
+    [ ON DELETE azione ] [ ON UPDATE azione ] }
+	\end{lstlisting}
+	
+	Vincoli di tabella:
+	\begin{lstlisting}
+[ CONSTRAINT vincolo ]
+{ CHECK ( espressione ) [ NO INHERIT ] |
+  UNIQUE ( attributo [, ... ]) |
+  PRIMARY KEY ( attributo [, ... ]) |
+  FOREIGN KEY ( attributo [, ... ])
+  REFERENCES reftable [ ( refcolumn [ , ... ]) ]
+	[ ON DELETE azione ] [ ON UPDATE azione ] }
+	\end{lstlisting}
+
+	\begin{itemize}
+		\item \lstinline|NOT NULL|: determina che il valore nullo non è ammesso come
+		valore dell’attributo.
+		\item \lstinline|DEFAULT valore|: specifica un valore di
+		default per un attributo quando un comando di inserimento dati non
+		specifica nessun valore per l’attributo.
+		
+	\textbf{Esempio:}
+	\begin{lstlisting}
+nome VARCHAR (20) NOT NULL,
+cognome VARCHAR (20) NOT NULL DEFAULT ''
+	\end{lstlisting}
+		\item \lstinline|UNIQUE|: impone che i valori di un attributo (o di un insieme di
+		attributi) siano una \textbf{superchiave}.
+		\item \lstinline|PRIMARY KEY|: identifica l’attributo che rappresenta la chiave
+		primaria della relazione:
+		\begin{itemize}
+			\item Si usa una sola volta per tabella.
+			\item Implica il vincolo \lstinline|NOT NULL|.
+		\end{itemize}
+	
+	\textbf{Esempio: }
+	\begin{lstlisting}
+matricola CHAR(6) PRIMARY KEY;
+	\end{lstlisting}
+	oppure su più attributi
+	\begin{lstlisting}
+nome VARCHAR(20),
+cognome VARCHAR(20),
+PRIMARY KEY(nome, cognome)
+	\end{lstlisting}
+	
+	\item \lstinline|CHECK (vincolo)|: specifica un vincolo generico che devono soddisfare le tuple della tabella.
+	Un vincolo \lstinline|CHECK| è soddisfatto se la sua espressione è vera o nulla. \\
+In molti casi, un’espressione è nulla se uno degli operandi è nullo. Conviene quindi mettere sempre \lstinline|NOT NULL| insieme al vincolo \lstinline|CHECK()|!
+	\begin{lstlisting}
+CREATE TABLE Impiegato (
+...
+stipendio NUMERIC (8 ,2) DEFAULT 500.00 NOT NULL
+	CHECK ( stipendio >= 0.0) , -- check di attributo
+UNIQUE ( cognome , nome ) ,
+CHECK ( nome <> cognome ) -- check di tabella
+);
+	\end{lstlisting}
+	
+	\end{itemize}
+	
+	\subsubsection{Vincoli di integrità referenziale}
+	Un vincolo di integrità referenziale crea un legame tra i valori di un attributo (o di un insieme di attributi) A della tabella corrente (detta 
+	interna/slave) e i valori di un attributo (o di un insieme di attributi) B di
+un’altra tabella (detta esterna/master ):
+\begin{itemize}
+\item Impone che, in ogni tupla della tabella interna, il valore di A, se diverso
+dal valore nullo, sia presente tra i valori di B nella tabella esterna.
+\item L’attributo B della tabella esterna deve essere soggetto a un vincolo \lstinline|UNIQUE| o \lstinline|PRIMARY KEY|.
+\end{itemize}
+		Un vincolo di integrità referenziale si dichiara nella tabella interna e ha
+		due possibili sintassi.
+		\begin{itemize}
+			\item \lstinline|REFERENCES|: \textbf{vincolo di attributo}, da usare quando il vincolo è su un
+			singolo attributo della tabella interna, $ |A| = 1 $.
+			\item \lstinline|FOREIGN KEY|: \textbf{vincolo di tabella} , da usare quando il vincolo coinvolge più attributi della tabella interna, $ |A| > 1 $.
+		\end{itemize}
+		\textbf{Esempio:}
+		\begin{lstlisting}
+CREATE TABLE Interna
+...
+attributo VARCHAR(15) REFERENCES TabellaEsterna (chiave)
+...
+
+...
+piano VARCHAR (10),
+stanza INTEGER,
+FOREIGN KEY (piano, stanza) REFERENCES Ufficio (piano, nStanza)
+		\end{lstlisting}
+		
+	\subsection{Comando ALTER TABLE}
+		La struttura di una tabella si può modificare dopo la sua creazione con il
+		comando \lstinline|ALTER TABLE|.
+		\begin{itemize}
+			\item Aggiunta di un nuovo attributo con \lstinline|ADD COLUMN|:
+			\begin{lstlisting}
+ALTER TABLE impiegato ADD COLUMN stipendio NUMERIC(8,2);
+			\end{lstlisting}
+			\item Rimozione di un attributo con \lstinline|DROP COLUMN|:
+			\begin{lstlisting}
+ALTER TABLE impiegato DROP COLUMN stipendio;
+			\end{lstlisting}
+			\item Modifica di un valore di default di un attributo con \lstinline|ALTER COLUMN|:
+			\begin{lstlisting}
+ALTER TABLE impiegato ALTER COLUMN stipendio
+	SET DEFAULT 1000.00;
+			\end{lstlisting}			
+		\end{itemize}
+		
+	\subsection{Comando INSERT INTO}
+		Una tabella viene popolata con il comando \lstinline|INSERT INTO|:
+		\begin{lstlisting}
+INSERT INTO impiegato (matricola, nome, cognome)
+	VALUES ('A00001', 'Mario', 'Rossi'),
+	       ('A00002', 'Luca', 'Bianchi');
+		\end{lstlisting}
+	
+	\subsection{Comando UPDATE}
+		Una tupla di una tabella può essere modificata con il comando \lstinline|UPDATE|:
+		\begin{lstlisting}
+UPDATE tabella
+	SET attributo = espressione [, ... ]
+	[ WHERE condizione ];
+		\end{lstlisting}
+	\lstinline|condizione| è una espressione booleana che seleziona quali righe
+	aggiornare. Se \lstinline|WHERE| non è presente, tutte le tuple saranno aggiornate.
+	
+	\textbf{Esempio: }
+	\begin{lstlisting}
+UPDATE impiegato
+	SET stipendio = stipendio * 1.10
+	WHERE nomeDipartimento = 'Vendite';
+UPDATE impiegato
+	SET telefono = '+39' || telefono;
+	\end{lstlisting}
+	\textbf{Nota:} L’operatore '||' concatena due espressioni e ritorna la stringa corrisp.
+	
+	\subsection{Comando DELETE}
+		Le tuple di una tabella vengono cancellate con il comando \lstinline|DELETE|:
+		\begin{lstlisting}
+DELETE FROM impiegato WHERE matricola = 'A001';
+		\end{lstlisting}
+		Una tabella viene cancellata con il comando \lstinline|DROP TABLE|.
+		
+	\subsection{Politiche di reazione}
+		In SQL si possono attivare diverse politiche di adeguamento della tabella
+		interna
+		\begin{lstlisting}
+FOREIGN KEY ( column_name [ , ... ]) REFERENCES
+	reftable [ ( refcolumn [ , ... ]) ]
+   ON DELETE reazione ON UPDATE reazione
+		\end{lstlisting}
+		\begin{itemize}
+			\item \lstinline|CASCADE|: la modifica del valore di un attributo riferito nella tabella master
+			si propaga anche in tutte le righe corrispondenti nelle tabelle slave.
+
+			\item \lstinline|SET NULL|: la modifica del valore di un attributo riferito nella tabella
+			master determina che in tutte le righe corrispondenti nelle tabelle slave
+			il valore dell’attributo referente è posto a \lstinline|NULL| (se ammesso).
+
+			\item \lstinline|SET DEFAULT|: la modifica del valore di un attributo riferito nella tabella
+			master determina che in tutte le righe corrispondenti nelle tabelle slave
+			il valore dell’attributo referente è posto al valore di default (se esiste).
+
+			\item \lstinline|NO ACTION|: indica che non si fa nessuna azione. Il vincolo però deve
+			essere sempre valido. Quindi, la modifica del valore di un attributo
+			riferito nella tabella master non viene effettuata.
+		\end{itemize}
+		
+		Si possono aggiungere/rimuovere anche dopo la creazione della tabella:
+		\begin{itemize}
+\item Per aggiungere:
+\begin{lstlisting}
+ALTER TABLE nome_tabella ADD CONSTRAINT def_vincolo;
+\end{lstlisting}
+dove def\_vincolo = dichiarazione vincolo di tabella.\\
+Esempio: 
+\begin{lstlisting}
+ALTER TABLE museo ADD CONSTRAINT cons_prezzo 
+	CHECK (costo > 0.0);
+\end{lstlisting}
+\item Per rimovere:
+\begin{lstlisting}
+ALTER TABLE nome_tabella DROP CONSTRAINT nome_vincolo;
+\end{lstlisting}
+Il nome\_vincolo è il nome dato durante la dichiarazione. Se non si definisce un nome, il DBMS ne assegna uno.
+\end{itemize}
+	\subsection{Query sul database}
+		In SQL, esiste solo un comando per interrogare un base di dati: \lstinline|SELECT|.
+		\begin{lstlisting}
+SELECT [ DISTINCT ]
+[ * | expression [[ AS ] output_name ] [ , ...] ]
+[ FROM from_item [ , ...] ]
+[ WHERE condition ]
+[ GROUP BY grouping_element [ , ...] ]
+[ HAVING condition [ , ...] ]
+[ { UNION | INTERSECT | EXCEPT } [ DISTINCT ]
+	other_select ]
+[ ORDER BY expression [ ASC | DESC | USING operator ]]
+...
+		\end{lstlisting}
+		dove
+		\begin{itemize}
+			\item \lstinline|*| è un’abbreviazione per indicare tutti gli attributi delle tabelle.
+			\item \lstinline|expression| è un’espressione che determina un attributo.
+			\item \lstinline|output_name| è il nome assegnato all’attributo che conterrà il risultato
+			della valutazione dell’espressione \lstinline|expression| nella relazione risultato.
+			\item \lstinline|from_item| è un’espressione che determina una sorgente per gli attributi.
+			\item \lstinline|condition| è un’espressione booleana per selezionare i valori degli
+			attributi.
+			\item \lstinline|grouping_element| è un’espressione per poter eseguire operazioni su
+			più valori di un attributo e considerare il risultato.
+			\item \lstinline|DISTINCT| : se presente richiede l’eliminazione delle tuple duplicate.
+		\end{itemize}
+		
+	\subsubsection{Operatore LIKE e SIMILAR TO}
+		Nella clausola \lstinline|WHERE| può apparire l’operatore \lstinline|LIKE| per il confronto di
+		stringhe. \lstinline|LIKE| è un operatore di pattern matching. I pattern si costruiscono
+		con i caratteri speciali \lstinline|_| (1 carattere qualsiasi) e \lstinline|%| (0 o più caratteri qualsiasi):
+		\begin{lstlisting}
+WHERE attributo [ NOT ] LIKE 'pattern';
+		\end{lstlisting}
+		L’operatore \lstinline|SIMILAR TO| è un \lstinline|LIKE| più espressivo che accetta
+		espressioni regolari (versione SQL) come pattern. Esempi di componenti di
+		espressioni regolari:
+		\begin{itemize}
+			\item \lstinline|_| = 1 carattere qualsiasi. \lstinline|%| = 0 o più caratteri qualsiasi.
+			\item \lstinline|*| = ripetizione del precedente match 0 o più volte. 
+				\lstinline|+| = ripetizione del precedente match UNA o più volte.
+			\item \lstinline|{n}| = ripetizione del precedente match n volte (\textbf{nè più nè meno}).
+			\item \lstinline|{n,m}| = ripetizione del precedente match almeno n e non più di m volte.
+			\item \lstinline|[...]| = ... è un elenco di caratteri ammissibili
+		\end{itemize}
+		\textbf{Esempio:} Studenti con cognome che inizia con 'A' o 'B', o 'D', o 'N' e finisce con 'a':
+		\begin{lstlisting}
+SELECT cognome, nome, città FROM Studente
+WHERE cognome SIMILAR TO '[ABDN]{1}%a';
+		\end{lstlisting}
+		
+	\subsubsection{Operatore BETWEEN}
+		Nella clausola \lstinline|WHERE| può apparire l’operatore \lstinline|[ NOT ] BETWEEN| per testare
+		l’appartenenza di un valore ad un intervallo. Gli estremi dell'intervallo sono \textbf{inclusi}.
+		
+		\noindent
+		\textbf{Esempio:} Tutti gli studenti che hanno matricola tra 'IN0002' e 'IN0004'.
+	\begin{lstlisting}
+SELECT cognome, nome, matricola FROM Studente
+WHERE matricola BETWEEN 'IN0002' AND 'IN0004';
+	\end{lstlisting}
+	
+	\subsubsection{Operatore IN}
+		Nella clausola \lstinline|WHERE| può apparire l’operatore \lstinline|[ NOT ] IN| per testare
+		l’appartenenza di un valore ad un insieme.
+	
+		\noindent
+		\textbf{Esempio: }Tutti gli studenti che hanno matricola nell’elenco 'IN0001', 'IN0003' e
+		'IN0005'.
+		\begin{lstlisting}
+SELECT cognome, nome, matricola FROM Studente
+WHERE matricola IN ('IN0001', 'IN0003', 'IN0005');
+		\end{lstlisting}
+	
+	\subsubsection{Operatore IS NULL}
+		Nella clausola \lstinline|WHERE| può apparire l’operatore \lstinline|IS [ NOT ] NULL| per testare
+		se un valore è NOT KNOWN (=NULL) o no.
+	
+		\noindent
+		\textbf{Esempio: }Tutti gli studenti che NON hanno una città.
+\begin{lstlisting}
+SELECT cognome, nome, città FROM Studente
+WHERE città IS NULL;
+\end{lstlisting}
+	\textbf{Nota: }In SQL, \lstinline|NULL| non è uguale a \lstinline|NULL|.
+	NON SI PUÒ usare \lstinline|'='| o \lstinline|'<>'| con il valore NULL!
+	
+	\subsubsection{Operatore ORDER BY}
+		La clausola \lstinline|ORDER BY| ordina le tuple del risultato in ordine rispetto agli
+		attributi specificati.
+		
+		\noindent
+		\textbf{Esempio: }Tutti gli studenti in ordine decrescente rispetto al cognome e crescente
+		(lessicografico) rispetto al nome.
+		\begin{lstlisting}
+SELECT cognome, nome
+FROM Studente
+ORDER BY cognome DESC, nome;
+		\end{lstlisting}
+		
+	\subsubsection{Operatori di aggregazione}
+		Sono operatori che permettono di determinare \textbf{un} valore considerando i
+		valori ottenuti da una \lstinline|SELECT|.
+		Due tipi principali:
+		\begin{itemize}
+			\item \lstinline|COUNT|
+			\item \lstinline|MAX|, \lstinline|MIN|, \lstinline|AVG|, \lstinline|SUM|
+		\end{itemize}
+		Quando si usano gli operatori aggregati, dopo la \lstinline|SELECT| \textit{non} possono
+		comparire espressioni che usano i valori presenti nelle singole tuple
+		perché il risultato è sempre e solo una tupla. \\
+		Questi operatori si possono usare solo in \lstinline|SELECT| e \lstinline|HAVING|; il loro uso con altri valori necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query. \medskip \\
+		L'operatore \lstinline|COUNT| restituisce il numero di tuple significative nel risultato dell’interrogazione:
+		\begin{lstlisting}
+COUNT ({ * | expr | ALL expr | DISTINCT expr }])
+		\end{lstlisting}
+		dove \lstinline|expr| è un’espressione che usa attributi e funzioni di attributi ma non
+		operatori di aggregazione (per quel caso è necessario l'uso di una vista).\\
+		Tre casi comuni:
+		\begin{itemize}
+			\item \lstinline|COUNT(*)| ritorna il numero di tuple nel risultato dell’interrogazione.
+			\item \lstinline|COUNT([ALL] expr)| ritorna il numero di tuple in ciascuna delle quali il valore
+			expr è non nullo.
+			\item \lstinline|COUNT(DISTINCT expr)| come con \lstinline|COUNT(expr)| ma con l’ulteriore
+			condizione che i valori di \lstinline|expr| sono distinti.
+		\end{itemize}
+		\lstinline|MAX|, \lstinline|MIN|, \lstinline|AVG|, \lstinline|SUM| determinano un valore numerico (\lstinline|SUM|/\lstinline|AVG|) o alfanumerico (\lstinline|MAX|/\lstinline|MIN|)
+		considerando le tuple significative nel risultato dell’interrogazione.\medskip \\ 
+		\textbf{Esempi: }\\
+		Calcola la media delle medie degli studenti.
+		\begin{lstlisting}
+SELECT AVG(media)::DECIMAL (5,2)
+FROM Studente;
+		\end{lstlisting}
+		Calcola la media delle medie distinte degli studenti.
+		\begin{lstlisting}
+SELECT AVG(DISTINCT media)::DECIMAL(5,2)
+FROM Studente;
+		\end{lstlisting}
+		
+	\subsubsection{Interrogazioni con raggruppamento}
+		Un raggruppamento è un insieme di tuple che hanno medesimi valori su
+		uno o più attributi caratteristici del raggruppamento.
+		
+		\noindent
+		La clausola \lstinline|GROUP BY attr [, ...]| permette di determinare tutti i
+		raggruppamenti delle tuple della relazione risultato (tuple selezionate
+		con la clausola \lstinline|WHERE| ) in funzione degli attributi dati.
+		In una interrogazione che fa uso di \lstinline|GROUP BY| , possono comparire come
+		argomento della \lstinline|SELECT| solamente gli attributi utilizzati per il
+		raggruppamento e funzioni aggregate valutate sugli altri attributi.\medskip \\
+		\textbf{Esempi: }\\		
+		Visualizzare tutte le città raggruppate della tabella Studente.
+		\begin{lstlisting}
+SELECT città
+FROM Studente
+GROUP BY città;
+		\end{lstlisting}
+		Visualizzare tutte le città e i cognomi raggruppati.
+		\begin{lstlisting}[mathescape]
+SELECT cognome, LOWER(città)
+FROM Studente
+GROUP BY cognome, LOWER(città);
+		\end{lstlisting}
+		\textbf{Nota1: }NON SI POSSONO SPECIFICARE attributi che non sono raggruppati dopo il
+		\lstinline|SELECT|.
+		
+		\lstset{moredelim=[is][\sout]{|}{|}}
+		\begin{lstlisting}
+SELECT |cognome|, città
+FROM Studente
+GROUP BY città;
+		\end{lstlisting}
+		
+		\noindent
+		\textbf{Nota2: }Si possono specificare espressioni con operatori di aggregazione su attributi
+		non raggruppati.
+		\begin{lstlisting}
+SELECT LOWER(città) AS città,
+  CAST(AVG(media) AS DECIMAL(5,2)) AS media
+FROM Studente
+GROUP BY LOWER(città);
+		\end{lstlisting}
+		
+		\begin{itemize}
+			\item La clausola \lstinline|WHERE| permette di selezionare le righe che devono far parte
+			del risultato.
+			\item La clausola \lstinline|HAVING| permette di selezionare i raggruppamenti che
+			devono far parte del risultato (guardare il primo esempio per un confronto con \lstinline|WHERE|).
+			\item La sintassi è \lstinline|HAVING bool_expr| , dove \lstinline|bool_expr| è un'espressione
+			booleana che può usare gli attributi usati nel \lstinline|GROUP BY| e/o gli altri
+			attributi mediante operatori di aggregazione.
+		\end{itemize}
+		\textbf{Esempi: }\\
+		Visualizzare tutte le città raggruppate che iniziano con ’V’ della tabella Studente (la query ritorna solo i singoli valori delle città che iniziano con 'V', mentre la stessa condizione in \lstinline|WHERE| ritorna tutte le tuple che contengono queste città).
+		\begin{lstlisting}
+SELECT città
+FROM Studente
+GROUP BY città
+HAVING città LIKE 'V%';
+		\end{lstlisting}
+		Visualizzare tutte le città e i cognomi raggruppati con almeno due studenti
+		con lo stesso cognome.
+		\begin{lstlisting}
+SELECT cognome, LOWER(città)
+FROM Studente
+GROUP BY cognome, LOWER(città)
+HAVING COUNT(cognome)>1;
+		\end{lstlisting}
+		N.B: \textbf{le funzioni di aggregazione non sono ammesse in WHERE, solo in HAVING!}
+		
+		\subsubsection{Comando JOIN}
+			Si è visto che se sono presenti due o più nomi di tabelle, si esegue il
+			prodotto cartesiano tra tutte le tabelle e lo schema del risultato può
+			contenere tutti gli attributi del prodotto cartesiano.
+			Il prodotto cartesiano di due o più tabelle è un \lstinline|CROSS JOIN| .
+			A partire da SQL-2, esistono altri tipi di \lstinline|JOIN| (\lstinline|join_type|):
+			\lstinline|INNER JOIN|, \lstinline|LEFT OUTER JOIN| , \lstinline|RIGHT OUTER JOIN| e \lstinline|FULL OUTER JOIN|.
+			
+			\begin{lstlisting}
+table_name [ NATURAL ] join_type table_name 
+  [ ON join_condition [ , ...]]
+			\end{lstlisting}
+			dove \lstinline|join_condition| è un’espressione booleana che seleziona le tuple del join
+			da aggiungere al risultato. Le tuple selezionate possono essere poi filtrate
+			con la condizione della clausola \lstinline|WHERE|.
+\subsubsection*{INNER JOIN}
+			Rappresenta il tradizionale $ \Theta $ join dell’algebra relazionale.
+			Combina ciascuna riga $ r_1 $ di $ table_1 $ con ciascuna riga di $ table_2 $ che
+			soddisfa la condizione della clausola \lstinline|ON|.
+			
+			\bigskip
+			\noindent
+			\begin{minipage}{0.6\textwidth}
+					\begin{lstlisting}
+SELECT I.cognome, R.nomeRep, R.sede
+FROM Impiegato I INNER JOIN Reparto R
+     ON I.nomerep = R.nomerep;
+				\end{lstlisting}
+				\end{minipage}\hfilneg\vrule\hfill
+			\begin{minipage}{0.33\textwidth}
+				\begin{tabular}{ll}
+						\toprule
+						\textbf{cognome} & \textbf{nomerep} \\
+						\midrule
+						Rossi & Vendite \\
+						Verdi & Acquisti \\
+						\midrule
+					\end{tabular}
+				\end{minipage}
+			
+		\subsubsection*{LEFT OUTER JOIN}
+			Si esegue un \lstinline|INNER JOIN|. Poi, per ciascuna riga $ r_1 $ di $ table_1 $ che non
+			soddisfa la condizione con qualsiasi riga di $ table_2 $, si aggiunge una riga al
+			risultato con i valori di $ r_1 $ e assegnando \lstinline|NULL| agli altri attributi.
+			
+			\bigskip
+			\noindent
+			\begin{minipage}{0.7\textwidth}
+					\begin{lstlisting}
+INSERT INTO Reparto (nomerep, sede, telefono)
+   VALUES ('Finanza', 'Padova', '02 8028888');
+SELECT R.nomeRep, I.cognome
+FROM Reparto R LEFT OUTER JOIN Impiegato I 
+     ON I.nomerep = R.nomerep;
+				\end{lstlisting}
+				\end{minipage}\hfilneg\vrule\hfill
+			\begin{minipage}{.27\textwidth}
+					\begin{tabular}{ll}
+						\toprule
+						\textbf{nomerep} & \textbf{cognome} \\
+						\midrule
+						Acquisti & Rossi \\
+						Vendite & Verdi  \\
+						Finanza &  \\
+						\midrule
+					\end{tabular}
+				\end{minipage}
+		
+			\noindent
+			\textbf{Nota: } Il \lstinline|LEFT OUTER JOIN| non è simmetrico! \\
+			Con le medesime tabelle si possono avere risultati diversi invertendo l’ordine
+			delle tabelle nel join!
+		\subsubsection*{RIGHT OUTER JOIN}
+			Si esegue un \lstinline|INNER JOIN|. Poi, per ciascuna riga $ r_2 $ di $ table_2 $ che non
+			soddisfa la condizione con qualsiasi riga di $ table_1 $, si aggiunge una riga al
+			risultato con i valori di $ r_2 $ e assegnando \lstinline|NULL| agli altri attributi.
+			
+			\bigskip
+			\noindent
+			\begin{minipage}{0.67\textwidth}
+					\begin{lstlisting}
+SELECT I.cognome, R.nomeRep
+FROM Impiegato I RIGHT OUTER JOIN Reparto R 
+     ON I.nomerep = R.nomerep;
+					\end{lstlisting}
+				\end{minipage}\hfilneg\vrule\hfill
+			\begin{minipage}{.28\textwidth}
+					\begin{tabular}{ll}
+							\toprule
+							\textbf{cognome} & \textbf{nomerep} \\
+							\midrule
+							Rossi & Vendite \\
+							Verdi & Acquisti \\
+							& Finanza \\
+							\midrule
+						\end{tabular}
+					\end{minipage}
+	
+		\subsubsection*{FULL OUTER JOIN}
+			È equivalente a: \lstinline|INNER JOIN + LEFT OUTER JOIN + RIGHT OUTER JOIN| .
+			
+			\noindent
+			\textbf{Nota: }Non è equivalente a \lstinline|CROSS JOIN|!
+			
+	\subsubsection{Interrogazioni nidificate}
+		SQL permette il confronto di un valore (ottenuto come risultato di una
+		espressione valutata sulla singola riga) con il risultato dell’esecuzione di
+		una interrogazione SQL. L’interrogazione che viene usata nel confronto viene definita
+		direttamente nel predicato interno alla clausola \lstinline|WHERE|. \\
+		\textbf{Attenzione: }il confronto è tra un valore di un attributo (valore singolo) e
+		il risultato di una interrogazione (possibile insieme di valori). Quindi:
+		\begin{itemize}
+				\item Gli operatori di confronto tradizionali $ (<, >, <>, =, \dots) $ \textbf{NON} possono	essere usati.
+				\item Si devono usare dei nuovi operatori, \lstinline|EXISTS|, \lstinline|IN|, 
+				\lstinline|NOT IN|, \lstinline|ALL|, \lstinline|ANY/SOME|, che estendono i tradizionali
+				operatori a questo tipo di confronti.
+			\end{itemize}
+			
+	\subsubsection{Operatore EXISTS}
+		\begin{lstlisting}
+EXISTS (subquery)
+		\end{lstlisting}
+			dove \lstinline|(subquery)| è una \lstinline|SELECT|.\\
+			\lstinline|EXISTS| ritorna falso se \lstinline|(subquery)| non contiene righe; vero altrimenti.
+			
+			\noindent
+			\lstinline|EXISTS| è significativo quando nella \lstinline|(subquery)| si selezionano righe
+			usando i valori della riga corrente nella \lstinline|SELECT| principale: data binding. \\
+			\textbf{Esempio:} Determinare i nomi degli impiegati che sono diversi tra loro ma di pari lunghezza:
+			\begin{lstlisting}[tabsize=4]
+SELECT I.nome
+FROM Impiegato I
+WHERE EXISTS(
+    SELECT 1 FROM Impiegato Ii WHERE I.nome <> Ii.nome
+		AND CHAR_LENGTH(I.nome) = CHAR_LENGTH(Ii.nome)
+);
+			\end{lstlisting}
+			\lstinline|I.nome| nella subquery è il valore di nome nella riga corrente della \lstinline|SELECT| principale.
+			
+			\noindent
+			\textbf{Nota: } L’operatore \lstinline|NOT| può essere usato in coppia con \lstinline|EXISTS|.
+			\bigskip
+			
+	\subsubsection{Operatore IN}
+		\begin{lstlisting}
+[ ROW ] (expr [ ,...]) IN (subquery)
+		\end{lstlisting}
+		
+		\begin{itemize}
+				\item \lstinline|expr| è un’espressione costruita con un attributo della query principale.
+			Ci possono essere 1 o più espressioni.
+			
+				\item \lstinline|(subquery)| deve restituire un numero di colonne = numero di
+			espressioni in \lstinline|(expr [,...])|.
+			
+				\item I valori dell’espressioni vengono confrontati con i valori di ciascuna riga
+			del risultato di \lstinline|(subquery)|.
+			
+				\item Il confronto ritorna vero se i valori sono uguali ai valori di almeno una
+			riga della subquery.
+			\end{itemize}
+		\textbf{Esempio:} 
+		\begin{lstlisting}
+SELECT I.nome, I.cognome
+FROM Impiegato I
+WHERE ROW (I.nome, I.cognome ) IN (
+    SELECT Ii.nome, Ii.cognome FROM ImpiegatoAltraAzienda Ii
+);
+		\end{lstlisting}
+		
+	\subsubsection{Operatore ANY/SOME}
+		\begin{lstlisting}
+expression operator ANY (subquery)
+expression operator SOME (subquery)
+		\end{lstlisting}
+		\noindent
+		dove \lstinline|(subquery)| è una \lstinline|SELECT| che deve restituire UNA sola colonna; \\
+		\lstinline|expression| è un’espressione che coinvolge attributi della \lstinline|SELECT|
+		principale.\\
+		\lstinline|operator| è un operatore di confronto, come '\lstinline|=|' o '\lstinline|>=|'.\\
+		\lstinline|ANY| : ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di una qualsiasi riga del risultato di \lstinline|(subquery)|.\\
+		\lstinline|SOME| è uno sinonimo di \lstinline|ANY|. \medskip
+		
+
+		\textbf{Esempio:} Visualizzare il nome degli insegnamenti che hanno un numero di crediti
+		inferiore alla media dell’ateneo di un qualsiasi anno accademico:
+		\begin{lstlisting}
+SELECT DISTINCT I.nomeins, IE.crediti
+FROM Insegn I JOIN InsErogato IE ON I.id = IE.id_insegn
+WHERE IE.crediti < ANY (
+    SELECT AVG(crediti) FROM InsErogato
+    GROUP BY annoaccademico
+);
+		\end{lstlisting}
+		\medskip 
+	\subsubsection{Operatore ALL}
+		\begin{lstlisting}
+expression operator ALL (subquery)
+		\end{lstlisting}
+		\noindent
+		\lstinline|(subquery)| è una \lstinline|SELECT| che deve restituire UNA sola colonna;\\
+		\lstinline|expression| è un’espressione che coinvolge attributi della \lstinline|SELECT|
+		principale.\\
+		\lstinline|operator| è un operatore di confronto, come ’\lstinline|=|’ o ’\lstinline|>=|’.\\
+		\lstinline|ALL| : ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di ciascuna riga del risultato di \lstinline|(subquery)|. \medskip 
+		
+		
+		\textbf{Esempio:} Trovare il nome degli insegnamenti (o moduli) con almeno un docente e
+		crediti maggiori rispetto ai crediti di ciascun insegnamento del corso di laurea
+		con id=6.
+		\begin{lstlisting}
+SELECT DISTINCT I.nomeins, IE.crediti
+FROM Insegn I
+JOIN InsErogato IE ON I.id = IE.id_insegn
+JOIN Docenza D ON IE.id = D.id_inserogato
+WHERE IE.crediti > ALL (
+    SELECT crediti FROM InsErogato
+    WHERE id_corsostudi = 6
+);
+		\end{lstlisting}
+		
+	\subsubsection{Operatori insiemistici UNION/INTERSECT/EXCEPT}
+		Gli operatori insiemistici si possono utilizzare solo al livello più esterno
+		di una query, operando sul risultato di due o più clausole \lstinline|SELECT|.\\
+		Gli operatori insiemistici sono: \lstinline|UNION|, \lstinline|INTERSECT| e \lstinline|EXCEPT|.\\
+		Si possono avere sequenze di \lstinline|UNION/INTERSECT/EXCEPT|
+		\begin{lstlisting}[mathescape]
+query$_1$ { UNION or INTERSECT or EXCEPT } [ ALL ] query$_2$
+		\end{lstlisting}
+		\begin{itemize}
+				\item Gli operatori si possono applicare solo quando $ \textup{query}_1 $ e 
+				$ \textup{query}_2 $ producono risultati con lo stesso numero di colonne e di tipo compatibile
+				fra loro.
+				\item Tutti gli operatori eliminano i duplicati dal risultato a meno che \lstinline|ALL| non
+				sia stato specificato.
+				\item \lstinline|UNION| aggiunge il risultato di $ \textup{query}_2 $ a quello di 
+				$ \textup{query}_1 $.
+				\item \lstinline|INTERSECT| restituisce le righe che sono presenti sia nel risultato di
+				$ \textup{query}_1 $ sia in quello di $ \textup{query}_2 $.
+				\item \lstinline|EXCEPT| restituisce le righe di $ \textup{query}_1 $ che non sono presenti nel risultato
+				di $ \textup{query}_2 $. In pratica esegue la differenza insiemistica.
+			\end{itemize}
+		\textbf{Esempi: }\\
+		Visualizzare i nomi degli insegnamenti e i nomi dei corsi di laurea che non
+		iniziano per ’A’ mantenendo i duplicati.
+		\begin{lstlisting}
+SELECT nomeins
+FROM Insegn
+WHERE NOT nomeins LIKE 'A%'
+UNION ALL
+SELECT nome
+FROM CorsoStudi
+WHERE NOT nome LIKE 'A%';
+		\end{lstlisting} \medskip
+		Visualizzare i nomi degli insegnamenti che sono anche nomi di corsi di
+		laurea.
+		\begin{lstlisting}
+SELECT nomeins
+FROM Insegn
+INTERSECT ALL
+SELECT nome
+FROM CorsoStudi;
+		\end{lstlisting} \medskip
+		Visualizzare i nomi degli insegnamenti che NON sono anche nomi di corsi di
+		laurea.
+		\begin{lstlisting}
+SELECT nomeins
+FROM Insegn
+EXCEPT
+SELECT nome
+FROM CorsoStudi ;
+		\end{lstlisting}
+	
+	\subsubsection{Viste}
+		\begin{itemize}
+				\item Le viste sono tabelle "virtuali" il cui contenuto dipende dal contenuto
+				delle altre tabelle della base di dati.
+				\item In SQL le viste vengono definite associando un nome ed una lista di
+				attributi al risultato dell’esecuzione di un’interrogazione.
+				\item Ogni volta che si usa una vista, si esegue la query che la definisce.
+				\item Nell’interrogazione che definisce la vista possono comparire anche altre
+				viste.
+				\item SQL non ammette però:
+				\begin{itemize}
+						\item dipendenze immediate (definire una vista in termini di se stessa) o
+					ricorsive (definire una interrogazione di base e una interrogazione
+					ricorsiva);
+						\item dipendenze transitive circolari ($ V_1 $ definita usando $ V_2 $, $ V_2 $ usando $ V_3 $, $ \dots $, $ V_n $ usando $ V_1 $).
+					\end{itemize}
+			\end{itemize}
+		\begin{lstlisting}
+CREATE [ TEMP ] VIEW nome [ (col_name [ , ...]) ] AS query
+		\end{lstlisting}
+		\noindent
+		\begin{itemize}
+				\item \lstinline|TEMP| : la vista è temporanea. Quando ci si sconnette, la vista viene
+			distrutta. È un’estensione di PostgreSQL. Nella base di dati \lstinline|did2014| si
+			possono fare solo viste temporanee.
+			\item \lstinline|column_name| : nomi delle colonne che compongono la vista. Se non si
+			specificano, si ereditano dalla query.
+			\item \lstinline|query| deve restituire un insieme di attributi pari e nel medesimo ordine
+			a quello specificato con \lstinline|(column_name [, ...])| se presente.
+			\end{itemize}
+		
+		
+		\bigskip
+		
+		\textbf{Esempi: }\\
+		Definire la vista che contiene gli insegnamenti erogati completi di
+		nomeins e codiceins presi dalla tabella Insegn .
+		\begin{lstlisting}
+CREATE TEMP VIEW InsErogatiCompleti AS
+SELECT I.nomeins, I.codiceins, IE.*
+FROM InsErogato IE JOIN Insegn I 
+     ON IE.id_insegn = I.id;
+		\end{lstlisting}\bigskip
+		Si vuole determinare qual è il corso di studi con il massimo numero di
+		insegnamenti (esclusi i moduli).
+		Prima si crea una vista:
+	\begin{lstlisting}
+CREATE TEMP VIEW InsCorsoStudi(Nome, NumIns) AS
+  SELECT CS.nome, COUNT(*)
+  FROM CorsoStudi CS JOIN InsErogato IE 
+       ON CS.id = IE.id_corsostudi
+  WHERE IE.modulo = 0
+  GROUP BY CS.nome;
+	\end{lstlisting}
+		Poi la si usa:
+		\begin{lstlisting}
+SELECT Nome, NumIns
+FROM InsCorsoStudi
+WHERE NumIns = ANY (
+    SELECT MAX(NumIns) FROM InsCorsoStudi
+);
+
+		\end{lstlisting}
+		
+		\noindent
+		\textbf{NOTA: } \textit{Non è possibile usare due operatori di aggregazione in cascata!}
+	\newpage		
+	\section{Indici}
+	Gli indici sono strutture dati che permettono di accedere ad una tabella dati in maniera più efficiente. Dato che un indice è completamente scorrelato dalla tabella dati a cui si riferisce, deve sempre essere mantenuto aggiornato in base al contenuto della tabella cui si riferisce. Il costo dell'aggiornamento di un indice può essere significativo quando ci sono molti indici definiti sulla base di dati, per cui è bene usarli con saggezza ed applicarli nella maniera più efficiente possibile.
+	
+	Una buona regola pratica per l'uso di indici, dal momento che costano tempo e memoria, è di applicarli in base alle query eseguite più frequentemente, tenendo anche presente che il sistema deve aggiornare l'indice per ogni operazione \lstinline|INSERT, DELETE| e \lstinline|UPDATE|.
+	
+	\subsection{Comando timing}
+	Il comando \lstinline|\timing| da un 'idea del tempo necessario all'esecuzione di una query.
+	In un prompt di \verb|psql| basta eseguire:
+	\begin{lstlisting}
+=> \timing
+=> select * from tabella;
+	\end{lstlisting}
+
+	\subsection{Comando CREATE INDEX} \label{createindex}
+	\begin{lstlisting}[escapeinside={(*}{*)}]
+CREATE [ UNIQUE ] INDEX [nome]
+ON tabella [ USING method ]
+({ nomeAttr (*| (expression) } [ ASC | DESC ] [ , ...])
+	\end{lstlisting}
+	dove:
+	\begin{itemize}
+		\item \verb|method| è il tipo di indice;
+		\item \verb|nomeAttr| o \verb|expression| indicano su quali colonne o espressioni con colonne si deve creare l'indice;
+		\item \lstinline|ASC/DESC| indica se l'attributo è ascendente o discendente;
+		\item \lstinline|ALTER INDEX| e \lstinline|DROP INDEX| permettono di modificare o rimuovere gli indici.
+	\end{itemize}
+
+	Una volta creato, l'indice è usato dal sistema ogni volta che l'ottimizzatore di query lo ritiene opportuno, ovvero solo quando il vantaggio derivato è di una certa consistenza. Un indice può anche essere utilizzato per ottimizzare l'esecuzione di \lstinline|UPDATE| e \lstinline|DELETE|, se nella clausola \lstinline|WHERE| ci sono attributi indicizzati.
+	
+	\noindent
+	\textbf{Nota: PostgreSQL crea in automatico indici per gli attributi dichiarati come chiave primaria, quindi è inutile indicizzarli.}
+	
+	\subsection{Comando ANALYZE}
+	Il comando \lstinline|ANALYZE| è usato per forzare l'aggiornamento delle statistiche di esecuzione delle query quando uno o più nuovi indici sono creati.
+	\begin{lstlisting}
+CREATE INDEX ie_id_corsostudi ON Inserogato (id_corsostudi) ;
+CREATE INDEX ie_id_insegn ON Inserogato (id_insegn);
+CREATE INDEX ie_aa_C ON Inserogato (annoaccademico);
+CREATE INDEX ie_aa_IT ON Inserogato (annoaccademico
+	varchar_pattern_ops);
+CREATE INDEX cs_nome ON Corsostudi (nome varchar_pattern_ops);
+ANALYZE;
+	\end{lstlisting}
+	
+	\subsection{Tipi di indici}
+	PostgreSQL ammette molti tipi di indice, tra i quali: \textbf{B-tree, hash, GiST, SP-GiST, Gin, Brin}.
+	Ognuno di questi tipi usa una tecnica algoritmica diversa e risulta migliore di altri in alcune situazioni (vedi \ref{createindex} per la specifica del tipo di indice da creare).
+	Se il tipo di indice non è specificato, viene creato un indice di tipo B-tree.
+	
+	 Nello specifico caso dell'indice B-tree, questo viene utilizzato quando l'attributo coinvolto è usato con gli operatori di confronto di valore o con i comandi \lstinline|BETWEEN, IN, IS NULL, IS NOT NULL | e \lstinline|LIKE|.
+	 La keyword \textbf{varchar\_pattern\_ops} è inserita quando si vuole che l'indice consideri anche i pattern del tipo \lstinline|LIKE 'stringa%'|.
+	 
+	 \subsection{Indici multi-attributo}
+	 Se si hanno query con condizioni su coppie o terne, a volte può essere più efficiente l'uso di un indice dichiarato su due attributi rispetto a due indici mono-attributo.
+	 
+	 Ad esempio, con una query come:
+	 \begin{lstlisting}
+SELECT I.nomeins, I.codiceins
+FROM Insegn I
+JOIN InsErogato IE ON I.id = IE.id_insegn
+WHERE IE.annoaccademico = '2006/2007'
+	AND IE.id_corsostudi = 4;
+	 \end{lstlisting}
+	 che controlla gli attributi \verb|annoaccademico| e \verb|id_corsostudi|, è utile usare un indice multi-attributo che indicizzi i due campi:
+	 \begin{lstlisting}
+CREATE INDEX ie_aa_idcs ON Inserogato (annoaccademico,
+	id_corsostudi);
+	 \end{lstlisting}
+	 Non sempre gli indici multi-attributo possono essere usati, come nel caso di espressioni con \lstinline|OR|.
+	 
+	 \subsection{Indici di espressioni}
+	 Le query con condizioni su espressioni/funzioni di uno o più attributi di una tabella possono essere velocizzate creando indici sulle medesime espressioni/funzioni.\\
+Sintassi: \lstinline|CREATE INDEX nome ON nomeTabella(expression);|\\
+dove \lstinline|expression| è una espressione su uno o più attributi.
+Per opportunità, si considerano espressioni che sono frequenti nelle interrogazioni usate.
+\paragraph{Esempio 1.}Idice sull'espressione LOWER(nomeins):
+\begin{lstlisting}
+CREATE INDEX ins_lower_nonins ON
+Insegn ( LOWER ( nomeins ) varchar_pattern_ops ) ;
+\end{lstlisting}
+\newpage
+
+ 	\subsection{Comando EXPLAIN}
+	Ogni DBMS ha un ottimizzatore di query che determina un piano di esecuzione per ogni query. Il comando \lstinline|EXPLAIN [query]| permette di vedere il piano di esecuzione della query, facilitando l'analisi dei colli di bottiglia e l'ottimizzazione.
+	
+	Un piano di esecuzione di una query è un albero di nodi di esecuzione, dove le foglie sono \textbf{nodi di scansione}, che restituiscono gli indirizzi di righe della tabella. I possibili tipi di scansione sono 3: sequenziali, indicizzate e bit-mapped. Se una query contiene \lstinline|JOIN, GROUP BY, ORDER BY| o altre operazioni sulle righe, allora ci saranno altri nodi di esecuzione sopra i nodi foglia.
+	
+	L'output del comando ha una riga per ogni nodo dell'albero di esecuzione dove viene indicato il tipo di operazione e una stima del costo di esecuzione. La prima riga contiene il costo complessivo della query.
+	
+	\paragraph{Esempio 1.}
+	Considerare questa query:
+	\begin{lstlisting}
+EXPLAIN SELECT * FROM Insegn ;
+	\end{lstlisting}
+	Il piano corrispondente è:
+	\begin{lstlisting}
+Seq Scan ON insegn (cost=0.0..185.69 ROWS=8169 width=63)
+	\end{lstlisting}
+	\begin{itemize}
+	\item 0.0 è il costo iniziale, per produrre la prima riga 
+	\item 185.69 è il costo totale, per produrre tutte le righe
+	\item 8169 è il numero totale di righe del risultato
+	\item 63 è la dimensione, in byte, di ogni riga
+	\end{itemize} 
+	Il costo è in termini di numero di accessi alla memoria secondaria (page disk). Il numero totale di righe non è sempre il numero totale di righe valutate dall’esecutore.\medskip
+	
+	\paragraph{Esempio 2.} 
+	Considerare questa query:
+	\begin{lstlisting}
+EXPLAIN SELECT * FROM Insegn WHERE id < 1000;
+	\end{lstlisting}
+	Il piano corrispondente è:
+	\begin{lstlisting}
+Bitmap Heap Scan ON insegn ( cost=18. 60..13 2.79 ROWS=815...)
+Recheck Cond : ( id < 1000)
+-> Bitmap INDEX Scan ON insegn_pkey(cost=0..18.39 ROWS=815 width=0)
+	INDEX Cond : ( id < 1000)
+	\end{lstlisting}
+	Prima viene eseguito il nodo foglia \lstinline|Bitmap Index Scan| che, grazie all'indice B-tree, permette di ritornare un vettore di bit che marca le righe da considerare. Il vettore viene poi passato al nodo padre \lstinline|Bitmap Heap Scan|, che esegue la selezione delle righe che hanno $id < 1000$. \medskip
+	
+	\paragraph{Esempio 3.}
+		Considerare questa query:
+	\begin{lstlisting}
+EXPLAIN SELECT *
+FROM t1, t2
+WHERE t1.unique1 < 100 
+	AND t1.unique2 = t2.unique2 ;
+	\end{lstlisting}
+	Il piano corrispondente è:
+	\begin{lstlisting}
+Merge JOIN (cost=198.11..268.19 ROWS=10 width=488)
+	Merge Cond : ( t1.unique2 = t2.unique2 )
+	-> INDEX Scan USING t1_unique2 ON t1 (cost=0..656 ROWS=101..)
+		Filter : (unique1 < 100)
+	-> Sort (cost=197.83..200.33 ROWS=1000..)
+	Sort KEY : t2.unique2
+		-> Seq Scan ON t2 (cost=0.00..148.00 ROWS=1000..)
+	\end{lstlisting}
+\lstinline|Merge JOIN| esegue il join ordinando le due tabelle rispetto agli attributi di join. \medskip
+
+\paragraph{Esempio 4.}
+		Considerare questa query:
+	\begin{lstlisting}
+EXPLAIN SELECT * FROM Inserogato WHERE id <1000 AND
+	id_discriminante >100;
+	\end{lstlisting}
+	Il piano corrispondente è:
+	\begin{lstlisting}
+Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
+	Recheck Cond : (( id < 1000) AND ( id_discriminante > 100) )
+	-> BitmapAnd (cost=743.92..743.92 ROWS=480 width=0)
+		-> Bitmap INDEX Scan ON inserogato_pkey
+					(cost=0.00..18.57 ROWS=837 width=0)
+		   INDEX Cond : ( id < 1000)
+		-> Bitmap INDEX Scan ON inserogato_discriminante_index
+					(cost=0.00..724.86 ROWS=39009 width=0)
+		   INDEX Cond : ( id_discriminante > 100)
+	\end{lstlisting}
+	\begin{itemize}
+	\item I 2 nodi foglia restituiscono un vettore di bit: 1 per ogni riga chè può soddisfare il criterio;
+	\item Il nodo padre esegue l'AND dei due vettori di bit;
+	\item Il nodo root recupera le righe e fa la selezione finale.
+	\end{itemize}  \medskip
+	Esiste una variante estesa di \lstinline|EXPLAIN|, \lstinline|EXPAIN ANALYZE|, che esegue la query senza registrare le modifiche e mostra una stima verosimile dei tempi di esecuzione.
+
+	\newpage
+	
+		\section{Transazioni concorrenti}
+	Una transazione SQL è una sequenza di istruzioni ed è eseguita in maniera atomica.
+	Gli stati intermedi della base di dati durante l'esecuzione della serie di istruzioni della transazione non sono visibili al di fuori della transazione stessa.
+	Se una transazione termina senza errori, le modifiche vengono salvate, in caso contrario lo stato della base di dati rimane quello presente prima dell'inizio della transazione e non viene salvata nessuna modifica.
+	
+	A volte può capitare che le transazioni accedano in modo concorrente alle stesse informazioni nella base di dati, e può non essere garantito il corretto svolgimento delle operazioni; in questo caso vengono impostati dei livelli di isolamento della transazione rispetto alle altre, con diversi effetti sull'accesso concorrente ai dati.
+	
+	In PostgreSQL i livelli di isolamento sono 4:
+		\begin{itemize}
+			\item Read Uncommitted (in PostgreSQL 9.6 implementato come Read Committed)
+			\item Read Committed
+			\item Repeatable Read
+			\item Serializable	
+		\end{itemize}
+		Prendiamo come esempio la seguente tabella, 
+		\lstinline|Web|:
+		\begin{tabular}{cc}
+			\toprule
+			\lstinline|id| & \lstinline|hits| \\
+			\midrule
+			1 & 9 \\
+			2 & 10 \\
+			\midrule
+		\end{tabular}
+		
+		\subsection{Read Committed}
+			È il \textbf{livello di default}, basta scrivere '\lstinline|BEGIN;|'. Nonrepeatable reads e Phantom reads possibili.
+			\begin{itemize}
+				\item \lstinline|SELECT| vede solo i dati registrati (\lstinline|COMMITTED|) in altre transazioni e quelli modificati da comandi precedenti nella stessa transazione.
+				\item \lstinline|UPDATE| e \lstinline|DELETE| vedono i dati come \lstinline|SELECT|
+				\item Se i dati da aggiornare sono stati modificati ma \textbf{non registrati} in transazioni concorrenti, il comando deve:
+				\begin{itemize}
+					\item Attendere il \lstinline|COMMIT| o \lstinline|ROLLBACK| della transazione concorrente.
+					\item Riesaminare le righe per verificare che soddisfano ancora i criteri del comando.
+				\end{itemize}
+			\end{itemize}
+			\textbf{Esempio di anomalia Nonrepeatable reads:}
+			\begin{multicols}{2}
+				\noindent
+				$ T_1 $:
+				\begin{lstlisting}
+BEGIN;
+UPDATE Web SET hits=hits+1;
+
+COMMIT;
+				\end{lstlisting}
+				\columnbreak
+				$ T_2 $:
+				\begin{lstlisting}
+BEGIN;
+
+DELETE FROM Web WHERE hits=10;
+
+				\end{lstlisting}
+			\end{multicols}
+			\lstinline|DELETE| non riesce a cancellare, anche se esiste un hits=10 sia prima sia dopo l'update: questo perchè \lstinline|SELECT|, che vede solo i valori registrati, ha saltato id=1 in fase di valutazione, perciò quando il \lstinline|DELETE| verrà sbloccato, ricontrollerà solamente se il valore corrispondente a id=2 è ancora valido.
+			
+		\subsection{Repeatable Read}
+			Differisce da Read Committed per il fatto che una query in una transazione Repeatable Read vede i dati come erano prima dell'inizio della transazione, che perciò non cambiano all'interno della transazione a causa di commits in altre transazioni, come nel caso di Read Committed. Due \lstinline|SELECT| identiche all'interno di una singola transazione vedono sempre gli stessi dati.
+			\begin{itemize}
+				\item \lstinline|UPDATE| e \lstinline|DELETE| vedono i dati come \lstinline|SELECT|.
+				\item Se i dati da aggiornare sono stati modificati ma \textbf{non registrati} in transazioni concorrenti, il comando deve attendere: 
+				\begin{itemize}
+					\item il \lstinline|COMMIT| e quindi i dati vengono cambiati e \lstinline|UPDATE| e \lstinline|DELETE| vengono bloccate con errore.
+					\item il \lstinline|ROLLBACK| e quindi \lstinline|UPDATE| e \lstinline|DELETE| possono procedere.
+				\end{itemize}
+			\end{itemize}
+			
+			\noindent
+			\textbf{Esempio1: Cattura dell'anomalia Nonrepeatable reads}
+			\begin{multicols}{2}
+			\noindent
+			$ T_1 $:
+			\begin{lstlisting}
+BEGIN TRANSACTION ISOLATION LEVEL
+  REPEATABLE READ;
+
+UPDATE Web SET hits=hits+1;
+
+COMMIT;
+			\end{lstlisting}
+			\columnbreak
+			$ T_2 $:
+			\begin{lstlisting}
+BEGIN;
+
+DELETE FROM Web WHERE hits=10;
+
+ERROR: could NOT serialize 
+access due to concurrent UPDATE.
+			\end{lstlisting}
+			\end{multicols}
+			\noindent
+			\textbf{Esempio2: anomalia Phantom reads}
+			\begin{multicols}{2}
+			\noindent
+			$ T_1 $:
+			\begin{lstlisting}
+BEGIN TRANSACTION ISOLATION LEVEL
+  REPEATABLE READ;
+ 
+INSERT INTO Web SELECT
+  MAX(hits)+1 FROM Web;
+  
+COMMIT;
+			\end{lstlisting}
+			\columnbreak
+			$ T_2 $:
+			\begin{lstlisting}
+BEGIN TRANSACTION ISOLATION LEVEL
+  REPEATABLE READ;
+
+INSERT INTO Web SELECT
+  MAX(hits)+1 FROM Web;
+
+COMMIT;
+			\end{lstlisting}
+			\end{multicols}
+La tabella finale contiene due valori 11 e non 11 e 12 (inserimento fantasma).
+		
+	\subsection{Serializable}
+		È \textbf{il più restrittivo} e garantisce che le transazioni siano eseguite \textbf{come se fossero sequenziali tra loro} (in un ordine non prestabilito). Si deve però prevedere la possibilità di transazioni abortite più frequenti per gli aggiornamenti concorrenti tipo Repeatable Read.\\
+		\textbf{Esempio:}
+		\begin{multicols}{2}
+		\noindent
+		$ T_1 $:
+		\begin{lstlisting}
+BEGIN TRANSACTION ISOLATION LEVEL
+  SERIALIZABLE;
+  
+INSERT INTO Web SELECT
+  MAX(hits)+1 FROM Web;
+
+COMMIT;
+		\end{lstlisting}
+		\columnbreak
+		$ T_2 $:
+		\begin{lstlisting}
+BEGIN TRANSACTION ISOLATION LEVEL
+  SERIALIZABLE;
+
+INSERT INTO Web SELECT
+  MAX(hits)+1 FROM Web;
+
+COMMIT;
+		\end{lstlisting}
+		\end{multicols}
+		
+		La $ T_2 $ riporta il seguente errore:
+		\begin{lstlisting}
+ERROR: could not serialize access due to READ/WRITE dependencies 
+       among transactions
+DETAIL: reason code: canceled ON identification AS a pivot, 
+        during COMMIT attempt
+HINT: the TRANSACTION might succeed if retried.
+		\end{lstlisting}
+	
+\section{Python e Database}
+	La API ufficiale di Python è la DB-API v2.0, che descrive come un modulo Python deve accedere a una base di dati esterna. Esistono diversi moduli (librerie) DB-API, si utilizzerà \textbf{psycopg2}.
+	\subsection{Connection}
+	L'accesso ad un database avviene tramite un oggetto di tipo \textbf{Connection}. Il metodo \textbf{connect()} accetta i parametri necessari per la connessione e ritorna un oggetto \textit{Connection}. \\
+	Metodi principali:
+	\begin{itemize}
+	\item \lstinline|cursor()|: ritorna un cursore della base di dati. Un oggetto cursore permette di inviare comandi SQL al DBMS.
+	\item \lstinline[keywordstyle=\color{black}]|commit()|: registra la transazione corrente. Normalmente una connessione apre una transazione al primo invio di comandi. Se non si esegue un \textit{commit()} prima di chiudere, tutte le eventuali modifiche/inserimenti vengono persi.
+	\item \lstinline[keywordstyle=\color{black}]|rollback()|: abortisce la transazione corrente.
+	\item \lstinline|close()|: chiude la connessione corrente. Implica un \textit{rollback()} automatico delle operazioni non registrate.
+	\item \lstinline|autocommit|: proprietà r/w. Se \textit{True} , ogni comando inviato è una transazione isolata. Se \textit{False} (default) il primo comando inviato inizia una transazione, che deve essere chiusa con \textit{commit()} o \textit{rollback()}.
+	\item \lstinline|readonly|: proprietà r/w. Se \textit{True} , nella sessione non si possono inviare comandi di modifica dati. Il default è \textit{False}.
+	\item \lstinline|isolation_level|: proprietà r/w. Modifica il livello di isolamento per la prossima transazione. Valori leciti: \lstinline|'READ UNCOMMITTED'|, \lstinline|'READ COMMITTED'|,\lstinline|'REPEATABLE READ'|, \\ \lstinline|'SERIALIZABLE'| e  \lstinline|'DEFAULT'|. \\
+ Meglio assegnare questa variabile subito dopo la creazione della connessione.
+	\begin{lstlisting}
+	connector = psycopg2.connect(...)
+	connector.isolation_level = 'REPEATABLE READ'
+	\end{lstlisting}
+	\end{itemize}
+	
+	\subsection{Cursor}
+	Un \textbf{cursore} gestisce l'interazione con la base di dati: mediante un cursore è possibile inviare un comando SQL e accedere all'esito e ai dati di risposta del comando.\\
+	Metodi principali:
+	\begin{itemize}
+	\item \lstinline[keywordstyle=\color{black}]|execute(comando, parametri)|: prepara ed esegue un \textit{comando} SQL usando i \textit{parametri}. I parametri devono essere passati come \textbf{tupla} o come \textbf{dict}.\\
+	Il comando ritorna \textit{None}. Eventuali risultati si devono recuperare con il \lstinline|fetch*()|.
+	\begin{lstlisting}
+	cur.execute("CREATE TABLE test (id SERIAL PRIMARY KEY, \ 
+		num integer, data varchar)")
+	cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)",
+		(100, "abc'def"))	#psyconpg2 fa le conversioni!
+	\end{lstlisting}
+	\item \lstinline|executemany(comando, parametri)|: prepara ed esegue un \textit{comando} SQL per ciascun valore presente nella lista \textit{parametri}. Per come è attualmente implementato è meno efficiente di un unico insert con più tuple:
+	\begin{lstlisting}
+	cur.execute("INSERT INTO test (num, data) 
+		VALUES (%s, %s), (%s, %s), (%s, %s)", 
+		(100, "abc'def", None, 'dada', 42, 'bar'))
+	\end{lstlisting}
+	\item \lstinline|fetchone()|: ritorna una tupla della tabella risultato.\\ Si può usare dopo un \lstinline|execute("SELECT ...")|. Se non ci sono tuple ritorna \textit{None}.
+	\begin{lstlisting}
+	>>> cur.execute("SELECT * FROM test WHERE id = %s", (3,))
+	>>> cur.fetchone()
+	(3, 42, 'bar')
+	\end{lstlisting}
+	\item \lstinline|fetchmany(<numero>)|: ritorna una lista di tuple della tabella risultato di lunghezza massima \textit{<numero>}.\\ Si può usare dopo un \lstinline|execute("SELECT ...")|. Se non ci sono tuple ritorna una lista vuota.
+	\begin{lstlisting}
+	>>> cur.execute("SELECT * FROM test WHERE id < %s", (4,) )
+	>>> cur.fetchmany(3)
+	[(1, 100, "abc'def"), (2, None, 'dada'), (3, 42, 'bar') ]
+	>>> cur.fetchmany(2)
+	[]
+	\end{lstlisting}
+	\item Dopo un \lstinline|execute("SELECT ...")|, il cursore è un iterabile sulla tabella risultato. È possibile quindi accedere alle tuple del risultato anche con un ciclo:
+	\begin{lstlisting}
+	>>> cur.execute("SELECT * FROM test WHERE id < %s", (4 ,))
+	>>> for record in cur :
+... print ( record , end = " , " )
+	(1, 100, "abc'def"), (2, None, 'dada'), (3, 42, 'bar'),
+	\end{lstlisting}
+	\item \lstinline|rowcount|: di sola lettura, uguale al numero di righe prodotte dall'ultimo comando. -1 indica che non è possibile determinare il valore.
+	\item \lstinline|statusmessage|: di sola lettura, uguale al messaggio ritornato dall’ultimo comando eseguito.
+	\end{itemize}
+	
+	\subsection{Particolarità di psycopg2}
+	\lstinline[keywordstyle=\color{black}]|cursor.execute*| accetta solo \%s come indicatore di posizione parametro. La conversione dal tipo Python al dominio SQL è automatica per tutti i tipi fondamentali. \\
+	Esempio:
+	\begin{lstlisting}
+	>>> cur.execute("INSERT INTO test1(id, date_val, item) 
+		VALUES (%s, %s, %s)", (42, datetime.date(2005, 11, 18),
+		"O' Reilly ") )
+	\end{lstlisting}
+	è convertita in SQL:
+	\begin{lstlisting}
+	INSERT INTO test1(id, date_val, item) VALUES 
+		(42, '2005-11-18', 'O''Reilly');
+	\end{lstlisting}
+	
+	\newpage
+	
+	\section{Uso di psycopg2}
+	\textit{psycopg2} è una libreria Python che consente di collegarsi a database SQL ed eseguire statement di vario genere, il tutto da codice Python ad alto livello.
+	
+	Le operazioni da svolgere per collegarsi ed effettuare le operazioni sono:
+	\begin{itemize}
+		\item Collegarsi al database:
+		\begin{lstlisting}[frame=tb]
+def connect():
+	conn = psycopg2.connect(host=[host], database=[db-name],
+		user=[username], password=[password])
+	return conn
+		\end{lstlisting}
+		\lstinline|conn| è un'istanza della classe \lstinline|Connection|.
+		
+		\item Eventualmente modificare le proprietà di livello di isolamento, autocommit, readonly.
+		\item Ottenere un cursore dalla connessione: un cursore è come un buffer che contiene temporaneamente i dati delle operazioni svolte e da svolgere
+		\begin{lstlisting}[frame=tb]
+cursor=conn.cursor()
+		\end{lstlisting}
+		
+		\item Eseguire le operazioni da svolgere con le seguenti chiamate:
+		\begin{lstlisting}[frame=tb]
+cursor.execute([statement],[params])
+conn.commit()
+		\end{lstlisting}
+		dove \lstinline|statement| è lo statement da eseguire sulla base di dati, mentre \lstinline|commit()| esegue effettivamente l'operazione. \lstinline|params| è una o più tuple (o dizionario) che contengono i dati da inserire. Nella stringa dello statement i parametri da sostituire vanno rimpiazzati con dei segnaposto \lstinline|%s|. La libreria si occuperà di fare tutte le conversioni, quindi non servono cast.
+		
+		\item Ottenere i risultati da elaborare con la chiamata di:
+		\begin{lstlisting}[frame=tb]
+cur.fetchone() # legge una sola riga
+cur.fetchmany([numero]) # legge [numero] righe
+cur.fetchall() # legge tutte le righe
+		\end{lstlisting}
+		Altro metodo per leggere è attraverso l'uso di un ciclo for:
+		\begin{lstlisting}[frame=tb]
+for record in cur :
+	print (record)
+		\end{lstlisting}
+		Se non ci sono tuple, viene ritornato \lstinline|None|  nei primi due casi (\lstinline|numero| è il numero di tuple da leggere dal risultato), una lista vuota nel terzo caso.
+		
+		\item Chiudere le risorse con \lstinline|conn.close()| e \lstinline|cursor.close()|.
+	\end{itemize} \medskip
+	La gestione dei \textbf{close} e dei \textbf{commit} è semplificata se si usa il costrutto \textbf{with}:
+	\begin{lstlisting}[frame=tb]
+conn = psycopg2.connect (...)
+with conn :
+	with conn.cursor() as cur:
+		cur.execute([statement],[params])
+		...
+	\end{lstlisting}
+	\begin{itemize}
+	\item Quando si usa una connessione con il with, all’uscita del blocco viene fatto un \textbf{commit} automatico, mentre la connessione \textbf{non viene chiusa}.
+	\item Quando si usa/crea un cursore con il with, all’uscita del blocco viene fatto un \textbf{close} automatico del cursore (conviene usare sempre lo stesso cursore se possibile).
+	\end{itemize}
+	\subsection{Connessioni e cursori}
+	Si deve porre attenzioni alla combinazione di cursori sulla medesima connessione:
+	\begin{itemize}
+	\item Aprire una connessione costa in tempo (e spazio). Meglio
+aprire/chiudere poche connessioni in un’esecuzione.
+	\item Con un oggetto connessione si possono creare più cursori. Questi cursori condividono la connessione.
+	\item Psycopg2 garantisce solo che le istruzioni inviate dai cursori vengono sequenzializzate, quindi non si possono gestire transazioni concorrenti usando diversi cursori sulla medesima connessione.
+	\item Regola pratica: usare più cursori sulla medesima connessione quando si fanno transazioni in auto-commit o solo transazioni di sola lettura.
+	\end{itemize}
+	
+	\subsection{Esempio}
+	\begin{lstlisting}
+from datetime import date
+from decimal import Decimal
+import psycopg2
+
+conn = psycopg2.connect(host = "dbserver.scienze.univr.it", 
+	database = "psnrrt07", user = "psnrrt07")
+
+with conn :
+	with conn.cursor() as cur :
+		cur.execute("CREATE TABLE Spese(id SERIAL PRIMARY KEY, \
+			data DATE, voce VARCHAR, importo NUMERIC)" )
+		print("Esito creazione tabella : ", cur.statusmessage)
+		cur.execute("INSERT INTO Spese(data, voce, importo) \
+			VALUES (%s,%s,%s),(%s,%s,%s),(%s,%s,%s),(%s,%s,%s)", \
+			(date(2016,2,24), "Stipendio", Decimal("0.1"), \
+			date(2016,2,24), 'Stipendio "Bis"', Decimal("0.1"), \
+			date(2016,2,24), 'Stipendio "Tris"', Decimal("0.1"), \
+			date(2016,2,27), "Affitto", Decimal("-0.3")) )
+		print("Esito inserimento tabella: ", cur.statusmessage )
+	\end{lstlisting}	
+\# In questo punto il with precedente è chiuso: cursore chiuso e fatto un commit
+	\begin{lstlisting}
+with conn :
+	with conn.cursor() as cur : 
+		cur.execute("SELECT id, data, voce, importo FROM Spese")
+		print('=' * 55)
+		print("| {:>2s} | {:10s } | {:<20} | {:>10s} |".format( \
+			"N", "Data", "Voce", "Importo") )
+		print('-' * 55)
+		tot = Decimal(0)
+		for riga in cur :
+			print("| {:>2d} | {:10s} | {:<20} | {:>10.2f} |" \
+				.format(riga[0], str(riga[1]), riga[2], riga[3]) )
+			tot += riga[3]
+		print('-' * 55)
+		\end{lstlisting}
+\# In questo punto cur è chiuso ed è stato fatto un commit !  \\
+\# Si può ora chiudere la connessione e stampare il totale degli importi
+	\begin{lstlisting}
+conn.close()
+print(" {:>40s}		{:10.2f}".format("Totale", tot) )
+	\end{lstlisting}	
+	\newpage
+	
+			
+		
+	\section{Flask}
+	\lstset{language=Python}
+		\subsection{HTTP requests:}
+			\begin{itemize}
+				\item \lstinline|GET|: serve ad un client per \textbf{recuperare} una risorsa dal server (come la richiesta di una pagin web). Eventuali parametri da inviare al server sono specificati nella \textbf{query string} dell'URL.
+				\item \lstinline|POST|: serve ad un client per \textbf{inviare} informazioni al server. La maggior parte dei browser usa post per \textbf{inviare dati delle form ai server}. I dati sono specificati nel corpo della richiesta.
+			\end{itemize}
+		\subsection{Accesso ai parametri della query string di una richiesta GET}
+		\textbf{Query String} rappresentata dalla variabile \lstinline|request.args| di tipo \lstinline|dict|, accessibile direttamente dal metodo associato all'URL:
+		\begin{lstlisting}[frame=tb]
+from flask import Flask, request
+app = Flask(__name__)
+
+@app.route('/login')
+def login():
+	user = request.args['user']
+	role = request.args['role']
+	return ...
+		\end{lstlisting}
+		\subsection{Accesso ai parametri della query string di una richiesta POST}
+		\lstset{language=HTML}
+		\begin{lstlisting}[frame=tb, caption={esempio di form html5}]
+<form action="http://localhost:5000/login" method="post">
+	<label> Name: <input type="text" name="user"/> </label><br>
+	<label> Role: <input type="text" name="role"/> </label><br>
+	<input type="submit" value="Invia">
+</form>
+		\end{lstlisting}
+		\lstset{language=Python}
+		I dati di un \lstinline|POST| sono nel dict \lstinline|request.form|
+		\begin{lstlisting}[frame=tb]
+@app.route('/login')
+def login():
+	user = request.form['user']
+	role = request.form['role']
+	return ...
+		\end{lstlisting}
+		Il metodo \lstinline|route()| associa un metodo a un URL in modalità \lstinline|GET|, per usare lo stesso sistema in modalità \lstinline|POST|, è necessario specificare esplicitamente i metodi che vengono utilizzati:
+		\begin{lstlisting}
+@app.route('/',method=['GET','POST'])
+		\end{lstlisting}
+		
+		\newpage
+		
+		\subsection{Esempio esercizio d'esame con integrazione HTML}
+			Dall'esame del 04/07/2017:\\		
+			Assumendo di avere una base di dati PostgreSQL che contenga le tabelle di questo tema d'esame, scrivere:
+			\begin{enumerate}[label=(\alph*)]
+				\item Un template JINJA2 per una form HTML 5 che: (1) permetta di acquisire un codice fiscale (controllando il formato), (2) di selezionare una biblioteca dalla lista \lstinline|biblioteche| passata come parametro al template e (3) invii i dati all'URL \lstinline|/prestitiUtente| in modalità GET. Il formato di \lstinline|biblioteche| è \lstinline|[{id, nome}, ...]|.\\
+				Scrivere solo la parte della FORM, non tutto il documento HTML. 
+				
+				\item Un metodo Python che, associato all'URL \lstinline|/prestitiUtente| secondo il framework Flask, (1) legga i parametri codice fiscale e identificatore biblioteca, (2) si connetta alla base di dati 'X' (si assuma di dover specificare solo il nome della base di dati) e recuperi tutti i prestiti (idRisorsa, dataInizio, durata) associati al codice fiscale e biblioteca dati come parametri (scrivere la query!), (3) usi il metodo \lstinline|render_template('view.html', ...)| per pubblicare il risultato passando la lista del risultato. Se il  risultato dell'interrogazione è vuoto, il metodo deve passare il controllo a \lstinline|render_template('nessunPrestito0Errore.html')|.\\
+				Scrivere solo il metodo.
+			\end{enumerate}
+			Soluzione (a):
+			\lstset{language=HTML}
+			\begin{lstlisting}[frame=tb, tabsize=2]
+<form action="/prestitiUtente" method="get">
+	<label for="codicef">Codice fiscale: </label>
+		<input id="codicef" name="cf" type="text" pattern="[A-Z]...">
+	<br>
+	<label for="biblioteca">Biblioteca: </label>
+		<select id="biblioteca" name="biblio">
+			{% for b in biblio %}
+			<option value="{{b.id}}"> {{b.nome}} </option>
+			{% endfor %}
+		</select>
+	<input type="submit" value="Invia">
+</form>
+			\end{lstlisting}
+			Soluzione (b):
+			\lstset{language=Python}
+			\begin{lstlisting}[frame=tb, tabsize=2]
+@app.route('/prestitiUtente', methods= ['GET'])
+def getPrestiti():
+	cf = request.args['cf']
+	biblio = request.args['biblio']
+	
+	with psycopg2.connect(database='X') as conn:
+		with conn.cursor() as cur:
+			cur.execute("SELECT P.idRisorsa, P.dataInizio, P.durata\
+				FROM Prestito P WHERE P.idUtente = %s AND\
+				P.idBiblioteca = %s", cf, int(biblio))
+			prestiti = cur.fetchall()
+			
+			if not prestiti:
+				return render_template('nessunPrestito0Errore.html')
+				
+			return render_template('view.html', prestiti=prestiti, 
+				cf=cf, biblio=biblio)
+			\end{lstlisting}
+			
+		\subsection{Un altro esempio}
+		Qui di seguito un altro esempio di applicazione scritta con Flask, pensata per la gestione delle spese. \\
+		File \verb|controller.py|:
+		\lstset{language=Python}
+
+		\begin{lstlisting}[frame=tb,tabsize=2]
+from datetime import datetime, date
+from decimal import Decimal
+from flask import *
+import psycopg2
+
+app = Flask(__name__)
+
+HOST = [nome-host]
+DATABASE = [nome-db]
+USER =[username]
+
+
+def connect():
+	connection = psycopg2.connect(host=HOST, database=DATABASE, 
+		user=USER, password=[password])
+	return connection
+
+
+def get_cursor(connection):
+	return connection.cursor()
+
+
+def insert_data(tup):
+	conn = connect()
+	cursor = conn.cursor()
+	cursor.execute('insert into Spese(date, description, import)
+		values (%s, %s, %s)', tup)
+	conn.commit()
+	conn.close()
+
+def remove_data(tup):
+	conn = connect()
+	cursor = conn.cursor()
+	cursor.execute('delete from Spese where date=%s and 
+		description=%s and import=%s ', tup)
+	conn.commit()
+	conn.close()
+
+
+@app.route('/', methods=['POST', 'GET'])
+def fill_table():
+	connection = connect()
+	cursor = get_cursor(connection)
+	cursor.execute('select date, description, import from Spese')
+	connection.commit()
+	table = cursor.fetchall()
+	connection.close()
+
+	if request.method == 'POST':
+		if request.form['submit'] == 'Add entry':
+			return redirect(url_for('new_entry'))
+		elif request.form['submit'] == 'Remove entry':
+			return redirect(url_for('remove_entry'))
+
+	return render_template('main_table.html', table=table)
+
+
+@app.route('/new_entry', methods=['POST', 'GET'])
+def new_entry():
+	if request.method == 'POST':
+		if request.form['submit'] == 'Confirm':
+			purchase_date = datetime.strptime(request.form['date'],
+				 '%d/%m/%Y')
+			price = float(request.form['cost'])
+			descr = request.form['descr']
+			insert_data((date(purchase_date.year, 
+				purchase_date.month, purchase_date.day), descr,
+				 Decimal(price)))
+			return redirect(url_for('fill_table'))
+	
+	return render_template('new_entry.html')
+
+
+@app.route('/remove_entry', methods=['POST', 'GET'])
+def remove_entry():
+	if request.method == 'POST':
+		if request.form['submit'] == 'Delete':
+			purchase_date = datetime.strptime(request.form['date'],
+				 '%d/%m/%Y')
+			price = float(request.form['cost'])
+			descr = request.form['descr']
+			remove_data((date(purchase_date.year, 
+				purchase_date.month, purchase_date.day), descr,
+				 Decimal(price)))
+			return redirect(url_for('fill_table'))
+	
+	return render_template('remove_entry.html')
+
+
+if __name__ == '__main__':
+app.run()
+		\end{lstlisting}
+		Qui di seguito le pagine html create e utilizzate (puramente funzionali, non hanno nulla di estetico!). \\
+		File \verb|main_table.html|:
+		\lstset{language=HTML}
+		\begin{lstlisting}[frame=tb,tabsize=4]
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<h1>Gestione spese</h1>
+</head>
+<body>
+<table border="1" cellpadding="5" cellspacing="5" width="500">
+	<tr>
+	<th>Data</th>
+	<th>Descrizione</th>
+	<th>Importo</th>
+	</tr>
+	{% for entry in table %}
+		<tr>
+		<td>{{entry[0]}}</td>
+		<td>{{entry[1]}}</td>
+		<td>{{entry[2]}}</td>
+		</tr>
+	{% endfor %}
+</table>
+
+<form method="post">
+<input type="submit" name="submit" value="Add entry"/>
+<input type="submit" name="submit" value="Remove entry"/>
+</form>
+</body>
+</html>
+		\end{lstlisting}
+		
+		File \verb|new_entry.html|:
+		\begin{lstlisting}[frame=tb,tabsize=4]
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<h1>Add new entry</h1>
+</head>
+<body>
+<form method="post">
+	Data:<input name="date" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"/> 
+		<br>
+	Importo:<input name="cost"/> <br>
+	Descrizione:<input name="descr"/> <br>
+	
+	<input type="submit" name="submit" value="Confirm">
+</form>
+</body>
+</html>
+		\end{lstlisting}
+		
+	File \verb|remove_entry.html|
+	\begin{lstlisting}[frame=tb,tabsize=4]
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<h1>Remove entry</h1>
+</head>
+<body>
+<form method="post">
+	Data:<input name="date" pattern="[0-9]{2}/[0-9]{2}/[0-9]{4}"/> 
+		<br>
+	Importo:<input name="cost"/> <br>
+	Descrizione:<input name="descr"/> <br>
+	
+	<input type="submit" name="submit" value="Delete">
+</form>
+</body>
+</html>
+	\end{lstlisting}
+	\newpage
+\section{JDBC}
+JDBC è una libreria di funzioni Java che consente di collegarsi ad un database ed eseguire operazioni.
+Le fasi principali per eseguire una qualsiasi operazione sono:
+
+\begin{enumerate}
+	\item Caricare il driver \lstinline|org.postgresql.Driver|;
+	
+	\item Collegarsi al database sul quale si intende operare;
+	
+	\item Creare gli statement da eseguire;
+	
+	\item Eseguire gli statement e il commit;
+	
+	\item Chiudere le risorse utilizzate.
+\end{enumerate}
+
+\subsection{Caricamento del driver}
+Questa fase consente di caricare i moduli che servono per collegarsi al database. Si effettua eseguendo l'opportuna chiamata:
+\lstset{language=Java}
+\begin{lstlisting}
+Class.forName("org.postgresql.Driver");
+\end{lstlisting}
+
+\subsection{Collegamento al database}
+Per collegarsi al database si effettua una chiamata che, passando gli opportuni parametri, ritorna un oggetto di tipo \lstinline|Connection|, che verrà usato per eseguire gli statement nelle prossime fasi.
+
+\begin{lstlisting}
+try {
+	Connection connection = DriverManager.getConnection(
+		[url], [utente], [password]);
+} catch (SQLException e) {
+	System.out.println(e.getMessage());
+}
+\end{lstlisting}
+Esempio di url:
+\begin{lstlisting}
+"jdbc:postgresql://dbserver.scienze.univr.it/db0"
+\end{lstlisting}\medskip
+La classse \lstinline|Connection| contiene i seguenti metodi fondamentali:
+\begin{itemize}
+\item \lstinline|createStatement()|: ritorna un oggetto \lstinline|Statement|, che permette di invare query statiche.
+\item \lstinline|prepareStatement(query)|: ritorna un oggetto \lstinline|PreparedStatement|, che rappresenta la query ma che permette di reinviare la stessa più volte ma con parametri diversi.
+\item \lstinline|commit()|: registra la transazione corrente (normalmente le connessioni in JDBC sono in auto-commit).
+\item \lstinline|rollback()|: abortisce la transazione corrente.
+\item \lstinline|close|: chiude la connessione corrente
+\end{itemize}
+
+\subsubsection{Differenza tra Statement e PreparedStatement}
+\begin{itemize}
+\item un oggetto di tipo \textbf{Statement} è sufficiente per inviare query semplici senza parametri.
+\item un oggetto di tipo \textbf{PreparedStatement} è da preferire quando una stessa query deve essere riusata più volte con parametri diversi o anche non si vuole fare la conversione esplicita dei valori dei parametri da Java nei corrispondenti SQL.
+\end{itemize}
+
+\subsection{Creazione ed esecuzione di statement}
+Gli statement sono le istruzioni SQL da eseguire sul database. Per statement semplici si può usare questo snippet:
+\begin{lstlisting}
+try {
+	Statement s = connection.createStatement();
+	ResultSet rs = s.executeQuery("select * from Spese");
+} catch (SQLException e) {
+	e.printStackTrace();
+}
+\end{lstlisting}
+dove \lstinline|connection| è un'istanza della classe \lstinline|Connection|. \\
+Se lo statement è un comando di \lstinline|select| (come in questo caso) si usa il metodo \lstinline|executeQuery|, altrimenti nel caso di comandi di aggiornamento (\lstinline|insert|, \lstinline|update|) si usa il metodo \lstinline|executeUpdate| o \lstinline|executeLargeUpdate|, il quale \textit{ritorna il \textbf{numero di righe che sono state modificate}}.\medskip
+
+Se gli statement sono complessi e hanno magari una clausola \lstinline|where| con vari confronti, bisogna prima creare un oggetto \lstinline|PreparedStatement|, con la seguente sintassi:
+
+\begin{lstlisting}
+try {
+	PreparedStatement ps = connection.prepareStatement(
+		"insert into Spese(data, voce, importo) values(?, ?, ?)");
+	ps.setDate(1, date);
+	ps.setString(2, descr);
+	ps.setFloat(3, price);
+	ps.executeUpdate();
+} catch (SQLException e) {
+	e.printStackTrace();
+}
+\end{lstlisting}
+dove \lstinline|connection| è un'istanza della classe \lstinline|Connection|. 
+
+I punti interrogativi sono usati come segnaposto da rimpiazzare con con i metodi \lstinline|setDate()|, \lstinline|setString()|, ecc.
+I metodi set funzionano passando come parametro un \textbf{indice} (partendo da 1), e il valore che si vuole sostituire nella query.
+In questo modo i punti interrogativi saranno rimpiazzati dai campi passati nei metodi set. \\
+\textbf{Nota: le connessioni sono auto-commit, il commit viene eseguito al termine dell'esecuzione di ogni comando.}
+
+\subsection{Accesso ai campi}
+La query eseguita con il metodo \lstinline|executeQuery()| ritorna un oggetto di tipo \lstinline|ResultSet|, il quale contiene lo stato e l'eventuale cursore sulla tabella risultato.
+\begin{itemize}
+\item Il metodo \lstinline|next()| di ResultSet posiziona il cursore alla prossima riga non letta della tabella e restituisce vero se esiste, falso altrimenti.
+\item I metodi \lstinline|get<tipo>(<index>)| e \lstinline|get<tipo>(<nome>)| di ResultSet permettono di recuperare il valore della colonna \lstinline|<index>|/\lstinline|<nome>| della riga corrente.
+\end{itemize}
+Esempio:
+\begin{lstlisting}
+ResultSet rs = s.executeQuery("select * from Spese");
+
+while(rs.next()) {
+	System.out.print("Data : " + rs.getData(1) );
+	System.out.print("Voce : " + rs.getString("descrizione") );
+	System.out.print("Importo : " + rs.getBigDecimal(3) );
+}
+\end{lstlisting}
+
+\subsection{Chiusura risorse}
+Quando gli statement da eseguire sono terminati, va chiusa la connessione utilizzata con:
+\begin{lstlisting}
+connection.close();
+\end{lstlisting}
+
+\subsection{Modulo JDBC completo}
+Qui di seguito viene inserito un modulo jdbc per il controllo della tabella \lstinline|Spese| utilizzata negli esempi precedenti.
+
+\begin{lstlisting}[tabsize=2]
+import java.sql.*;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Collections;
+import java.util.Scanner;
+
+public class Main {
+	public static void main(String args[]) {
+		printMenu();
+		callFunction();
+
+	}
+
+	private static void displayData() {
+		Connection connection = getConnection();
+		try {
+			Statement ps = connection.createStatement();
+			ResultSet rs = ps.executeQuery("select * from Spese");
+		printData(rs);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static void insertData() {
+		Connection connection = getConnection();
+		Scanner scan = new Scanner(System.in);
+		System.out.print("Data:");
+		String dateString = scan.next();
+		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+		Date date = null;
+		try {
+			date = new Date(format.parse(dateString).getTime());
+		} catch (ParseException e) {
+			System.out.println(e.getMessage());
+		}
+		System.out.print("Prezzo:");
+		float price = Float.parseFloat(scan.next());
+		
+		System.out.print("Descrizione:");
+		String descr = scan.next();
+		
+		try {
+			PreparedStatement ps = connection.prepareStatement(
+			"insert into Spese(data, voce, importo) values(?, ?, ?)");
+			ps.setDate(1, date);
+			ps.setString(2, descr);
+			ps.setFloat(3, price);
+			ps.executeUpdate();
+			System.out.println("Update completed.");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}	
+	}
+	
+	private static void removeData() {
+		Connection connection = getConnection();
+		Scanner scan = new Scanner(System.in);
+		System.out.print("Data:");
+		String dateString = scan.next();
+		SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
+		Date date = null;
+		try {
+			date = new Date(format.parse(dateString).getTime());
+		} catch (ParseException e) {
+			System.out.println(e.getMessage());
+		}
+		System.out.print("Prezzo:");
+		float price = Float.parseFloat(scan.next());
+		
+		System.out.print("Descrizione:");
+		String descr = scan.next();
+		
+		try {
+			PreparedStatement ps = connection.prepareStatement(
+			"delete from Spese where data=? and voce=? and importo=?");
+			ps.setDate(1, date);
+			ps.setString(2, descr);
+			ps.setFloat(3, price);
+			ps.executeUpdate();
+			System.out.println("Update completed.");
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static void printData(ResultSet rs) {
+		try {
+			System.out.println(
+			String.join("", Collections.nCopies(50, "=")));
+			SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+			while (rs.next()) {
+				System.out.println(
+				String.format("| %2s | %10s | %-20s | %10.2f |",
+				 rs.getInt("id"), sdf.format(rs.getDate("data")), 
+				 rs.getString("voce"), rs.getFloat("importo")));
+			}
+			System.out.println(String.join("", 
+					Collections.nCopies(50, "=")));
+		
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static void printMenu() {
+		System.out.println(String.join("", Collections.nCopies(50,
+			"=")));
+		System.out.println("1. Display data");
+		System.out.println("2. Insert new outlay");
+		System.out.println("3. Remove outlay");
+		System.out.println(String.join("", Collections.nCopies(50, 
+			"=")));
+	}
+	
+	private static Connection getConnection() {
+		try {
+			Class.forName("org.postgresql.Driver");
+			return DriverManager.getConnection(
+			"jdbc:postgresql://dbserver.scienze.univr.it:5432/id864ghl",
+			"id864ghl", "perzona-falza");
+		} catch (ClassNotFoundException | SQLException e) {
+			System.out.println(e.getMessage());
+		}
+	
+	return null;
+	}
+	
+	private static void callFunction() {
+		Scanner scan = new Scanner(System.in);
+		System.out.print("Choose action:");
+		int option = Integer.parseInt(scan.next());
+		if (option == 0) {
+			System.exit(0);
+		} else if (option == 1) {
+			displayData();
+		} else if (option == 2) {
+			insertData();
+		} else if (option == 3) {
+			removeData();
+		} else {
+			System.out.println("Invalid option");
+		}
+  }
+}
+\end{lstlisting}
+
+\newpage
+
+\section{Appello del 19/09/2018}
+\paragraph{Schema base di dati}
+Si consideri il seguente schema relazionale (chiavi primarie sottolineate) contenente le informazioni relative ai voli: \medskip \\
+VOLO(\underline{iataCompagnia, numero, orarioPartenza}, aeropPartenza, aeropArrivo, durata)\\
+AEROPORTO(\underline{iata}, città)\\
+COMPAGNIA(\underline{iata}, nome)\\
+BIGLIETTO(\underline{numero}, dataAcquisto, prezzo)\\
+VOLIBIGLIETTO(\underline{numeroBiglietto, iataCompagnia, numero, orarioPartenza}, ordinale)\\
+\\
+dove \textbf{iataCompagnia} è il codice di 2 lettere della compagnia aerea, \textbf{VOLO.numero} è un intero positivo, \textbf{VOLO.orarioPartenza} è la data e l'orario con fuso orario della partenza, \textbf{VOLO.aeropPartenza/aeropArrivo} sono i codici IARA degli aeroporti (4 lettere). Per questioni di semplicità si assume che i codici IATA delle compagnie e degli aeroporti siano già definiti come domini di nome, rispettivamente, \textbf{IATACompagnia} e \textbf{IATAAeroporto}. Un biglietto comprende uno o più voli. \textbf{BIGLIETTO.numero} è una stringa di 13 cifre. \textbf{VOLIBIGLIETTO.ordinale} indica l'ordine del volo ed è = 0 se il biglietto è composto da un solo volo.
+\paragraph{Domanda 1}\dotfill 
+\\Determinare i vincoli di integrità che si possono desumere usando la notazione '$\rightarrow$'.\\
+Scrivere il codice PostgreSQL che generi TUTTE le tabelle per rappresentare lo schema relazionale specificando tutti i possibili controlli di integrità referenziale e almeno 3 controlli di correttezza dei dati.
+
+\paragraph{Soluzione}\dotfill
+\\VOLO.iataCompagnia$\rightarrow$COMPAGNIA.iata\\
+VOLIBIGLIETTO.numeroBiglietto$\rightarrow$BIGLIETTO.numero\\
+\begin{small}
+VB.iataCompagnia,VB.numero,
+VB.orarioPartenza$\rightarrow$V.iataCompagnia,V.numero,
+V.orarioPartenza 
+\end{small}\medskip \\
+Codice SQL:
+\lstset{language=SQL}
+\begin{lstlisting}
+	CREATE DOMAIN numBiglietto AS CHAR(13)
+		CHECK (VALUE SIMILAR TO '[0-9]+' );
+		
+	CREATE TABLE AEROPORTO(
+		iata IATAAeroporto PRIMARY KEY,
+		città TEXT NOT NULL
+	);
+	
+	CREATE TABLE COMPAGNIA(
+		iata IATACompagnia PRIMARY KEY,
+		nome TEXT NOT NULL
+	);
+	
+	CREATE TABLE BIGLIETTO(
+		numero numBiglietto PRIMARY KEY,
+		dataAcquisto DATE NOT NULL,
+		prezzo DECIMAL(6,2) NOT NULL
+	);
+	
+	CREATE TABLE VOLO(
+		iataCompagnia IATACompagnia 
+			REFERENCES COMPAGNIA(iata),
+		numero INTEGER CHECK (numero > 0),
+		orarioPartenza TIMESTAMP WITH TIME ZONE,
+		aeropPartenza IATAAeroporto
+			REFERENCES AEROPORTO(iata),
+		aeropArrivo IATAAeroporto 
+			REFERENCES AEROPORTO(iata),
+		durata INTERVAL,
+		PRIMARY KEY (iataCompagnia, numero, orarioPartenza)
+	);
+	
+	CREATE TABLE VOLIBIGLIETTO(
+		numeroBiglietto numBiglietto,
+		iataCompagnia IATACompagnia,
+		numero INTEGER,
+		orarioPartenza TIMESTAMP WITH TIME ZONE,
+		ordinale INTEGER NOT NULL CHECK (ordinale >= 0),
+		PRIMARY KEY (numeroBiglietto, iataCompagnia, numero,
+			orarioPartenza),
+		FOREIGN KEY (iataCompagnia, numero, orarioPartenza)
+			REFERENCES VOLO(iataCompagnia, numero, orarioPartenza)
+	);
+\end{lstlisting}
+\paragraph{Domanda 2}\dotfill
+\\Scrivere il codice PostgreSQL che determina le soluzioni alle seguenti due interrogazioni usando il minor numero di JOIN:
+\begin{itemize}
+\item[(a)] Per ogni biglietto che ha più di un volo, visualizzare il numero del biglietto e tutti i suoi voli in ordine temporale. Ciascun volo deve essere completato con aeroporto di partenza, di arrivo e orarioPartenza.
+\item[(b)] Dato l'aeroporto di partenza 'X' e quello di arrivo 'Y', visualizzare i biglietti che hanno almeno un volo fra i due aeroporti riportando, per ciascun biglietto, il numero del biglietto, il numero e la durata complessiva dei voli del biglietto.
+\end{itemize}
+
+\paragraph{Soluzione}\dotfill
+\\(a) 
+\begin{lstlisting}
+	SELECT VB.numeroBiglietto, V.numero, V.aeropPartenza,
+		V.aeropArrivo, V.orarioPartenza
+	FROM VOLIBIGLIETTO VB JOIN VOLO V ON 
+		VB.iataCompagnia = V.iataCompagnia AND 
+		VB.numero = V.numero AND 
+		VB.orarioPartenza = V.orarioPartenza
+	WHERE VB.ordinale >= 1
+	ORDER BY VB.numeroBiglietto, V.orarioPartenza
+\end{lstlisting}
+(b) (probabilmente troppi join usati)
+\begin{lstlisting}
+	SELECT VB.numeroBiglietto, COUNT(VB.ordinale), SUM(V.durata)
+	FROM VOLIBIGLIETTO VB JOIN VOLO V on
+ 	 	VB.iataCompagnia = V.iataCompagnia and
+ 		VB.numero = V.numero and
+ 		VB.orarioPartenza = V.orarioPartenza
+	WHERE VB.numeroBiglietto = ANY(
+  		SELECT VB2.numeroBiglietto
+  		FROM VOLIBIGLIETTO VB2 JOIN VOLO V2 on
+    		VB2.iataCompagnia = V2.iataCompagnia and
+    		VB2.numero = V2.numero and
+    		VB2.orarioPartenza = V2.orarioPartenza
+  		WHERE VB.numeroBiglietto = VB2.numeroBiglietto AND
+        	V2.aeropPartenza = 'X' AND V2.aeropArrivo = 'Y'
+  	)
+	GROUP BY VB.numeroBiglietto	
+	ORDER BY VB.numeroBiglietto;
+\end{lstlisting}
+
+\paragraph{Domanda 3}\dotfill
+\\Data una base di dati PostgreSQL che contenga le tabelle della Domanda 1, scrivere un programma Python che, leggendo il numero di biglietto da console, visualizzi tutti i voli del biglietto, in ordine, con la sosta tra un volo e l'altro (se il biglietto ha più voli, altrimenti la sosta ha valore 0). Se il biglietto non esiste, il programma deve richiedere il numero del biglietto.\\
+{\small \textit{Suggerimento: \lstinline|datetime.timedelta| rappresenta un interval. \lstinline|durataSosta = timedelta(seconds=0)|...} }
+
+\paragraph{Soluzione}\dotfill
+\lstset{language=Python}
+\begin{lstlisting}
+from datetime import date, timedelta
+from decimal import Decimal
+from getpass import getpass
+import psycopg2
+
+bigliettoEsiste = 0
+psw = getpass("Inserire la password: ")
+    
+conn = psycopg2.connect(host="dbserver.scienze.univr.it",
+	database="id468wfl", user="id468wfl", password=psw)
+	
+with conn:
+	with conn.cursor() as cur:
+		while(not bigliettoEsiste):
+	
+			codice = input("Inserire il codice del biglietto: ")	
+			cur.execute("SELECT numero, orarioPartenza, ordinale
+				FROM VOLIBIGLIETTO WHERE numeroBiglietto =  %s
+				ORDER BY orarioPartenza", (codice,) )
+				
+			voli = cur.fetchall()
+			
+			if not voli:
+				print("Il biglietto non esiste!")
+			else:
+				bigliettoEsiste = 1
+
+oraPrecedente = timedelta(seconds = 0)
+for riga in voli:
+
+	#dopo il volo con ordinale 1 stampa la sosta
+	if riga[2] > 1:
+    	durataSosta = riga[1] - oraPrecedente
+        print("--sosta: " + str(durataSosta))
+        
+	print("numero: {:<6s} | orarioPartenza: {:22s}"\
+        .format(str(riga[0]) , str(riga[1])) )
+        
+    oraPrecedente =  riga[1]
+    
+conn.close()
+
+\end{lstlisting}
+\newpage 
+\paragraph{Domanda 4}\dotfill
+\\Si consideri la tabella \lstinline|BIGLIETTO| della Domanda 1. Si scrivano due transazioni in cui: 1) nella prima transazione si aumenta del 5\% il prezzo a tutti i biglietti che partono dopo il '2018-11-01 00:00:00 CET', mentre 2) nell'altra si abbassa il prezzo del 10\% a tutti i biglietti che hanno prezzo pari a 1050 euro. Che tipo di errore si può verificare se le due transazioni sono concorrenti? Che tipo di isolamento si deve dichiarare per eliminare l'errore? In quale transazione?
+
+\paragraph{Soluzione}\dotfill 
+\\ \lstset{language=SQL}
+\begin{minipage}{0.5\textwidth}
+ Transazione 1 (giusto???):
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+Transazione 2:
+\end{minipage}
+\begin{footnotesize}
+\begin{minipage}{0.5\textwidth}
+\begin{lstlisting}[tabsize=2]
+	BEGIN TRANSACTION ISOLATION LEVEL 
+		REPEATABLE READ;
+
+	UPDATE BIGLIETTO 
+	SET prezzo = prezzo + (prezzo * 0.05)
+	WHERE dataAcquisto >= '2018-11-01';
+	
+	COMMIT;
+\end{lstlisting}
+\end{minipage}\vrule\hfill
+\begin{minipage}{0.5\textwidth}
+\begin{lstlisting}[tabsize=2]
+	BEGIN;
+
+	UPDATE BIGLIETTO 
+	SET prezzo = prezzo - (prezzo * 0.1)
+	WHERE prezzo = 1050;
+	...
+\end{lstlisting}
+\end{minipage}
+\end{footnotesize}\medskip \\
+La prima transazione (T1) è stata scritta con livello di isolamento REPEATABLE READ per evitare anomalie Nonrepeatable reads; se infatti le due transazioni sono concorrenti, è possibile che il controllo della seconda transazione (T2) sul valore di 'prezzo' (se è = 1050) non legga determinati valori corretti.\\
+Esempio con READ COMMITTED: ci sono 2 biglietti, il primo con prezzo 1050, l'altro 1000. T1 e T2 iniziano contemporaneamente. 
+T1 aumenta il prezzo dei due biglietti (il secondo diventa 1050), T2 controlla i biglietti da modificare; T2 vede che ci sono state modifiche in T1 e aspetta il commit. Nel momento del commit di T1, T2 ricontrolla SOLO il biglietto che aveva prezzo 1050, valore ora diverso, e l'UPDATE non fa modifiche, senza vedere che il biglietto che aveva prezzo 1000 ora lo ha 1050, e sarebbe quindi da aggiornare.
+
+Con isolamento REPEATABLE READ invece, T2 fallisce quando legge le modifiche di T1.
+
+\paragraph{Domanda 5}\dotfill
+\\Si consideri il seguente risultato del comando \lstinline|ANALYZE| su una query inerenti a 2 tabelle:
+\begin{small}
+\begin{lstlisting}
+Hash JOIN (cost=17.68..36.19 ROWS=3 width=84
+	Hash Cond: (((v.iatacompagnia)::TEXT = (b.iatacompagnia)::TEXT) AND 
+		(v.numero = b.numerovolo) AND
+		(v.orarioPartenza=b.orarioPartenza))
+	-> Seq Scan ON volo v (cost=0.00..14.00 ROWS=400 width=60)
+	-> Hash (cost=17.62..17.62 ROWS=3 width=104)
+		-> Seq scan ON volibiglietto b (cost=0.00..17.62 ROWS=3 width=104)
+			Filter: (numerobiglietto = '1234567890123'::bpchar)
+\end{lstlisting}
+\end{small}
+Desumere il testo della query e indicare un indice che potrebbe migliorare l'esecuzione della query. \textit{Suggerimento: la query inizia con {\small \lstinline|SELECT b.numeroBiglietto, b.ordinale, b.orarioPartenza,| \lstinline|v.durata FROM|...}}
+\paragraph{Soluzione}\dotfill
+\\Query:
+\begin{lstlisting}
+	SELECT b.numeroBiglietto,b.ordinale,b.orarioPartenza,v.durata
+	FROM BIGLIETTO b JOIN VOLIBIGLIETTO v ON 
+		b.iataCompagnia = v.iataCompagnia AND
+		b.numero = v.numeroVolo AND
+		b.orarioPartenza = v.orarioPartenza
+	WHERE b.numeroBiglietto = '1234567890123'
+\end{lstlisting}
+Un indice utile potrebbe essere (numeroBiglietto?).
+\textbf{TODO}
+
+\newpage
+
+\section{Appello del 16/02/2018}
+Si consideri il seguente schema relazionale parziale e semplificato (chiavi primarie sottolineate) contenente le informazioni relative alla programmazione di convegni: \medskip \\
+CONVEGNO(\underline{nome}, dataInizio, dataFine, numeroSessioni, tipo, luogo);\\
+INTERVENTO\_IN\_CONVEGNO(\underline{nomeConvegno, idIntervento, nomeSessione}, orarioInizio);\\
+SESSIONE(\underline{nome, nomeConvegno}, data, orarioInizio, orarioFine);\\
+INTERVENTO(\underline{id}, titolo, relatore, durata);\\
+\\
+dove \textbf{numeroSessioni} è un intero, tipo può assumere valori (seminario, simposio, conferenza), \textbf{luogo} è generico (VARCHAR è sufficiente), INTERVENTO\_IN\_CONVEGNO.\textbf{orarioInizio} è l'orario di inizio dell'intervento all'interno della sessione. Gli attributi inerenti al tempo devono avere il fuso orario.
+
+\paragraph{Domanda 1}\dotfill
+\\Scrivere il codice PostgreSQL che generi i domini e le tabelle per rappresentare lo schema relazionale specificando tutti i possibili controlli di integrità e di correttezza dei dati opportuni.
+
+\paragraph{Soluzione}\dotfill
+\begin{lstlisting}
+	CREATE DOMAIN tipo_domain AS TEXT
+		CHECK (VALUE IN ('seminario', 'simposio', 'conferenza') );
+		
+	CREATE TABLE CONVEGNO(
+		nome VARCHAR PRIMARY KEY,
+		dataInizio DATE NOT NULL, --o timestamp with timezone ??
+		dataFine DATE NOT NULL,
+		numeroSessioni INTEGER,	--un check ??
+		tipo tipo_domain,
+		luogo VARCHAR
+	);
+	
+	CREATE TABLE INTERVENTO(
+		id VARCHAR PRIMARY KEY,
+		titolo VARCHAR NOT NULL,
+		relatore VARCHAR NOT NULL,
+		durata INTERVAL
+	);
+	
+	CREATE TABLE SESSIONE(
+		nome VARCHAR UNIQUE,	--UNIQUE necessario per reference
+		nomeConvegno VARCHAR REFERENCES CONVEGNO(nome),
+		data DATE,
+		orarioInizio TIME WITH TIME ZONE,
+		orarioFine TIME WITH TIME ZONE,
+		PRIMARY KEY(nome, nomeConvegno)
+	);
+	
+	CREATE TABLE INTERVENTO_IN_CONVEGNO(
+		nomeConvegno VARCHAR REFERENCES CONVEGNO(nome),
+		idIntervento VARCHAR REFERENCES INTERVENTO(id),
+		nomeSessione VARCHAR REFERENCES SESSIONE(nome),
+		orarioInizio TIME WITH TIME ZONE,
+		PRIMARY KEY(nomeConvegno, idIntervento, nomeSessione)
+	);
+
+\end{lstlisting}
+
+\paragraph{Domanda 2}\dotfill
+\\Dato il nome 'X' di un convegno, scrivere una query che visualizzi il programma del convegno. Il programma è costituito da un elenco ordinato per giorno e ora degli interventi: sessione, titoloIntervento, relatore e orario inizio intervento.
+
+\paragraph{Soluzione}\dotfill
+\begin{lstlisting}
+	SELECT S.nome, I.titolo, I.relatore, S.data, IiC.orarioInizio
+	FROM INTERVENTO_IN_CONVEGNO IiC JOIN INTERVENTO I ON
+		IiC.idIntervento = I.id JOIN SESSIONE ON
+		IiC.nomeSessione = S.nome
+	WHERE IiC.nomeConvegno = 'X'
+	ORDER BY S.data, IiC.orarioInizio
+\end{lstlisting}
+
+\paragraph{Domanda 3}\dotfill
+\\Assumendo di avere una base di dati PostgreSQL che contenga le tabelle di questo tema d'esame, scrivere un programma Python che, leggendo una o più tuple del tipo 'nomeConegno', 'nomeSessione', 'idIntervento', 'orarioInizio' da console, inserisca una o più tuple nella tabella INTERVENTO\_IN\_CONVEGNO. L'inserimento deve garantire la correttezza della base di dati: controllo preventivo che le eventuali dipendenze siano rispettate e che l'orario dell'intervento sia compatibile con la sua durata e la presenza di altri interventi. Se una dipendenza non è rispettata, il programma deve chiedere di reinserire il dato associato alla dipendenza prima di procedere ad inserire la tupla. Il programma deve visualizzare l'esito di ogni singolo inserimento. È richiesto che il programma suggerisca il tipo di dati da inserire, che non ammetta possibilità di SQL Injection e che sia eseguibile in concorrenza con altre istanze del programma stesso.
+
+\paragraph{Soluzione}\dotfill
+\lstset{language=Python}
+\begin{lstlisting}
+from datetime import date, timedelta
+from decimal import Decimal
+from getpass import getpass
+import psycopg2
+
+psw = getpass("Inserire la password: ")
+    
+conn = psycopg2.connect(host="dbserver.scienze.univr.it",
+	database="id468wfl", user="id468wfl", password=psw)
+
+nomeConvegno = input("Inserire il nome del convegno: ")
+nomeSessione = input("Inserire il nome della sessione: ")
+idIntervento = input("Inserire l'id dell'intervento: ")
+orarioInizio = input("Inserire l'orario di inizio: ")
+	
+with conn:
+	with conn.cursor() as cur:
+		
+
+\end{lstlisting}
+
+\paragraph{Domanda 4}\dotfill
+\\Scrivere il codice PostgreSQL, definendo anche eventuali viste, per rispondere alle seguenti due interrogazioni nel modo più efficace:
+\begin{itemize}
+\item[(a)] Trovare per ogni convegno il numero totale e la durata totale degli interventi per ciascuna sessione di convegno. Il risultato deve visualizzare nome convegno, giorno e i conteggi richiesti.
+\item[(b)] Trovare per ogni convegno distribuito su almeno 3 giorni il numero totale di interventi e la durata totale degli interventi per ciascun giorno di convegno. Il risultato deve visualizzare nome convegno, giorno e i conteggi richiesti.
+\end{itemize}
+
+\paragraph{Soluzione}\dotfill
+\\(a)
+\lstset{language=SQL}
+\begin{lstlisting}
+	SELECT S.nomeConvegno, S.nome, S.data, COUNT(I.id) as 
+		"n_interventi", SUM(I.durata) as "durata_totale"
+	FROM INTERVENTO_IN_CONVEGNO IiC JOIN SESSIONE S ON
+		S.nome = IiC.nomeSessione JOIN INTERVENTO I ON
+		I.id = IiC.idIntervento
+	GROUP BY S.nomeConvegno, S.nome
+	ORDER BY S.nomeConvegno, S.data
+\end{lstlisting}
+(b)
+\begin{lstlisting}
+	SELECT C.nome, S.data, COUNT(I.id) as
+		"n_interventi", SUM(I.durata) as "durata_totale"
+	FROM INTERVENTO_IN_CONVEGNO IiC JOIN Convegno C on
+  		IiC.nomeConvegno = C.nome JOIN SESSIONE S on
+  		IiC.nomeSessione = S.nome JOIN INTERVENTO I on
+  		IiC.idIntervento = I.id
+	WHERE C.dataFine::date - C.dataInizio::date >= 2
+		-- date-date=integer (es: '2018-01-03'-'2018-01-01' = 2)
+	GROUP BY C.nome, S.data;
+\end{lstlisting}
+\paragraph{Domanda 5}\dotfill
+\\Si consideri il seguente piano di esecuzione:
+\begin{scriptsize}
+\begin{lstlisting}[tabsize=2]
+	HashAggregate (cost=1859.67..1866.24 ROWS=657 width=60
+		GROUP KEY: i.nomeins, d.descrizione
+		->	Hash JOIN (cost=319.54..1856.39 ROWS=657 width=60
+				Hash Cond: (ie.id_insegn = i.id)
+				->	Hash JOIN (cost=31.74..1559.55 ROWS=657 width=25)
+						Hash Cond: (ie.id_discriminante = d.id)
+						->	Bitmap Heap Scan ON inserogato ie (cost=26.68..1543.97 ROWS=1053 width=8)
+								Recheck Cond: (((annoaccademico)::TEXT='2009/2010'::TEXT) AND (crediti=ANY
+		  ('{3,5,12}'::NUMERIC[])) AND (modulo = '0'::NUMERIC))
+		  						->	Bitmap Index Scan ON ins_aa (cost=0.00..26.42 ROWS=1053 width=0)
+		  								INDEX Cond: (((annoaccademico)::TEXT='2009/2010'::TEXT) AND (crediti=ANY
+		  ('{3,5,12}'::NUMERIC[])) AND (modulo = '0'::NUMERIC))
+		  				-> Hash (cost=3.36..3.36 ROWS=136 width=25)
+		  					->	Seq Scan ON discriminante d (cost=0.0..3.36 ROWS=136 width=25)
+		  					
+		  		-> Hash (cost=185.69..185.69 ROWS=8169 width=43)
+		  			->	Seq Scan ON insegn i (cost=0.00..185.69 ROWS=8169 width=43) 
+\end{lstlisting}
+\end{scriptsize}
+
+\begin{itemize}
+\item[(a)] Indicare quanti e quali indici sono stati usati per risolvere la query. Per indicare quali sono gli indici, scrivere il codice SQL per crearli.
+\item[(b)] Supponendo che i dati non varino nel tempo e che le chiavi primarie hanno indice, in base al piano di esecuzione conviene creare degli altri indici? Se sì, quali?
+\end{itemize}
+
+\paragraph{Soluzione}\dotfill
+\\(a) 1 indice, \lstinline|ins_aa|:
+\begin{lstlisting}
+	CREATE INDEX ins_aa ON Inserogato (annoaccademico, 
+		crediti, modulo)	--???
+\end{lstlisting}
+(b) In base al piano di esecuzione conviene/non conviene
+\newpage
+
+\section{Credits}
+\begin{itemize}
+\item Davide Bianchi (mail: \mail{davideb1912@gmail.com})
+\item Matteo Danzi (mail: \mail{matteodanziguitarman@hotmail.it})
+\end{itemize}
+Documento modificato da Edoardo Righi nell'Anno Accademico 2018/2019. Aggiunte prove di esame parzialmente risolte (mi auguro correttamente) oltre ad alcune modifiche generali. Lascio un collegamento qui sotto al già ottimo documento originale. \medskip \\
+Documento originale: {\scriptsize \url{https://github.com/davbianchi/dispense-info-univr/tree/master/triennale/basi-di-dati-lab}}
+			
+\end{document}
