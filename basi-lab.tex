@@ -38,6 +38,7 @@
 	stringstyle=\color{Purple},
 	literate={à}{{\`a}}1
 }
+\usepackage{pmboxdraw}	%per └
 \usepackage{fancyvrb}
 \pagestyle{fancy}
 \lhead{\nouppercase{\leftmark}}
@@ -113,7 +114,7 @@ CREATE TABLE nomeTabella (
 	\subsubsection{Domini di tempo}
 	\begin{itemize}
 		\item \lstinline|DATE|: date rappresentate tra apici e nel formato \verb|YYYY-MM-DD|;
-		\item \lstinline|TIME(precisione)|: misure di tempo nel formato \verb|hh:mm:ss:[precisione]|;
+		\item \lstinline|TIME(precisione)|: misure di tempo nel formato \verb|hh:mm:ss.[precisione]|;
 		\item \lstinline|INTERVAL|: intervalli di tempo.
 		\item \lstinline|TIME/TIMESTAMP WITH TIME ZONE|: con tutti i dati per il tempo, con indicazioni sul fuso.
 	\end{itemize}
@@ -920,7 +921,8 @@ ON tabella [ USING method ]
 	Una volta creato, l'indice è usato dal sistema ogni volta che l'ottimizzatore di query lo ritiene opportuno, ovvero solo quando il vantaggio derivato è di una certa consistenza. Un indice può anche essere utilizzato per ottimizzare l'esecuzione di \lstinline|UPDATE| e \lstinline|DELETE|, se nella clausola \lstinline|WHERE| ci sono attributi indicizzati.
 	
 	\noindent
-	\textbf{Nota: PostgreSQL crea in automatico indici per gli attributi dichiarati come chiave primaria, quindi è inutile indicizzarli.}
+	\textbf{Nota: PostgreSQL crea in automatico indici (B-tree) per gli attributi dichiarati come chiave primaria, quindi è inutile indicizzarli.}\\
+	Essendo indici B-tree, un indice (a,b,c,d) permette a query che filtrano su (a), (a,b), o (a,b,c) di usare l'indice.
 	
 	\subsection{Comando ANALYZE}
 	Il comando \lstinline|ANALYZE| è usato per forzare l'aggiornamento delle statistiche di esecuzione delle query quando uno o più nuovi indici sono creati.
@@ -1053,7 +1055,9 @@ Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
 	\item Il nodo padre esegue l'AND dei due vettori di bit;
 	\item Il nodo root recupera le righe e fa la selezione finale.
 	\end{itemize}  \medskip
-	Esiste una variante estesa di \lstinline|EXPLAIN|, \lstinline|EXPAIN ANALYZE|, che esegue la query senza registrare le modifiche e mostra una stima verosimile dei tempi di esecuzione.
+	Esiste una variante estesa di \lstinline|EXPLAIN|, \lstinline|EXPAIN ANALYZE|, che esegue la query senza registrare le modifiche e mostra una stima verosimile dei tempi di esecuzione.\\
+	Esempio:
+	\url{https://robots.thoughtbot.com/reading-an-explain-analyze-query-plan}
 
 	\newpage
 	
@@ -2155,12 +2159,11 @@ Desumere il testo della query e indicare un indice che potrebbe migliorare l'ese
 	SELECT b.numeroBiglietto,b.ordinale,b.orarioPartenza,v.durata
 	FROM BIGLIETTO b JOIN VOLIBIGLIETTO v ON 
 		b.iataCompagnia = v.iataCompagnia AND
-		b.numero = v.numeroVolo AND
+		b.numero = v.numero AND
 		b.orarioPartenza = v.orarioPartenza
 	WHERE b.numeroBiglietto = '1234567890123'
 \end{lstlisting}
-Un indice utile potrebbe essere (numeroBiglietto?).
-\textbf{TODO}
+La query filtra su chiavi primarie quindi non dovrebbero essere necessari nuovi indici. 
 
 \newpage
 
@@ -2232,27 +2235,42 @@ dove \textbf{numeroSessioni} è un intero, tipo può assumere valori (seminario,
 \paragraph{Domanda 3}\dotfill
 \\Assumendo di avere una base di dati PostgreSQL che contenga le tabelle di questo tema d'esame, scrivere un programma Python che, leggendo una o più tuple del tipo 'nomeConegno', 'nomeSessione', 'idIntervento', 'orarioInizio' da console, inserisca una o più tuple nella tabella INTERVENTO\_IN\_CONVEGNO. L'inserimento deve garantire la correttezza della base di dati: controllo preventivo che le eventuali dipendenze siano rispettate e che l'orario dell'intervento sia compatibile con la sua durata e la presenza di altri interventi. Se una dipendenza non è rispettata, il programma deve chiedere di reinserire il dato associato alla dipendenza prima di procedere ad inserire la tupla. Il programma deve visualizzare l'esito di ogni singolo inserimento. È richiesto che il programma suggerisca il tipo di dati da inserire, che non ammetta possibilità di SQL Injection e che sia eseguibile in concorrenza con altre istanze del programma stesso.
 
-\paragraph{Soluzione}\dotfill
+\paragraph{Soluzione (incompleta)}\dotfill
 \lstset{language=Python}
-\begin{lstlisting}
+\begin{lstlisting}[tabsize=2]
 from datetime import date, timedelta
 from decimal import Decimal
 from getpass import getpass
 import psycopg2
 
+fine = 0
 psw = getpass("Inserire la password: ")
     
 conn = psycopg2.connect(host="dbserver.scienze.univr.it",
 	database="id468wfl", user="id468wfl", password=psw)
-
-nomeConvegno = input("Inserire il nome del convegno: ")
-nomeSessione = input("Inserire il nome della sessione: ")
-idIntervento = input("Inserire l'id dell'intervento: ")
-orarioInizio = input("Inserire l'orario di inizio: ")
 	
 with conn:
 	with conn.cursor() as cur:
-		
+		while(not fine):
+			nomeConvegno = input("Inserire il nome del convegno: ")
+			nomeSessione = input("Inserire il nome della sessione: ")
+			idIntervento = input("Inserire l'id dell'intervento: ")
+			orarioInizio = input("Inserire l'orario di inizio: ")
+			#con i vari check
+			
+			cur.execute("INSERT INTO INTERVENTO_IN_CONVEGNO ( \ 	
+					nomeConvegno, idIntervento, nomeSessione, orarioInizio) \
+				values (%s,%s,%s,%s)", (nomeConvegno, idIntervento, 
+					nomeSessione, orarioInizio) )
+			
+			cur.statusmessage
+			
+			scelta = ""
+			while(scelta != "S" or scelta != "n"):
+				scelta = input("Continuare inserimento? (S/n)")
+			if(scelta == "n"):
+				fine = 1
+				
 
 \end{lstlisting}
 
@@ -2317,12 +2335,28 @@ with conn:
 \end{itemize}
 
 \paragraph{Soluzione}\dotfill
-\\(a) 1 indice, \lstinline|ins_aa|:
+\\(a) Un solo indice utilizzato, \lstinline|ins_aa|:
 \begin{lstlisting}
 	CREATE INDEX ins_aa ON Inserogato (annoaccademico, 
 		crediti, modulo)	--???
 \end{lstlisting}
-(b) In base al piano di esecuzione conviene/non conviene
+(b) 
+\begin{verbatim}
+HashAggregate
+└── Hash Join
+    ├── Hash Join
+    │   ├── Bitmap Heap Scan
+    │   │   └── Bitmap Index Scan
+    │   └── Hash
+    │       └── Seq Scan
+    └── Hash
+        └── Seq Scan
+\end{verbatim}
+Secondo il piano di esecuzione la query fa un \lstinline|Hash JOIN| tra un ulteriore \lstinline|JOIN| e un \lstinline|Seq Scan| di un'intera tabella (\lstinline|insegn|); la condizione di uguaglianza è su due chiavi (\lstinline|ie.id_insegn| e \lstinline|i.id|), che hanno già di default un indice, perciò non è necessaria qui la creazione di nuovi indici.\\
+Il \lstinline|JOIN| interno è tra un \lstinline|Bitmap Scan| che utilizza già un indice e un \lstinline|Seq Scan| di un'intera tabella (\lstinline|discriminante|); la condizione di uguaglianza è sulla chiave di \lstinline|discriminante| (\lstinline|d.id|) e su \lstinline|ie.id_discriminante|, che non è una chiave. In questo caso un indice su quest'ultimo potrebbe essere utile a ridurre il costo della query, che è abbastanza significativo.
+\begin{lstlisting}
+	CREATE INDEX ie_iddiscr ON Inserogato (id_discriminante);
+\end{lstlisting}
 \newpage
 
 \section{Credits}
