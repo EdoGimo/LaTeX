@@ -34,7 +34,7 @@
 	tabsize=4,
 	showstringspaces=false,
 	keywordstyle=\color{blue}\bfseries,
-	morekeywords={REFERENCES, BOOLEAN, REAL, DOUBLE, PRECISION, TEXT, VARBIT, SIMILAR, TO},
+	morekeywords={REFERENCES, BOOLEAN, REAL, DOUBLE, PRECISION, TEXT, VARBIT, SIMILAR, TO, ILIKE},
 	stringstyle=\color{Purple},
 	literate={à}{{\`a}}1
 }
@@ -86,13 +86,13 @@ CREATE TABLE nomeTabella (
 		\item \lstinline|BOOLEAN|: valori booleani (true/false);
 		\item \lstinline|INTEGER|: valori interi a 4 byte;
 		\item \lstinline|SMALLINT|: valori interi a 2 bit;
-		\item \lstinline|NUMERIC(p, s)|: valori decimali approssimati, dove \lstinline|p| è la precisione del numero (cifre a sinistra e a destra della virgola) e \lstinline|s| la scala (numero di cifre decimali dopo la virgola);
-		\item \lstinline|DECIMAL(p, s)|: valori deciamli approssimati, con i parametri uguali a \lstinline|NUMERIC|.
-		\item \lstinline|REAL|: valori in virgola mobile a 6 cifre decimali;
-		\item \lstinline|DOUBLE PRECISION|: valori in virgola mobile approssimati a 15 cifre decimali;
+		\item \lstinline|NUMERIC(p, s)|: valori decimali esatti, dove \lstinline|p| è la precisione del numero (cifre a sinistra e a destra della virgola) e \lstinline|s| la scala (numero di cifre decimali dopo la virgola);
+		\item \lstinline|DECIMAL(p, s)|: equivalente a \lstinline|NUMERIC|;
+		\item \lstinline|REAL|: valori in virgola mobile approssimati a 6 cifre decimali;
+		\item \lstinline|DOUBLE PRECISION|: valori in virgola mobile approssimati a 15 cifre decimali.
 	\end{itemize}
 	\textbf{Nota:} Se si devono rappresentare importi di denaro che contengono anche
-	decimali, \textbf{MAI} usare \lstinline|REAL| o \lstinline|DOUBLE PRECISION| ma usare \lstinline|NUMERIC|!
+	decimali, \textbf{MAI} usare \lstinline|REAL| o \lstinline|DOUBLE PRECISION| ma usare \lstinline|NUMERIC| e \lstinline|DECIMAL| (non approssimano la parte decimale)!
 
 	\subsubsection{Domini di caratteri}
 	\begin{itemize}
@@ -106,7 +106,7 @@ CREATE TABLE nomeTabella (
 	\begin{itemize}
 		\item \lstinline|BIT|: singoli bit;
 		\item \lstinline|VARBIT(n)|: stringa di bit di lunghezza fissa;
-		\item \lstinline|VARBIT|: stringa di bit di lunghezza arbitraria.
+		\item \lstinline|VARBIT|: stringa di bit di lunghezza arbitraria;
 		\item \lstinline|BOOLEAN|: valori booleani, possono essere solo singoli.
 	\end{itemize}
 	\textbf{Nota:} non sono ammesse stringhe di booleani.
@@ -115,8 +115,9 @@ CREATE TABLE nomeTabella (
 	\begin{itemize}
 		\item \lstinline|DATE|: date rappresentate tra apici e nel formato \verb|YYYY-MM-DD|;
 		\item \lstinline|TIME(precisione)|: misure di tempo nel formato \verb|hh:mm:ss.[precisione]|;
-		\item \lstinline|INTERVAL|: intervalli di tempo.
-		\item \lstinline|TIME/TIMESTAMP WITH TIME ZONE|: con tutti i dati per il tempo, con indicazioni sul fuso.
+		\item \lstinline|INTERVAL|: intervalli di tempo;
+		\item \lstinline|TIMESTAMP|: corrispondente a \lstinline|DATE| + \lstinline|TIME|;
+		\item \lstinline|TIME/TIMESTAMP WITH TIME ZONE|: aggiunta di indicazioni sul fuso orario.
 	\end{itemize}
 	\begin{lstlisting}
 	DATE : '2016-01-15'
@@ -125,6 +126,7 @@ CREATE TABLE nomeTabella (
 	TIME WITH TIME ZONE : '04:05:06-08:00' o '12:01:01 CET'
 	TIMESTAMP WITH TIME ZONE : '2016-01-24 00:00:00+01'
 	\end{lstlisting}
+	Funzioni e operazioni: \url{https://www.postgresql.org/docs/9.1/functions-datetime.html}
 	
 	\subsection{Comando CREATE DOMAIN}
 	Questo comando è usato per creare un dominio utente \textbf{invariabile nel tempo}.
@@ -170,8 +172,7 @@ CREATE DOMAIN giorniSettimana AS CHAR(3)
 		\item \lstinline|NOT NULL|: determina che il valore nullo non è ammesso come
 		valore dell’attributo.
 		\item \lstinline|DEFAULT valore|: specifica un valore di
-		default per un attributo quando un comando di inserimento dati non
-		specifica nessun valore per l’attributo.
+		default per un attributo quando un comando di inserimento dati non specifica nessun valore per l’attributo.
 		
 	\textbf{Esempio:}
 	\begin{lstlisting}
@@ -231,15 +232,15 @@ dal valore nullo, sia presente tra i valori di B nella tabella esterna.
 		\end{itemize}
 		\textbf{Esempio:}
 		\begin{lstlisting}
-CREATE TABLE Interna
+CREATE TABLE Interna(
 ...
 attributo VARCHAR(15) REFERENCES TabellaEsterna (chiave)
 ...
-
-...
 piano VARCHAR (10),
 stanza INTEGER,
-FOREIGN KEY (piano, stanza) REFERENCES Ufficio (piano, nStanza)
+FOREIGN KEY (piano, stanza) 
+	REFERENCES Ufficio (piano, nStanza)
+);
 		\end{lstlisting}
 		
 	\subsection{Comando ALTER TABLE}
@@ -369,8 +370,7 @@ SELECT [ DISTINCT ]
 		
 	\subsubsection{Operatore LIKE e SIMILAR TO}
 		Nella clausola \lstinline|WHERE| può apparire l’operatore \lstinline|LIKE| per il confronto di
-		stringhe. \lstinline|LIKE| è un operatore di pattern matching. I pattern si costruiscono
-		con i caratteri speciali \lstinline|_| (1 carattere qualsiasi) e \lstinline|%| (0 o più caratteri qualsiasi):
+		stringhe (\lstinline|ILIKE| se il confronto è case-insensitive). \lstinline|LIKE| è un operatore di pattern matching. I pattern si costruiscono con i caratteri speciali \lstinline|_| (1 carattere qualsiasi) e \lstinline|%| (0 o più caratteri qualsiasi):
 		\begin{lstlisting}
 WHERE attributo [ NOT ] LIKE 'pattern';
 		\end{lstlisting}
@@ -451,7 +451,7 @@ ORDER BY cognome DESC, nome;
 		Quando si usano gli operatori aggregati, dopo la \lstinline|SELECT| \textit{non} possono
 		comparire espressioni che usano i valori presenti nelle singole tuple
 		perché il risultato è sempre e solo una tupla. \\
-		Questi operatori si possono usare solo in \lstinline|SELECT| e \lstinline|HAVING|; il loro uso con altri valori necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query. \medskip \\
+		Questi operatori si possono usare solo in \lstinline|SELECT| e \lstinline|HAVING|; il loro uso \textbf{con altri valori	} necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query. \medskip \\
 		L'operatore \lstinline|COUNT| restituisce il numero di tuple significative nel risultato dell’interrogazione:
 		\begin{lstlisting}
 COUNT ({ * | expr | ALL expr | DISTINCT expr }])
@@ -568,15 +568,14 @@ table_name [ NATURAL ] join_type table_name
 			con la condizione della clausola \lstinline|WHERE|.
 \subsubsection*{INNER JOIN}
 			Rappresenta il tradizionale $ \Theta $ join dell’algebra relazionale.
-			Combina ciascuna riga $ r_1 $ di $ table_1 $ con ciascuna riga di $ table_2 $ che
-			soddisfa la condizione della clausola \lstinline|ON|.
+			Combina ciascuna riga $ r_1 $ di $ table_1 $ con ciascuna riga di $ table_2 $ che soddisfa la condizione della clausola \lstinline|ON|. \lstinline|INNER| è opzionale.
 			
 			\bigskip
 			\noindent
 			\begin{minipage}{0.6\textwidth}
 					\begin{lstlisting}
 SELECT I.cognome, R.nomeRep, R.sede
-FROM Impiegato I INNER JOIN Reparto R
+FROM Impiegato I JOIN Reparto R
      ON I.nomerep = R.nomerep;
 				\end{lstlisting}
 				\end{minipage}\hfilneg\vrule\hfill
@@ -706,7 +705,7 @@ WHERE EXISTS(
 				\item \lstinline|(subquery)| deve restituire un numero di colonne = numero di
 			espressioni in \lstinline|(expr [,...])|.
 			
-				\item I valori dell’espressioni vengono confrontati con i valori di ciascuna riga
+				\item I valori delle espressioni vengono confrontati con i valori di ciascuna riga
 			del risultato di \lstinline|(subquery)|.
 			
 				\item Il confronto ritorna vero se i valori sono uguali ai valori di almeno una
@@ -824,7 +823,7 @@ SELECT nome
 FROM CorsoStudi ;
 		\end{lstlisting}
 	
-	\subsubsection{Viste}
+	\subsection{Viste}
 		\begin{itemize}
 				\item Le viste sono tabelle "virtuali" il cui contenuto dipende dal contenuto
 				delle altre tabelle della base di dati.
@@ -854,19 +853,8 @@ CREATE [ TEMP ] VIEW nome [ (col_name [ , ...]) ] AS query
 			\item \lstinline|query| deve restituire un insieme di attributi pari e nel medesimo ordine
 			a quello specificato con \lstinline|(column_name [, ...])| se presente.
 			\end{itemize}
-		
-		
 		\bigskip
-		
-		\textbf{Esempi: }\\
-		Definire la vista che contiene gli insegnamenti erogati completi di
-		nomeins e codiceins presi dalla tabella Insegn .
-		\begin{lstlisting}
-CREATE TEMP VIEW InsErogatiCompleti AS
-SELECT I.nomeins, I.codiceins, IE.*
-FROM InsErogato IE JOIN Insegn I 
-     ON IE.id_insegn = I.id;
-		\end{lstlisting}\bigskip
+		\textbf{Esempio:}\\
 		Si vuole determinare qual è il corso di studi con il massimo numero di
 		insegnamenti (esclusi i moduli).
 		Prima si crea una vista:
@@ -922,7 +910,7 @@ ON tabella [ USING method ]
 	
 	\noindent
 	\textbf{Nota: PostgreSQL crea in automatico indici (B-tree) per gli attributi dichiarati come chiave primaria, quindi è inutile indicizzarli.}\\
-	Essendo indici B-tree, un indice (a,b,c,d) permette a query che filtrano su (a), (a,b), o (a,b,c) di usare l'indice.
+	Essendo indici B-tree, un indice (a,b,c,d) permette a query che filtrano ad esempio su (a), (a,b), o (a,b,c) di usare l'indice.
 	
 	\subsection{Comando ANALYZE}
 	Il comando \lstinline|ANALYZE| è usato per forzare l'aggiornamento delle statistiche di esecuzione delle query quando uno o più nuovi indici sono creati.
@@ -970,7 +958,7 @@ Per opportunità, si considerano espressioni che sono frequenti nelle interrogaz
 \paragraph{Esempio 1.}Idice sull'espressione LOWER(nomeins):
 \begin{lstlisting}
 CREATE INDEX ins_lower_nonins ON
-Insegn ( LOWER ( nomeins ) varchar_pattern_ops ) ;
+	Insegn ( LOWER ( nomeins ) varchar_pattern_ops );
 \end{lstlisting}
 \newpage
 
@@ -1221,8 +1209,8 @@ HINT: the TRANSACTION might succeed if retried.
 \section{Python e Database}
 	La API ufficiale di Python è la DB-API v2.0, che descrive come un modulo Python deve accedere a una base di dati esterna. Esistono diversi moduli (librerie) DB-API, si utilizzerà \textbf{psycopg2}.
 	\subsection{Connection}
-	L'accesso ad un database avviene tramite un oggetto di tipo \textbf{Connection}. Il metodo \textbf{connect()} accetta i parametri necessari per la connessione e ritorna un oggetto \textit{Connection}. \\
-	Metodi principali:
+	L'accesso ad un database avviene tramite un oggetto di tipo \textbf{Connection}. Il metodo \textbf{connect()} accetta i parametri necessari per la connessione e ritorna un oggetto \textit{Connection}.\\
+	Metodi principali dell'oggetto:
 	\begin{itemize}
 	\item \lstinline|cursor()|: ritorna un cursore della base di dati. Un oggetto cursore permette di inviare comandi SQL al DBMS.
 	\item \lstinline[keywordstyle=\color{black}]|commit()|: registra la transazione corrente. Normalmente una connessione apre una transazione al primo invio di comandi. Se non si esegue un \textit{commit()} prima di chiudere, tutte le eventuali modifiche/inserimenti vengono persi.
@@ -1230,7 +1218,7 @@ HINT: the TRANSACTION might succeed if retried.
 	\item \lstinline|close()|: chiude la connessione corrente. Implica un \textit{rollback()} automatico delle operazioni non registrate.
 	\item \lstinline|autocommit|: proprietà r/w. Se \textit{True} , ogni comando inviato è una transazione isolata. Se \textit{False} (default) il primo comando inviato inizia una transazione, che deve essere chiusa con \textit{commit()} o \textit{rollback()}.
 	\item \lstinline|readonly|: proprietà r/w. Se \textit{True} , nella sessione non si possono inviare comandi di modifica dati. Il default è \textit{False}.
-	\item \lstinline|isolation_level|: proprietà r/w. Modifica il livello di isolamento per la prossima transazione. Valori leciti: \lstinline|'READ UNCOMMITTED'|, \lstinline|'READ COMMITTED'|,\lstinline|'REPEATABLE READ'|, \\ \lstinline|'SERIALIZABLE'| e  \lstinline|'DEFAULT'|. \\
+	\item \lstinline|isolation_level|: proprietà r/w. Modifica il livello di isolamento per la prossima transazione. Valori leciti: \lstinline|'READ UNCOMMITTED'|, \lstinline|'READ COMMITTED'|,\lstinline|'REPEATABLE READ'|, \\ \lstinline|'SERIALIZABLE'| e  \lstinline|'DEFAULT'| (di solito corrispondente a \lstinline[keywordstyle=\color{black}]|REPEATABLE READ|). \\
  Meglio assegnare questa variabile subito dopo la creazione della connessione.
 	\begin{lstlisting}
 	connector = psycopg2.connect(...)
@@ -1270,11 +1258,12 @@ HINT: the TRANSACTION might succeed if retried.
 	>>> cur.fetchmany(2)
 	[]
 	\end{lstlisting}
+	\item \lstinline|fetchall()|: ritorna l'intero risultato come lista di tuple. Se non ci sono tuple ritorna una lista vuota.
 	\item Dopo un \lstinline|execute("SELECT ...")|, il cursore è un iterabile sulla tabella risultato. È possibile quindi accedere alle tuple del risultato anche con un ciclo:
 	\begin{lstlisting}
 	>>> cur.execute("SELECT * FROM test WHERE id < %s", (4 ,))
 	>>> for record in cur :
-... print ( record , end = " , " )
+			print ( record , end = " , " )
 	(1, 100, "abc'def"), (2, None, 'dada'), (3, 42, 'bar'),
 	\end{lstlisting}
 	\item \lstinline|rowcount|: di sola lettura, uguale al numero di righe prodotte dall'ultimo comando. -1 indica che non è possibile determinare il valore.
@@ -1330,12 +1319,12 @@ cur.fetchone() # legge una sola riga
 cur.fetchmany([numero]) # legge [numero] righe
 cur.fetchall() # legge tutte le righe
 		\end{lstlisting}
+		Se non ci sono tuple, viene ritornato \lstinline|None| nel primo caso, una lista vuota negli altri due casi. \\
 		Altro metodo per leggere è attraverso l'uso di un ciclo for:
 		\begin{lstlisting}[frame=tb]
 for record in cur :
 	print (record)
 		\end{lstlisting}
-		Se non ci sono tuple, viene ritornato \lstinline|None|  nei primi due casi (\lstinline|numero| è il numero di tuple da leggere dal risultato), una lista vuota nel terzo caso.
 		
 		\item Chiudere le risorse con \lstinline|conn.close()| e \lstinline|cursor.close()|.
 	\end{itemize} \medskip
@@ -1348,11 +1337,11 @@ with conn :
 		...
 	\end{lstlisting}
 	\begin{itemize}
-	\item Quando si usa una connessione con il with, all’uscita del blocco viene fatto un \textbf{commit} automatico, mentre la connessione \textbf{non viene chiusa}.
-	\item Quando si usa/crea un cursore con il with, all’uscita del blocco viene fatto un \textbf{close} automatico del cursore (conviene usare sempre lo stesso cursore se possibile).
+	\item Quando si usa una connessione con il with, all’uscita dal blocco viene fatto un \textbf{commit} automatico, mentre la connessione \textbf{non viene chiusa}.
+	\item Quando si usa/crea un cursore con il with, all’uscita dal blocco viene fatto un \textbf{close} automatico del cursore (conviene usare sempre lo stesso cursore se possibile).
 	\end{itemize}
 	\subsection{Connessioni e cursori}
-	Si deve porre attenzioni alla combinazione di cursori sulla medesima connessione:
+	Si deve porre attenzione alla combinazione di cursori sulla medesima connessione:
 	\begin{itemize}
 	\item Aprire una connessione costa in tempo (e spazio). Meglio
 aprire/chiudere poche connessioni in un’esecuzione.
@@ -1947,13 +1936,15 @@ COMPAGNIA(\underline{iata}, nome)\\
 BIGLIETTO(\underline{numero}, dataAcquisto, prezzo)\\
 VOLIBIGLIETTO(\underline{numeroBiglietto, iataCompagnia, numero, orarioPartenza}, ordinale)\\
 \\
-dove \textbf{iataCompagnia} è il codice di 2 lettere della compagnia aerea, \textbf{VOLO.numero} è un intero positivo, \textbf{VOLO.orarioPartenza} è la data e l'orario con fuso orario della partenza, \textbf{VOLO.aeropPartenza/aeropArrivo} sono i codici IARA degli aeroporti (4 lettere). Per questioni di semplicità si assume che i codici IATA delle compagnie e degli aeroporti siano già definiti come domini di nome, rispettivamente, \textbf{IATACompagnia} e \textbf{IATAAeroporto}. Un biglietto comprende uno o più voli. \textbf{BIGLIETTO.numero} è una stringa di 13 cifre. \textbf{VOLIBIGLIETTO.ordinale} indica l'ordine del volo ed è = 0 se il biglietto è composto da un solo volo.
+dove \textbf{iataCompagnia} è il codice di 2 lettere della compagnia aerea, \textbf{VOLO.numero} è un intero positivo, \textbf{VOLO.orarioPartenza} è la data e l'orario con fuso orario della partenza, \textbf{VOLO.aeropPartenza/aeropArrivo} sono i codici IATA degli aeroporti (4 lettere). Per questioni di semplicità si assume che i codici IATA delle compagnie e degli aeroporti siano già definiti come domini di nome, rispettivamente, \textbf{IATACompagnia} e \textbf{IATAAeroporto}. Un biglietto comprende uno o più voli. \textbf{BIGLIETTO.numero} è una stringa di 13 cifre. \textbf{VOLIBIGLIETTO.ordinale} indica l'ordine del volo ed è = 0 se il biglietto è composto da un solo volo.
 \paragraph{Domanda 1}\dotfill 
 \\Determinare i vincoli di integrità che si possono desumere usando la notazione '$\rightarrow$'.\\
 Scrivere il codice PostgreSQL che generi TUTTE le tabelle per rappresentare lo schema relazionale specificando tutti i possibili controlli di integrità referenziale e almeno 3 controlli di correttezza dei dati.
 
 \paragraph{Soluzione}\dotfill
 \\VOLO.iataCompagnia$\rightarrow$COMPAGNIA.iata\\
+VOLO.aeropPartenza$\rightarrow$AEROPORTO.iata\\
+VOLO.aeropArrivo$\rightarrow$AEROPORTO.iata\\
 VOLIBIGLIETTO.numeroBiglietto$\rightarrow$BIGLIETTO.numero\\
 \begin{small}
 VB.iataCompagnia,VB.numero,
@@ -1964,7 +1955,7 @@ Codice SQL:
 \lstset{language=SQL}
 \begin{lstlisting}
 	CREATE DOMAIN numBiglietto AS CHAR(13)
-		CHECK (VALUE SIMILAR TO '[0-9]+' );
+		CHECK (VALUE SIMILAR TO '[0-9]{13}' );
 		
 	CREATE TABLE AEROPORTO(
 		iata IATAAeroporto PRIMARY KEY,
@@ -2026,7 +2017,7 @@ Codice SQL:
 	WHERE VB.ordinale >= 1
 	ORDER BY VB.numeroBiglietto, V.orarioPartenza
 \end{lstlisting}
-(b) (probabilmente troppi join usati)
+(b) (forse troppi join usati)
 \begin{lstlisting}
 	SELECT VB.numeroBiglietto, COUNT(VB.ordinale), SUM(V.durata)
 	FROM VOLIBIGLIETTO VB JOIN VOLO V on
@@ -2042,7 +2033,7 @@ Codice SQL:
   		WHERE VB.numeroBiglietto = VB2.numeroBiglietto AND
         	V2.aeropPartenza = 'X' AND V2.aeropArrivo = 'Y'
   	)
-	GROUP BY VB.numeroBiglietto	
+	GROUP BY VB.numeroBiglietto		--necessario per count/sum
 	ORDER BY VB.numeroBiglietto;
 \end{lstlisting}
 
@@ -2075,7 +2066,7 @@ with conn:
 				
 			voli = cur.fetchall()
 			
-			if not voli:
+			if not voli:	#oppure usare cur.rowcount ?
 				print("Il biglietto non esiste!")
 			else:
 				bigliettoEsiste = 1
@@ -2103,7 +2094,7 @@ conn.close()
 \paragraph{Soluzione}\dotfill 
 \\ \lstset{language=SQL}
 \begin{minipage}{0.5\textwidth}
- Transazione 1 (giusto???):
+ Transazione 1:
 \end{minipage}
 \begin{minipage}{0.5\textwidth}
 Transazione 2:
@@ -2111,11 +2102,10 @@ Transazione 2:
 \begin{footnotesize}
 \begin{minipage}{0.5\textwidth}
 \begin{lstlisting}[tabsize=2]
-	BEGIN TRANSACTION ISOLATION LEVEL 
-		REPEATABLE READ;
+	BEGIN;
 
 	UPDATE BIGLIETTO 
-	SET prezzo = prezzo + (prezzo * 0.05)
+	SET prezzo = prezzo * 1.05
 	WHERE dataAcquisto >= '2018-11-01';
 	
 	COMMIT;
@@ -2123,16 +2113,17 @@ Transazione 2:
 \end{minipage}\vrule\hfill
 \begin{minipage}{0.5\textwidth}
 \begin{lstlisting}[tabsize=2]
-	BEGIN;
+	BEGIN TRANSACTION ISOLATION LEVEL 
+		REPEATABLE READ;
 
 	UPDATE BIGLIETTO 
-	SET prezzo = prezzo - (prezzo * 0.1)
+	SET prezzo = prezzo * 0.9
 	WHERE prezzo = 1050;
 	...
 \end{lstlisting}
 \end{minipage}
 \end{footnotesize}\medskip \\
-La prima transazione (T1) è stata scritta con livello di isolamento REPEATABLE READ per evitare anomalie Nonrepeatable reads; se infatti le due transazioni sono concorrenti, è possibile che il controllo della seconda transazione (T2) sul valore di 'prezzo' (se è = 1050) non legga determinati valori corretti.\\
+La seconda transazione (T2) è stata scritta con livello di isolamento REPEATABLE READ per evitare anomalie Nonrepeatable reads; se infatti le due transazioni sono concorrenti, è possibile che il controllo della seconda transazione (T2) sul valore di 'prezzo' (se è = 1050) non legga determinati valori corretti.\\
 Esempio con READ COMMITTED: ci sono 2 biglietti, il primo con prezzo 1050, l'altro 1000. T1 e T2 iniziano contemporaneamente. 
 T1 aumenta il prezzo dei due biglietti (il secondo diventa 1050), T2 controlla i biglietti da modificare; T2 vede che ci sono state modifiche in T1 e aspetta il commit. Nel momento del commit di T1, T2 ricontrolla SOLO il biglietto che aveva prezzo 1050, valore ora diverso, e l'UPDATE non fa modifiche, senza vedere che il biglietto che aveva prezzo 1000 ora lo ha 1050, e sarebbe quindi da aggiornare.
 
@@ -2174,7 +2165,7 @@ INTERVENTO\_IN\_CONVEGNO(\underline{nomeConvegno, idIntervento, nomeSessione}, o
 SESSIONE(\underline{nome, nomeConvegno}, data, orarioInizio, orarioFine);\\
 INTERVENTO(\underline{id}, titolo, relatore, durata);\\
 \\
-dove \textbf{numeroSessioni} è un intero, tipo può assumere valori (seminario, simposio, conferenza), \textbf{luogo} è generico (VARCHAR è sufficiente), INTERVENTO\_IN\_CONVEGNO.\textbf{orarioInizio} è l'orario di inizio dell'intervento all'interno della sessione. Gli attributi inerenti al tempo devono avere il fuso orario.
+dove \textbf{numeroSessioni} è un intero, \textbf{tipo} può assumere valori (seminario, simposio, conferenza), \textbf{luogo} è generico (VARCHAR è sufficiente), INTERVENTO\_IN\_CONVEGNO.\textbf{orarioInizio} è l'orario di inizio dell'intervento all'interno della sessione. Gli attributi inerenti al tempo devono avere il fuso orario.
 
 \paragraph{Domanda 1}\dotfill
 \\Scrivere il codice PostgreSQL che generi i domini e le tabelle per rappresentare lo schema relazionale specificando tutti i possibili controlli di integrità e di correttezza dei dati opportuni.
@@ -2233,7 +2224,7 @@ dove \textbf{numeroSessioni} è un intero, tipo può assumere valori (seminario,
 \end{lstlisting}
 
 \paragraph{Domanda 3}\dotfill
-\\Assumendo di avere una base di dati PostgreSQL che contenga le tabelle di questo tema d'esame, scrivere un programma Python che, leggendo una o più tuple del tipo 'nomeConegno', 'nomeSessione', 'idIntervento', 'orarioInizio' da console, inserisca una o più tuple nella tabella INTERVENTO\_IN\_CONVEGNO. L'inserimento deve garantire la correttezza della base di dati: controllo preventivo che le eventuali dipendenze siano rispettate e che l'orario dell'intervento sia compatibile con la sua durata e la presenza di altri interventi. Se una dipendenza non è rispettata, il programma deve chiedere di reinserire il dato associato alla dipendenza prima di procedere ad inserire la tupla. Il programma deve visualizzare l'esito di ogni singolo inserimento. È richiesto che il programma suggerisca il tipo di dati da inserire, che non ammetta possibilità di SQL Injection e che sia eseguibile in concorrenza con altre istanze del programma stesso.
+\\Assumendo di avere una base di dati PostgreSQL che contenga le tabelle di questo tema d'esame, scrivere un programma Python che, leggendo una o più tuple del tipo 'nomeConvegno', 'nomeSessione', 'idIntervento', 'orarioInizio' da console, inserisca una o più tuple nella tabella INTERVENTO\_IN\_CONVEGNO. L'inserimento deve garantire la correttezza della base di dati: controllo preventivo che le eventuali dipendenze siano rispettate e che l'orario dell'intervento sia compatibile con la sua durata e la presenza di altri interventi. Se una dipendenza non è rispettata, il programma deve chiedere di reinserire il dato associato alla dipendenza prima di procedere ad inserire la tupla. Il programma deve visualizzare l'esito di ogni singolo inserimento. È richiesto che il programma suggerisca il tipo di dati da inserire, che non ammetta possibilità di SQL Injection e che sia eseguibile in concorrenza con altre istanze del programma stesso.
 
 \paragraph{Soluzione (incompleta)}\dotfill
 \lstset{language=Python}
@@ -2249,7 +2240,7 @@ psw = getpass("Inserire la password: ")
 conn = psycopg2.connect(host="dbserver.scienze.univr.it",
 	database="id468wfl", user="id468wfl", password=psw)
 	
-with conn:
+with conn:	#prima serve cambiare 'isolation_level' ???
 	with conn.cursor() as cur:
 		while(not fine):
 			nomeConvegno = input("Inserire il nome del convegno: ")
