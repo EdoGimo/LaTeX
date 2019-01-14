@@ -884,7 +884,18 @@ WHERE NumIns = ANY (
 	
 	Una buona regola pratica per l'uso di indici, dal momento che costano tempo e memoria, è di applicarli in base alle query eseguite più frequentemente, tenendo anche presente che il sistema deve aggiornare l'indice per ogni operazione \lstinline|INSERT, DELETE| e \lstinline|UPDATE|.
 	
-	\subsection{Comando timing}
+	\subsubsection{Visualizzare gli indici}
+	Per visualizzare gli indici di una tabella si può utilizzare psql, l'applicativo front-end su terminale per interfacciarsi ai database Postgres. Per collegarsi si scrive:
+	\begin{lstlisting}
+psql -h dbserver database utente
+	\end{lstlisting}
+	Inserita la password richiesta si accederà al prompt di psql. Con il comando
+	\begin{lstlisting}
+=> \d nomeTabella
+	\end{lstlisting}
+	vengono riportati tutti i dettagli della tabella \lstinline|nomeTabella|, tra i quali gli eventuali indici.
+	
+	\subsubsection{Comando timing}
 	Il comando \lstinline|\timing| da un 'idea del tempo necessario all'esecuzione di una query.
 	In un prompt di \verb|psql| basta eseguire:
 	\begin{lstlisting}
@@ -955,12 +966,11 @@ CREATE INDEX ie_aa_idcs ON Inserogato (annoaccademico,
 Sintassi: \lstinline|CREATE INDEX nome ON nomeTabella(expression);|\\
 dove \lstinline|expression| è una espressione su uno o più attributi.
 Per opportunità, si considerano espressioni che sono frequenti nelle interrogazioni usate.
-\paragraph{Esempio 1.}Idice sull'espressione LOWER(nomeins):
+\paragraph{Esempio 1.}Indice sull'espressione \lstinline|LOWER(nomeins)|:
 \begin{lstlisting}
 CREATE INDEX ins_lower_nonins ON
 	Insegn ( LOWER ( nomeins ) varchar_pattern_ops );
 \end{lstlisting}
-\newpage
 
  	\subsection{Comando EXPLAIN}
 	Ogni DBMS ha un ottimizzatore di query che determina un piano di esecuzione per ogni query. Il comando \lstinline|EXPLAIN [query]| permette di vedere il piano di esecuzione della query, facilitando l'analisi dei colli di bottiglia e l'ottimizzazione.
@@ -2148,7 +2158,7 @@ Desumere il testo della query e indicare un indice che potrebbe migliorare l'ese
 \\Query:
 \begin{lstlisting}
 	SELECT b.numeroBiglietto,b.ordinale,b.orarioPartenza,v.durata
-	FROM BIGLIETTO b JOIN VOLIBIGLIETTO v ON 
+	FROM VOLIBIGLIETTO b JOIN VOLO v ON 
 		b.iataCompagnia = v.iataCompagnia AND
 		b.numero = v.numero AND
 		b.orarioPartenza = v.orarioPartenza
@@ -2251,7 +2261,7 @@ with conn:	#prima serve cambiare 'isolation_level' ???
 			
 			cur.execute("INSERT INTO INTERVENTO_IN_CONVEGNO ( \ 	
 					nomeConvegno, idIntervento, nomeSessione, orarioInizio) \
-				values (%s,%s,%s,%s)", (nomeConvegno, idIntervento, 
+					values (%s,%s,%s,%s)", (nomeConvegno, idIntervento, 
 					nomeSessione, orarioInizio) )
 			
 			cur.statusmessage
@@ -2328,7 +2338,7 @@ with conn:	#prima serve cambiare 'isolation_level' ???
 \paragraph{Soluzione}\dotfill
 \\(a) Un solo indice utilizzato, \lstinline|ins_aa|:
 \begin{lstlisting}
-	CREATE INDEX ins_aa ON Inserogato (annoaccademico, 
+	CREATE INDEX ins_aa ON InsErogato (annoaccademico, 
 		crediti, modulo)	--???
 \end{lstlisting}
 (b) 
@@ -2344,10 +2354,11 @@ HashAggregate
         └── Seq Scan
 \end{verbatim}
 Secondo il piano di esecuzione la query fa un \lstinline|Hash JOIN| tra un ulteriore \lstinline|JOIN| e un \lstinline|Seq Scan| di un'intera tabella (\lstinline|insegn|); la condizione di uguaglianza è su due chiavi (\lstinline|ie.id_insegn| e \lstinline|i.id|), che hanno già di default un indice, perciò non è necessaria qui la creazione di nuovi indici.\\
-Il \lstinline|JOIN| interno è tra un \lstinline|Bitmap Scan| che utilizza già un indice e un \lstinline|Seq Scan| di un'intera tabella (\lstinline|discriminante|); la condizione di uguaglianza è sulla chiave di \lstinline|discriminante| (\lstinline|d.id|) e su \lstinline|ie.id_discriminante|, che non è una chiave. In questo caso un indice su quest'ultimo potrebbe essere utile a ridurre il costo della query, che è abbastanza significativo.
+Il \lstinline|JOIN| interno è tra un \lstinline|Bitmap Scan| che utilizza già un indice e un \lstinline|Seq Scan| di un'intera tabella (\lstinline|discriminante|); la condizione di uguaglianza è sulla chiave di \lstinline|discriminante| (\lstinline|d.id|) e su \lstinline|ie.id_discriminante|, che non è una chiave (nella tabella InsErogato). In questo caso un indice su quest'ultimo potrebbe essere utile a ridurre il costo della query, che è abbastanza significativo.
 \begin{lstlisting}
 	CREATE INDEX ie_iddiscr ON Inserogato (id_discriminante);
 \end{lstlisting}
+\paragraph{N.B.} \lstinline|ie.id_discriminante| non è chiave di InsErogato, ma il database did2014 contiene già un indice "\lstinline|occorrenzains_discriminante_index|". Questa cosa non è possibile saperla durante la prova perciò, dato che le \textit{reference keys} non creano indici, credo sia comunque corretta questa soluzione.
 \newpage
 
 \section{Credits}
