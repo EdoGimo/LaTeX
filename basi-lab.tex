@@ -1073,6 +1073,11 @@ Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
 			\item Repeatable Read
 			\item Serializable	
 		\end{itemize}
+		Durante l'esecuzione, in base al livello di isolamento si possono presentare delle anomalie, tra le quali:
+		\begin{itemize}
+		\item \textbf{Nonrepeatable reads}: la transazione legge \lstinline|UPDATE| di cui è stato fatto il commit da un'altra transazione. La stessa riga ha quindi diversi valori rispetto all'inizio della transazione;
+		\item \textbf{Phantom reads}: la transazione legge \lstinline|INSERT| e \lstinline|DELETE| di cui è stato fatto il commit da un'altra transazione. Ci sono quindi nuove righe o righe mancanti rispetto all'inizio della transazione.
+		\end{itemize}\medskip
 		Prendiamo come esempio la seguente tabella, 
 		\lstinline|Web|:
 		\begin{tabular}{cc}
@@ -1083,13 +1088,13 @@ Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
 			2 & 10 \\
 			\midrule
 		\end{tabular}
+
 		
 		\subsection{Read Committed}
 			È il \textbf{livello di default}, basta scrivere '\lstinline|BEGIN;|'. Nonrepeatable reads e Phantom reads possibili.
 			\begin{itemize}
 				\item \lstinline|SELECT| vede solo i dati registrati (\lstinline|COMMITTED|) in altre transazioni e quelli modificati da comandi precedenti nella stessa transazione.
-				\item \lstinline|UPDATE| e \lstinline|DELETE| vedono i dati come \lstinline|SELECT|
-				\item Se i dati da aggiornare sono stati modificati ma \textbf{non registrati} in transazioni concorrenti, il comando deve:
+				\item \lstinline|UPDATE| e \lstinline|DELETE| vedono i dati come \lstinline|SELECT|. Inoltre se i dati da aggiornare sono stati modificati ma \textbf{non registrati} in transazioni concorrenti, il comando deve:
 				\begin{itemize}
 					\item Attendere il \lstinline|COMMIT| o \lstinline|ROLLBACK| della transazione concorrente.
 					\item Riesaminare le righe per verificare che soddisfano ancora i criteri del comando.
@@ -1114,7 +1119,31 @@ DELETE FROM Web WHERE hits=10;
 
 				\end{lstlisting}
 			\end{multicols}
-			\lstinline|DELETE| non riesce a cancellare, anche se esiste un hits=10 sia prima sia dopo l'update: questo perchè \lstinline|SELECT|, che vede solo i valori registrati, ha saltato id=1 in fase di valutazione, perciò quando il \lstinline|DELETE| verrà sbloccato, ricontrollerà solamente se il valore corrispondente a id=2 è ancora valido.
+			\lstinline|DELETE| non riesce a cancellare, anche se esiste un hits=10 sia prima sia dopo l'update: questo perchè \lstinline|SELECT|, che vede solo i valori registrati, ha saltato id=1 in fase di valutazione, perciò quando il \lstinline|DELETE| verrà sbloccato, ricontrollerà solamente se il valore corrispondente a id=2 è ancora valido. 
+			\newpage
+\textbf{Esempio di anomalia Phantom reads:}
+			\begin{multicols}{2}
+				\noindent
+				$ T_1 $:
+				\begin{lstlisting}
+BEGIN;
+SELECT id FROM Web WHERE hits=10;
+
+
+SELECT id FROM Web WHERE hits=10;
+
+COMMIT;
+				\end{lstlisting}
+				\columnbreak
+				$ T_2 $:
+				\begin{lstlisting}
+BEGIN;
+
+DELETE FROM Web WHERE hits=10;
+COMMIT;
+				\end{lstlisting}
+			\end{multicols}
+			Le due \lstinline|SELECT| della transazione 1 sono identiche ma danno due risultati diversi. Nessuna tupla è stata modificata nei suoi valori. Delle tuple sono state cancellate.
 			
 		\subsection{Repeatable Read}
 			Differisce da Read Committed per il fatto che una query in una transazione Repeatable Read vede i dati come erano prima dell'inizio della transazione, che perciò non cambiano all'interno della transazione a causa di commits in altre transazioni, come nel caso di Read Committed. Due \lstinline|SELECT| identiche all'interno di una singola transazione vedono sempre gli stessi dati.
@@ -1133,9 +1162,7 @@ DELETE FROM Web WHERE hits=10;
 			\noindent
 			$ T_1 $:
 			\begin{lstlisting}
-BEGIN TRANSACTION ISOLATION LEVEL
-  REPEATABLE READ;
-
+BEGIN;
 UPDATE Web SET hits=hits+1;
 
 COMMIT;
@@ -1143,15 +1170,16 @@ COMMIT;
 			\columnbreak
 			$ T_2 $:
 			\begin{lstlisting}
-BEGIN;
+BEGIN TRANSACTION ISOLATION LEVEL
+  REPEATABLE READ;
 
 DELETE FROM Web WHERE hits=10;
 
 ERROR: could NOT serialize 
 access due to concurrent UPDATE.
 			\end{lstlisting}
-			\end{multicols}
-			\noindent
+			\end{multicols} 
+			La transazione 2 legge l'\lstinline|UPDATE| concorrente della transazione 1 e annulla. \medskip \\
 			\textbf{Esempio2: anomalia Phantom reads}
 			\begin{multicols}{2}
 			\noindent
@@ -1215,6 +1243,8 @@ DETAIL: reason code: canceled ON identification AS a pivot,
         during COMMIT attempt
 HINT: the TRANSACTION might succeed if retried.
 		\end{lstlisting}
+	
+	\newpage
 	
 \section{Python e Database}
 	La API ufficiale di Python è la DB-API v2.0, che descrive come un modulo Python deve accedere a una base di dati esterna. Esistono diversi moduli (librerie) DB-API, si utilizzerà \textbf{psycopg2}.
@@ -2133,7 +2163,7 @@ Transazione 2:
 \end{lstlisting}
 \end{minipage}
 \end{footnotesize}\medskip \\
-La seconda transazione (T2) è stata scritta con livello di isolamento REPEATABLE READ per evitare anomalie Nonrepeatable reads; se infatti le due transazioni sono concorrenti, è possibile che il controllo della seconda transazione (T2) sul valore di 'prezzo' (se è = 1050) non legga determinati valori corretti.\\
+La seconda transazione (T2) è stata scritta con livello di isolamento REPEATABLE READ per evitare anomalie Nonrepeatable reads; se infatti le due transazioni sono concorrenti, è possibile che il controllo della seconda transazione (T2) sul valore di 'prezzo' (se è = 1050) non legga determinati valori corretti (= T2 si ferma quando legge l'UPDATE concorrente di T1). \medskip \\
 Esempio con READ COMMITTED: ci sono 2 biglietti, il primo con prezzo 1050, l'altro 1000. T1 e T2 iniziano contemporaneamente. 
 T1 aumenta il prezzo dei due biglietti (il secondo diventa 1050), T2 controlla i biglietti da modificare; T2 vede che ci sono state modifiche in T1 e aspetta il commit. Nel momento del commit di T1, T2 ricontrolla SOLO il biglietto che aveva prezzo 1050, valore ora diverso, e l'UPDATE non fa modifiche, senza vedere che il biglietto che aveva prezzo 1000 ora lo ha 1050, e sarebbe quindi da aggiornare.
 
