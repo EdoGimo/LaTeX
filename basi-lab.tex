@@ -884,7 +884,7 @@ WHERE NumIns = ANY (
 	
 	Una buona regola pratica per l'uso di indici, dal momento che costano tempo e memoria, è di applicarli in base alle query eseguite più frequentemente, tenendo anche presente che il sistema deve aggiornare l'indice per ogni operazione \lstinline|INSERT, DELETE| e \lstinline|UPDATE|.
 	
-	\subsubsection{Visualizzare gli indici}
+	\subsubsection*{Visualizzare gli indici}
 	Per visualizzare gli indici di una tabella si può utilizzare psql, l'applicativo front-end su terminale per interfacciarsi ai database Postgres. Per collegarsi si scrive:
 	\begin{lstlisting}
 psql -h dbserver database utente
@@ -895,7 +895,7 @@ psql -h dbserver database utente
 	\end{lstlisting}
 	vengono riportati tutti i dettagli della tabella \lstinline|nomeTabella|, tra i quali gli eventuali indici.
 	
-	\subsubsection{Comando timing}
+	\subsubsection*{Comando timing}
 	Il comando \lstinline|\timing| da un 'idea del tempo necessario all'esecuzione di una query.
 	In un prompt di \verb|psql| basta eseguire:
 	\begin{lstlisting}
@@ -1075,11 +1075,11 @@ Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
 		\end{itemize}
 		Durante l'esecuzione, in base al livello di isolamento si possono presentare delle anomalie, tra le quali:
 		\begin{itemize}
-		\item \textbf{Nonrepeatable reads}: la transazione legge \lstinline|UPDATE| di cui è stato fatto il commit da un'altra transazione. La stessa riga ha quindi diversi valori rispetto all'inizio della transazione;
-		\item \textbf{Phantom reads}: la transazione legge \lstinline|INSERT| e \lstinline|DELETE| di cui è stato fatto il commit da un'altra transazione. Ci sono quindi nuove righe o righe mancanti rispetto all'inizio della transazione.
+		\item \textbf{Nonrepeatable reads}: la transazione legge un \lstinline|UPDATE| di cui è stato fatto il commit in un'altra transazione. La stessa riga ha quindi diversi valori rispetto all'inizio della transazione;
+		\item \textbf{Phantom reads}: la transazione legge un \lstinline|INSERT| o un \lstinline|DELETE| di cui è stato fatto il commit in un'altra transazione. Ci sono quindi nuove righe o righe mancanti rispetto all'inizio della transazione.
 		\end{itemize}\medskip
-		Prendiamo come esempio la seguente tabella, 
-		\lstinline|Web|:
+		I prossimi esempi si basano sulla seguente tabella, 
+		\lstinline|Web|: \qquad
 		\begin{tabular}{cc}
 			\toprule
 			\lstinline|id| & \lstinline|hits| \\
@@ -1097,7 +1097,7 @@ Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
 				\item \lstinline|UPDATE| e \lstinline|DELETE| vedono i dati come \lstinline|SELECT|. Inoltre se i dati da aggiornare sono stati modificati ma \textbf{non registrati} in transazioni concorrenti, il comando deve:
 				\begin{itemize}
 					\item Attendere il \lstinline|COMMIT| o \lstinline|ROLLBACK| della transazione concorrente.
-					\item Riesaminare le righe per verificare che soddisfano ancora i criteri del comando.
+					\item Riesaminare le righe per verificare che soddisfino ancora i criteri del comando.
 				\end{itemize}
 			\end{itemize}
 			\textbf{Esempio di anomalia Nonrepeatable reads:}
@@ -1143,7 +1143,7 @@ DELETE FROM Web WHERE hits=10;
 COMMIT;
 				\end{lstlisting}
 			\end{multicols}
-			Le due \lstinline|SELECT| della transazione 1 sono identiche ma danno due risultati diversi. Nessuna tupla è stata modificata nei suoi valori. Delle tuple sono state cancellate.
+			Le due \lstinline|SELECT| della $T_1$ sono identiche ma danno due risultati diversi. Nessuna tupla è stata modificata nei suoi valori. Delle tuple sono state cancellate.
 			
 		\subsection{Repeatable Read}
 			Differisce da Read Committed per il fatto che una query in una transazione Repeatable Read vede i dati come erano prima dell'inizio della transazione, che perciò non cambiano all'interno della transazione a causa di commits in altre transazioni, come nel caso di Read Committed. Due \lstinline|SELECT| identiche all'interno di una singola transazione vedono sempre gli stessi dati.
@@ -1157,7 +1157,7 @@ COMMIT;
 			\end{itemize}
 			
 			\noindent
-			\textbf{Esempio1: Cattura dell'anomalia Nonrepeatable reads}
+			\textbf{Esempio 1: Cattura dell'anomalia Nonrepeatable reads}
 			\begin{multicols}{2}
 			\noindent
 			$ T_1 $:
@@ -1179,8 +1179,8 @@ ERROR: could NOT serialize
 access due to concurrent UPDATE.
 			\end{lstlisting}
 			\end{multicols} 
-			La transazione 2 legge l'\lstinline|UPDATE| concorrente della transazione 1 e annulla. \medskip \\
-			\textbf{Esempio2: anomalia Phantom reads}
+			La $T_2$ legge l'\lstinline|UPDATE| concorrente della $T_1$ e annulla. \medskip \\
+			\textbf{Esempio 2: anomalia Phantom reads}
 			\begin{multicols}{2}
 			\noindent
 			$ T_1 $:
@@ -1208,7 +1208,7 @@ COMMIT;
 La tabella finale contiene due valori 11 e non 11 e 12 (inserimento fantasma).
 		
 	\subsection{Serializable}
-		È \textbf{il più restrittivo} e garantisce che le transazioni siano eseguite \textbf{come se fossero sequenziali tra loro} (in un ordine non prestabilito). Si deve però prevedere la possibilità di transazioni abortite più frequenti per gli aggiornamenti concorrenti tipo Repeatable Read.\\
+		È \textbf{il più restrittivo} e garantisce che le transazioni siano eseguite \textbf{come se fossero sequenziali tra loro} (in un ordine non prestabilito). Si deve però prevedere la possibilità di transazioni abortite più frequenti per gli aggiornamenti concorrenti tipo Repeatable Read.\medskip \\
 		\textbf{Esempio:}
 		\begin{multicols}{2}
 		\noindent
@@ -1258,7 +1258,7 @@ HINT: the TRANSACTION might succeed if retried.
 	\item \lstinline|close()|: chiude la connessione corrente. Implica un \textit{rollback()} automatico delle operazioni non registrate.
 	\item \lstinline|autocommit|: proprietà r/w. Se \textit{True} , ogni comando inviato è una transazione isolata. Se \textit{False} (default) il primo comando inviato inizia una transazione, che deve essere chiusa con \textit{commit()} o \textit{rollback()}.
 	\item \lstinline|readonly|: proprietà r/w. Se \textit{True} , nella sessione non si possono inviare comandi di modifica dati. Il default è \textit{False}.
-	\item \lstinline|isolation_level|: proprietà r/w. Modifica il livello di isolamento per la prossima transazione. Valori leciti: \lstinline|'READ UNCOMMITTED'|, \lstinline|'READ COMMITTED'|,\lstinline|'REPEATABLE READ'|, \\ \lstinline|'SERIALIZABLE'| e  \lstinline|'DEFAULT'| (di solito corrispondente a \lstinline[keywordstyle=\color{black}]|REPEATABLE READ|). \\
+	\item \lstinline|isolation_level|: proprietà r/w. Modifica il livello di isolamento per la prossima transazione. Valori leciti: \lstinline|'READ UNCOMMITTED'|, \lstinline|'READ COMMITTED'|,  \lstinline|'REPEATABLE READ'|, \\ \lstinline|'SERIALIZABLE'| e  \lstinline|'DEFAULT'| (di solito corrispondente a \lstinline[keywordstyle=\color{black}]|REPEATABLE READ|). \\
  Meglio assegnare questa variabile subito dopo la creazione della connessione.
 	\begin{lstlisting}
 	connector = psycopg2.connect(...)
@@ -1363,14 +1363,14 @@ cur.fetchall() # legge tutte le righe
 		Altro metodo per leggere è attraverso l'uso di un ciclo for:
 		\begin{lstlisting}[frame=tb]
 for record in cur :
-	print (record)
+	print(record)
 		\end{lstlisting}
 		
 		\item Chiudere le risorse con \lstinline|conn.close()| e \lstinline|cursor.close()|.
 	\end{itemize} \medskip
 	La gestione dei \textbf{close} e dei \textbf{commit} è semplificata se si usa il costrutto \textbf{with}:
 	\begin{lstlisting}[frame=tb]
-conn = psycopg2.connect (...)
+conn = psycopg2.connect(...)
 with conn :
 	with conn.cursor() as cur:
 		cur.execute([statement],[params])
@@ -1396,7 +1396,7 @@ from datetime import date
 from decimal import Decimal
 import psycopg2
 
-conn = psycopg2.connect(host = "dbserver.scienze.univr.it", 
+conn = psycopg2.connect(host = "dbserver.scienze.univr.it", \
 	database = "psnrrt07", user = "psnrrt07")
 
 with conn :
@@ -1786,7 +1786,7 @@ try {
 \end{lstlisting}
 dove \lstinline|connection| è un'istanza della classe \lstinline|Connection|. 
 
-I punti interrogativi sono usati come segnaposto da rimpiazzare con con i metodi \lstinline|setDate()|, \lstinline|setString()|, ecc.
+I punti interrogativi sono usati come segnaposto da rimpiazzare con i metodi \lstinline|setDate()|, \lstinline|setString()|, ecc.
 I metodi set funzionano passando come parametro un \textbf{indice} (partendo da 1), e il valore che si vuole sostituire nella query.
 In questo modo i punti interrogativi saranno rimpiazzati dai campi passati nei metodi set. \\
 \textbf{Nota: le connessioni sono auto-commit, il commit viene eseguito al termine dell'esecuzione di ogni comando.}
@@ -2055,7 +2055,7 @@ Codice SQL:
 		VB.numero = V.numero AND 
 		VB.orarioPartenza = V.orarioPartenza
 	WHERE VB.ordinale >= 1
-	ORDER BY VB.numeroBiglietto, V.orarioPartenza
+	ORDER BY VB.numeroBiglietto, V.orarioPartenza;
 \end{lstlisting}
 (b) (forse troppi join usati)
 \begin{lstlisting}
@@ -2092,7 +2092,7 @@ import psycopg2
 bigliettoEsiste = 0
 psw = getpass("Inserire la password: ")
     
-conn = psycopg2.connect(host="dbserver.scienze.univr.it",
+conn = psycopg2.connect(host="dbserver.scienze.univr.it", \
 	database="id468wfl", user="id468wfl", password=psw)
 	
 with conn:
@@ -2111,19 +2111,19 @@ with conn:
 			else:
 				bigliettoEsiste = 1
 
-oraPrecedente = timedelta(seconds = 0)
+oraPrecedente = timedelta(seconds = 0)	#non so come usarlo
 for riga in voli:
 
 	#dopo il volo con ordinale 1 stampa la sosta
 	if riga[2] > 1:
-    	durataSosta = riga[1] - oraPrecedente
+		#timestamp - timestamp = interval
+    	durataSosta = riga[1] - oraPrecedente	
         print("--sosta: " + str(durataSosta))
         
-	print("numero: {:<6s} | orarioPartenza: {:22s}"\
+	print("numero: {:<6s} | orarioPartenza: {:22s}" \
         .format(str(riga[0]) , str(riga[1])) )
         
     oraPrecedente =  riga[1]
-    
 conn.close()
 
 \end{lstlisting}
@@ -2192,19 +2192,18 @@ Desumere il testo della query e indicare un indice che potrebbe migliorare l'ese
 		b.iataCompagnia = v.iataCompagnia AND
 		b.numero = v.numero AND
 		b.orarioPartenza = v.orarioPartenza
-	WHERE b.numeroBiglietto = '1234567890123'
+	WHERE b.numeroBiglietto = '1234567890123';
 \end{lstlisting}
 La query filtra su chiavi primarie quindi non dovrebbero essere necessari nuovi indici. 
 
 \newpage
 
-\section{Appello del 16/02/2018}
+\section{Appello del 16/02/2018 (Da sistemare)}
 Si consideri il seguente schema relazionale parziale e semplificato (chiavi primarie sottolineate) contenente le informazioni relative alla programmazione di convegni: \medskip \\
 CONVEGNO(\underline{nome}, dataInizio, dataFine, numeroSessioni, tipo, luogo);\\
 INTERVENTO\_IN\_CONVEGNO(\underline{nomeConvegno, idIntervento, nomeSessione}, orarioInizio);\\
 SESSIONE(\underline{nome, nomeConvegno}, data, orarioInizio, orarioFine);\\
-INTERVENTO(\underline{id}, titolo, relatore, durata);\\
-\\
+INTERVENTO(\underline{id}, titolo, relatore, durata);\medskip \\
 dove \textbf{numeroSessioni} è un intero, \textbf{tipo} può assumere valori (seminario, simposio, conferenza), \textbf{luogo} è generico (VARCHAR è sufficiente), INTERVENTO\_IN\_CONVEGNO.\textbf{orarioInizio} è l'orario di inizio dell'intervento all'interno della sessione. Gli attributi inerenti al tempo devono avere il fuso orario.
 
 \paragraph{Domanda 1}\dotfill
@@ -2217,9 +2216,9 @@ dove \textbf{numeroSessioni} è un intero, \textbf{tipo} può assumere valori (s
 		
 	CREATE TABLE CONVEGNO(
 		nome VARCHAR PRIMARY KEY,
-		dataInizio DATE NOT NULL, --o timestamp with timezone ??
+		dataInizio DATE NOT NULL, -- o timestamp with timezone ??
 		dataFine DATE NOT NULL,
-		numeroSessioni INTEGER,	--un check ??
+		numeroSessioni INTEGER,	-- check > 0 ??
 		tipo tipo_domain,
 		luogo VARCHAR
 	);
@@ -2232,7 +2231,7 @@ dove \textbf{numeroSessioni} è un intero, \textbf{tipo} può assumere valori (s
 	);
 	
 	CREATE TABLE SESSIONE(
-		nome VARCHAR UNIQUE,	--UNIQUE necessario per reference
+		nome VARCHAR,
 		nomeConvegno VARCHAR REFERENCES CONVEGNO(nome),
 		data DATE,
 		orarioInizio TIME WITH TIME ZONE,
@@ -2241,13 +2240,14 @@ dove \textbf{numeroSessioni} è un intero, \textbf{tipo} può assumere valori (s
 	);
 	
 	CREATE TABLE INTERVENTO_IN_CONVEGNO(
-		nomeConvegno VARCHAR REFERENCES CONVEGNO(nome),
-		idIntervento VARCHAR REFERENCES INTERVENTO(id),
-		nomeSessione VARCHAR REFERENCES SESSIONE(nome),
-		orarioInizio TIME WITH TIME ZONE,
-		PRIMARY KEY(nomeConvegno, idIntervento, nomeSessione)
+		nomeConvegno VARCHAR REFERENCES CONVEGNO (nome),
+  		idIntervento VARCHAR REFERENCES INTERVENTO (id),
+  		nomeSessione VARCHAR,
+  		orarioInizio TIME WITH TIME ZONE,
+  		PRIMARY KEY(nomeConvegno, idIntervento, nomeSessione),
+  		FOREIGN KEY(nomeSessione, nomeConvegno)
+    		REFERENCES SESSIONE(nome, nomeConvegno)
 	);
-
 \end{lstlisting}
 
 \paragraph{Domanda 2}\dotfill
@@ -2260,7 +2260,7 @@ dove \textbf{numeroSessioni} è un intero, \textbf{tipo} può assumere valori (s
 		IiC.idIntervento = I.id JOIN SESSIONE ON
 		IiC.nomeSessione = S.nome
 	WHERE IiC.nomeConvegno = 'X'
-	ORDER BY S.data, IiC.orarioInizio
+	ORDER BY S.data, IiC.orarioInizio;
 \end{lstlisting}
 
 \paragraph{Domanda 3}\dotfill
@@ -2322,7 +2322,7 @@ with conn:	#prima serve cambiare 'isolation_level' ???
 		S.nome = IiC.nomeSessione JOIN INTERVENTO I ON
 		I.id = IiC.idIntervento
 	GROUP BY S.nomeConvegno, S.nome
-	ORDER BY S.nomeConvegno, S.data
+	ORDER BY S.nomeConvegno, S.data;
 \end{lstlisting}
 (b)
 \begin{lstlisting}
@@ -2396,7 +2396,7 @@ Il \lstinline|JOIN| interno è tra un \lstinline|Bitmap Scan| che utilizza già 
 \item Davide Bianchi (mail: \mail{davideb1912@gmail.com})
 \item Matteo Danzi (mail: \mail{matteodanziguitarman@hotmail.it})
 \end{itemize}
-Documento modificato da Edoardo Righi nell'Anno Accademico 2018/2019. Aggiunte prove di esame parzialmente risolte (mi auguro correttamente) oltre ad alcune modifiche generali. Lascio un collegamento qui sotto al già ottimo documento originale. \medskip \\
+Documento modificato da Edoardo Righi nell'Anno Accademico 2017/2018. Aggiunte prove di esame parzialmente risolte (mi auguro correttamente) oltre ad alcune modifiche generali. Lascio un collegamento qui sotto al già ottimo documento originale. \medskip \\
 Documento originale: {\scriptsize \url{https://github.com/davbianchi/dispense-info-univr/tree/master/triennale/basi-di-dati-lab}}
 			
 \end{document}
