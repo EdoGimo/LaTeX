@@ -2255,8 +2255,9 @@ dove \textbf{numeroSessioni} è un intero, \textbf{tipo} può assumere valori (s
 \begin{lstlisting}
 	SELECT S.nome, I.titolo, I.relatore, S.data, IiC.orarioInizio
 	FROM INTERVENTO_IN_CONVEGNO IiC JOIN INTERVENTO I ON
-		IiC.idIntervento = I.id JOIN SESSIONE ON
-		IiC.nomeSessione = S.nome
+		IiC.idIntervento = I.id JOIN SESSIONE S ON 
+		IiC.nomeSessione = S.nome 
+		-- AND IiC.nomeConvegno = S.nomeConvegno ?? serve??
 	WHERE IiC.nomeConvegno = 'X'
 	ORDER BY S.data, IiC.orarioInizio;
 \end{lstlisting}
@@ -2426,7 +2427,7 @@ Il \lstinline|JOIN| interno è tra un \lstinline|Bitmap Scan| che utilizza già 
 \item Davide Bianchi (mail: \mail{davideb1912@gmail.com})
 \item Matteo Danzi (mail: \mail{matteodanziguitarman@hotmail.it})
 \end{itemize}
-Documento modificato da Edoardo Righi nell'Anno Accademico 2017/2018. Aggiunte prove di esame parzialmente risolte (mi auguro correttamente) oltre ad alcune modifiche generali. Lascio un collegamento qui sotto al già ottimo documento originale. \medskip \\
-Documento originale: {\scriptsize \url{https://github.com/davbianchi/dispense-info-univr/tree/master/triennale/basi-di-dati-lab}}
+Documento modificato da Edoardo Righi nell'Anno Accademico 2017/2018. Aggiunte due prove di esame da me risolte (mi auguro correttamente) e modificate alcune sezioni. Lascio un collegamento qui sotto al già ottimo documento originale. \medskip \\
+{\scriptsize \url{https://github.com/davbianchi/dispense-info-univr/tree/master/triennale/basi-di-dati-lab}}
 			
 \end{document}
