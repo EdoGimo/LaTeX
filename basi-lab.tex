@@ -1968,14 +1968,12 @@ public class Main {
 \newpage
 
 \section{Appello del 19/09/2018}
-\paragraph{Schema base di dati}
 Si consideri il seguente schema relazionale (chiavi primarie sottolineate) contenente le informazioni relative ai voli: \medskip \\
 VOLO(\underline{iataCompagnia, numero, orarioPartenza}, aeropPartenza, aeropArrivo, durata)\\
 AEROPORTO(\underline{iata}, città)\\
 COMPAGNIA(\underline{iata}, nome)\\
 BIGLIETTO(\underline{numero}, dataAcquisto, prezzo)\\
-VOLIBIGLIETTO(\underline{numeroBiglietto, iataCompagnia, numero, orarioPartenza}, ordinale)\\
-\\
+VOLIBIGLIETTO(\underline{numeroBiglietto, iataCompagnia, numero, orarioPartenza}, ordinale)\medskip \\
 dove \textbf{iataCompagnia} è il codice di 2 lettere della compagnia aerea, \textbf{VOLO.numero} è un intero positivo, \textbf{VOLO.orarioPartenza} è la data e l'orario con fuso orario della partenza, \textbf{VOLO.aeropPartenza/aeropArrivo} sono i codici IATA degli aeroporti (4 lettere). Per questioni di semplicità si assume che i codici IATA delle compagnie e degli aeroporti siano già definiti come domini di nome, rispettivamente, \textbf{IATACompagnia} e \textbf{IATAAeroporto}. Un biglietto comprende uno o più voli. \textbf{BIGLIETTO.numero} è una stringa di 13 cifre. \textbf{VOLIBIGLIETTO.ordinale} indica l'ordine del volo ed è = 0 se il biglietto è composto da un solo volo.
 \paragraph{Domanda 1}\dotfill 
 \\Determinare i vincoli di integrità che si possono desumere usando la notazione '$\rightarrow$'.\\
@@ -2131,10 +2129,10 @@ conn.close()
 \paragraph{Domanda 4}\dotfill
 \\Si consideri la tabella \lstinline|BIGLIETTO| della Domanda 1. Si scrivano due transazioni in cui: 1) nella prima transazione si aumenta del 5\% il prezzo a tutti i biglietti che partono dopo il '2018-11-01 00:00:00 CET', mentre 2) nell'altra si abbassa il prezzo del 10\% a tutti i biglietti che hanno prezzo pari a 1050 euro. Che tipo di errore si può verificare se le due transazioni sono concorrenti? Che tipo di isolamento si deve dichiarare per eliminare l'errore? In quale transazione?
 
-\paragraph{Soluzione}\dotfill 
-\\ \lstset{language=SQL}
+\paragraph{Soluzione}\dotfill \\ 
+\lstset{language=SQL}
 \begin{minipage}{0.5\textwidth}
- Transazione 1:
+Transazione 1:
 \end{minipage}
 \begin{minipage}{0.5\textwidth}
 Transazione 2:
@@ -2200,10 +2198,10 @@ La query filtra su chiavi primarie quindi non dovrebbero essere necessari nuovi 
 
 \section{Appello del 16/02/2018 (Da sistemare)}
 Si consideri il seguente schema relazionale parziale e semplificato (chiavi primarie sottolineate) contenente le informazioni relative alla programmazione di convegni: \medskip \\
-CONVEGNO(\underline{nome}, dataInizio, dataFine, numeroSessioni, tipo, luogo);\\
-INTERVENTO\_IN\_CONVEGNO(\underline{nomeConvegno, idIntervento, nomeSessione}, orarioInizio);\\
-SESSIONE(\underline{nome, nomeConvegno}, data, orarioInizio, orarioFine);\\
-INTERVENTO(\underline{id}, titolo, relatore, durata);\medskip \\
+CONVEGNO(\underline{nome}, dataInizio, dataFine, numeroSessioni, tipo, luogo)\\
+INTERVENTO\_IN\_CONVEGNO(\underline{nomeConvegno, idIntervento, nomeSessione}, orarioInizio)\\
+SESSIONE(\underline{nome, nomeConvegno}, data, orarioInizio, orarioFine)\\
+INTERVENTO(\underline{id}, titolo, relatore, durata)\medskip \\
 dove \textbf{numeroSessioni} è un intero, \textbf{tipo} può assumere valori (seminario, simposio, conferenza), \textbf{luogo} è generico (VARCHAR è sufficiente), INTERVENTO\_IN\_CONVEGNO.\textbf{orarioInizio} è l'orario di inizio dell'intervento all'interno della sessione. Gli attributi inerenti al tempo devono avere il fuso orario.
 
 \paragraph{Domanda 1}\dotfill
@@ -2268,6 +2266,7 @@ dove \textbf{numeroSessioni} è un intero, \textbf{tipo} può assumere valori (s
 
 \paragraph{Soluzione (incompleta)}\dotfill
 \lstset{language=Python}
+\begin{footnotesize}
 \begin{lstlisting}[tabsize=2]
 from datetime import date, timedelta
 from decimal import Decimal
@@ -2276,34 +2275,65 @@ import psycopg2
 
 fine = 0
 psw = getpass("Inserire la password: ")
-    
-conn = psycopg2.connect(host="dbserver.scienze.univr.it",
-	database="id468wfl", user="id468wfl", password=psw)
-	
-with conn:	#prima serve cambiare 'isolation_level' ???
+
+conn = psycopg2.connect(host="dbserver.scienze.univr.it", database="id468wfl", 
+		user="id468wfl", password=psw)
+
+with conn:
 	with conn.cursor() as cur:
 		while(not fine):
+
+			check = 0
 			nomeConvegno = input("Inserire il nome del convegno: ")
+			#check esistenza convegno
+			while not check:
+				cur.execute("SELECT * FROM Convegno WHERE nome = %s", (nomeConvegno,))
+				if not cur.fetchall():
+					nomeConvegno = input("Nome di convegno inesistente. Reinserire: ")
+				else:
+					check = 1
+
+			check = 0
 			nomeSessione = input("Inserire il nome della sessione: ")
+			#check esistenza sessione
+			while not check:
+				cur.execute("SELECT * FROM Sessione WHERE nome = %s AND nomeConvegno = %s",
+					(nomeSessione, nomeConvegno))
+				if not cur.fetchall():
+					nomeSessione = input("Nome di sessione inesistente. Reinserire: ")
+				else:
+					check = 1
+
+			check = 0
 			idIntervento = input("Inserire l'id dell'intervento: ")
+			#check esistenza intervento
+			while not check:
+				cur.execute("SELECT * FROM Intervento WHERE id = %s", (idIntervento,))
+				if not cur.fetchall():
+					idIntervento = input("ID di intervento inesistente. Reinserire: ")
+				else:
+					check = 1
+
 			orarioInizio = input("Inserire l'orario di inizio: ")
-			#con i vari check
+			#TODO: check orarioInizio Intervento > orarioInizio e < orarioFine sessione
+			#TODO: check orarioInizio Intervento + durata <= orarioFine sessione
+
+			#inserimento nuova tupla
+			cur.execute("INSERT INTO INTERVENTO_IN_CONVEGNO ( nomeConvegno, \
+					idIntervento, nomeSessione, orarioInizio) values (%s,%s,%s,%s)", 
+					(nomeConvegno, idIntervento, nomeSessione, orarioInizio) )
 			
-			cur.execute("INSERT INTO INTERVENTO_IN_CONVEGNO ( \ 	
-					nomeConvegno, idIntervento, nomeSessione, orarioInizio) \
-					values (%s,%s,%s,%s)", (nomeConvegno, idIntervento, 
-					nomeSessione, orarioInizio) )
+			print("Esito: " + cur.statusmessage)
 			
-			cur.statusmessage
-			
-			scelta = ""
-			while(scelta != "S" or scelta != "n"):
-				scelta = input("Continuare inserimento? (S/n)")
+			scelta = "" 
+			while(scelta != "S" and scelta != "n"):
+				scelta = input("(S/n) Continuare inserimento? ")
 			if(scelta == "n"):
 				fine = 1
 				
-
+conn.close()
 \end{lstlisting}
+\end{footnotesize}
 
 \paragraph{Domanda 4}\dotfill
 \\Scrivere il codice PostgreSQL, definendo anche eventuali viste, per rispondere alle seguenti due interrogazioni nel modo più efficace:
@@ -2336,8 +2366,8 @@ with conn:	#prima serve cambiare 'isolation_level' ???
 		-- date-date=integer (es: '2018-01-03'-'2018-01-01' = 2)
 	GROUP BY C.nome, S.data;
 \end{lstlisting}
-\paragraph{Domanda 5}\dotfill
-\\Si consideri il seguente piano di esecuzione:
+\paragraph{Domanda 5}\dotfill \medskip \\
+Si consideri il seguente piano di esecuzione:
 \begin{scriptsize}
 \begin{lstlisting}[tabsize=2]
 	HashAggregate (cost=1859.67..1866.24 ROWS=657 width=60
