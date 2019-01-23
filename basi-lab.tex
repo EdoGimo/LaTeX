@@ -185,7 +185,7 @@ cognome VARCHAR (20) NOT NULL DEFAULT ''
 		primaria della relazione:
 		\begin{itemize}
 			\item Si usa una sola volta per tabella.
-			\item Implica il vincolo \lstinline|NOT NULL|.
+			\item Implica i vincoli \lstinline|NOT NULL| e \lstinline|UNIQUE|.
 		\end{itemize}
 	
 	\textbf{Esempio: }
@@ -204,11 +204,11 @@ PRIMARY KEY(nome, cognome)
 In molti casi, un’espressione è nulla se uno degli operandi è nullo. Conviene quindi mettere sempre \lstinline|NOT NULL| insieme al vincolo \lstinline|CHECK()|!
 	\begin{lstlisting}
 CREATE TABLE Impiegato (
-...
-stipendio NUMERIC (8 ,2) DEFAULT 500.00 NOT NULL
-	CHECK ( stipendio >= 0.0) , -- check di attributo
-UNIQUE ( cognome , nome ) ,
-CHECK ( nome <> cognome ) -- check di tabella
+	...
+	stipendio NUMERIC (8 ,2) DEFAULT 500.00 NOT NULL
+		CHECK ( stipendio >= 0.0) , -- check di attributo
+	UNIQUE ( cognome , nome ) ,
+	CHECK ( nome <> cognome ) -- check di tabella
 );
 	\end{lstlisting}
 	
@@ -233,13 +233,13 @@ dal valore nullo, sia presente tra i valori di B nella tabella esterna.
 		\textbf{Esempio:}
 		\begin{lstlisting}
 CREATE TABLE Interna(
-...
-attributo VARCHAR(15) REFERENCES TabellaEsterna (chiave)
-...
-piano VARCHAR (10),
-stanza INTEGER,
-FOREIGN KEY (piano, stanza) 
-	REFERENCES Ufficio (piano, nStanza)
+	...
+	attributo VARCHAR(15) REFERENCES TabellaEsterna (chiave)
+	...
+	piano VARCHAR (10),
+	stanza INTEGER,
+	FOREIGN KEY (piano, stanza) 
+		REFERENCES Ufficio (piano, nStanza)
 );
 		\end{lstlisting}
 		
@@ -278,8 +278,7 @@ UPDATE tabella
 	[ WHERE condizione ];
 		\end{lstlisting}
 	\lstinline|condizione| è una espressione booleana che seleziona quali righe
-	aggiornare. Se \lstinline|WHERE| non è presente, tutte le tuple saranno aggiornate.
-	
+	aggiornare. Se \lstinline|WHERE| non è presente, tutte le tuple saranno aggiornate. \medskip \\
 	\textbf{Esempio: }
 	\begin{lstlisting}
 UPDATE impiegato
@@ -295,7 +294,12 @@ UPDATE impiegato
 		\begin{lstlisting}
 DELETE FROM impiegato WHERE matricola = 'A001';
 		\end{lstlisting}
+		In assenza di una condizione vengono eliminate tutte le tuple della tabella.
+	\subsection{Comando DROP TABLE}
 		Una tabella viene cancellata con il comando \lstinline|DROP TABLE|.
+		\begin{lstlisting}
+DROP TABLE impiegato;
+		\end{lstlisting}
 		
 	\subsection{Politiche di reazione}
 		In SQL si possono attivare diverse politiche di adeguamento della tabella
@@ -321,25 +325,27 @@ FOREIGN KEY ( column_name [ , ... ]) REFERENCES
 			essere sempre valido. Quindi, la modifica del valore di un attributo
 			riferito nella tabella master non viene effettuata.
 		\end{itemize}
-		
 		Si possono aggiungere/rimuovere anche dopo la creazione della tabella:
 		\begin{itemize}
 \item Per aggiungere:
 \begin{lstlisting}
-ALTER TABLE nome_tabella ADD CONSTRAINT def_vincolo;
+ALTER TABLE nome_tabella ADD [ CONSTRAINT nome_vincolo ]
+	CHECK (def_vincolo);
 \end{lstlisting}
-dove def\_vincolo = dichiarazione vincolo di tabella.\\
+dove \lstinline|def_vincolo| = dichiarazione vincolo di tabella. \medskip \\
 Esempio: 
 \begin{lstlisting}
 ALTER TABLE museo ADD CONSTRAINT cons_prezzo 
 	CHECK (costo > 0.0);
 \end{lstlisting}
+Se non si definisce un nome del constraint, il DBMS ne assegna uno.
 \item Per rimovere:
 \begin{lstlisting}
 ALTER TABLE nome_tabella DROP CONSTRAINT nome_vincolo;
 \end{lstlisting}
-Il nome\_vincolo è il nome dato durante la dichiarazione. Se non si definisce un nome, il DBMS ne assegna uno.
+dove \lstinline|nome_vincolo| è il nome scelto durante la dichiarazione (o definito dal DBMS).
 \end{itemize}
+\bigskip
 	\subsection{Query sul database}
 		In SQL, esiste solo un comando per interrogare un base di dati: \lstinline|SELECT|.
 		\begin{lstlisting}
@@ -354,7 +360,7 @@ SELECT [ DISTINCT ]
 [ ORDER BY expression [ ASC | DESC | USING operator ]]
 ...
 		\end{lstlisting}
-		dove
+		dove:
 		\begin{itemize}
 			\item \lstinline|*| è un’abbreviazione per indicare tutti gli attributi delle tabelle.
 			\item \lstinline|expression| è un’espressione che determina un attributo.
@@ -370,7 +376,7 @@ SELECT [ DISTINCT ]
 		
 	\subsubsection{Operatore LIKE e SIMILAR TO}
 		Nella clausola \lstinline|WHERE| può apparire l’operatore \lstinline|LIKE| per il confronto di
-		stringhe (\lstinline|ILIKE| se il confronto è case-insensitive). \lstinline|LIKE| è un operatore di pattern matching. I pattern si costruiscono con i caratteri speciali \lstinline|_| (1 carattere qualsiasi) e \lstinline|%| (0 o più caratteri qualsiasi):
+		stringhe (\lstinline|ILIKE| se il confronto è case-insensitive). \lstinline|LIKE| è un operatore di pattern matching: i pattern si costruiscono con i caratteri speciali \lstinline|_| (1 carattere qualsiasi) e \lstinline|%| (0 o più caratteri qualsiasi):
 		\begin{lstlisting}
 WHERE attributo [ NOT ] LIKE 'pattern';
 		\end{lstlisting}
@@ -383,7 +389,7 @@ WHERE attributo [ NOT ] LIKE 'pattern';
 				\lstinline|+| = ripetizione del precedente match UNA o più volte.
 			\item \lstinline|{n}| = ripetizione del precedente match n volte (\textbf{nè più nè meno}).
 			\item \lstinline|{n,m}| = ripetizione del precedente match almeno n e non più di m volte.
-			\item \lstinline|[...]| = ... è un elenco di caratteri ammissibili
+			\item \lstinline|[...]| = ... è un elenco di caratteri ammissibili. Con '\lstinline|-|' si possono usare intervalli (ad esempio con \lstinline|[A-Z]| si selezionano tutte le lettere maiuscole dell'alfabeto).
 		\end{itemize}
 		\textbf{Esempio:} Studenti con cognome che inizia con 'A' o 'B', o 'D', o 'N' e finisce con 'a':
 		\begin{lstlisting}
@@ -393,9 +399,7 @@ WHERE cognome SIMILAR TO '[ABDN]{1}%a';
 		
 	\subsubsection{Operatore BETWEEN}
 		Nella clausola \lstinline|WHERE| può apparire l’operatore \lstinline|[ NOT ] BETWEEN| per testare
-		l’appartenenza di un valore ad un intervallo. Gli estremi dell'intervallo sono \textbf{inclusi}.
-		
-		\noindent
+		l’appartenenza di un valore ad un intervallo. Gli estremi dell'intervallo sono \textbf{inclusi}.\medskip \\
 		\textbf{Esempio:} Tutti gli studenti che hanno matricola tra 'IN0002' e 'IN0004'.
 	\begin{lstlisting}
 SELECT cognome, nome, matricola FROM Studente
@@ -404,9 +408,7 @@ WHERE matricola BETWEEN 'IN0002' AND 'IN0004';
 	
 	\subsubsection{Operatore IN}
 		Nella clausola \lstinline|WHERE| può apparire l’operatore \lstinline|[ NOT ] IN| per testare
-		l’appartenenza di un valore ad un insieme.
-	
-		\noindent
+		l’appartenenza di un valore ad un insieme. \medskip \\
 		\textbf{Esempio: }Tutti gli studenti che hanno matricola nell’elenco 'IN0001', 'IN0003' e
 		'IN0005'.
 		\begin{lstlisting}
@@ -451,10 +453,10 @@ ORDER BY cognome DESC, nome;
 		Quando si usano gli operatori aggregati, dopo la \lstinline|SELECT| \textit{non} possono
 		comparire espressioni che usano i valori presenti nelle singole tuple
 		perché il risultato è sempre e solo una tupla. \\
-		Questi operatori si possono usare solo in \lstinline|SELECT| e \lstinline|HAVING|; il loro uso \textbf{con altri valori	} necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query. \medskip \\
+		Questi operatori si possono usare solo in \lstinline|SELECT| e \lstinline|HAVING|; il loro uso in una SELECT che richiede \textbf{altri valori}, oltre all'operatore in questione, necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query (esempi più avanti). \bigskip \\
 		L'operatore \lstinline|COUNT| restituisce il numero di tuple significative nel risultato dell’interrogazione:
 		\begin{lstlisting}
-COUNT ({ * | expr | ALL expr | DISTINCT expr }])
+COUNT ({ * | [ALL] expr | DISTINCT expr })
 		\end{lstlisting}
 		dove \lstinline|expr| è un’espressione che usa attributi e funzioni di attributi ma non
 		operatori di aggregazione (per quel caso è necessario l'uso di una vista).\\
@@ -465,7 +467,7 @@ COUNT ({ * | expr | ALL expr | DISTINCT expr }])
 			expr è non nullo.
 			\item \lstinline|COUNT(DISTINCT expr)| come con \lstinline|COUNT(expr)| ma con l’ulteriore
 			condizione che i valori di \lstinline|expr| sono distinti.
-		\end{itemize}
+		\end{itemize} \medskip
 		\lstinline|MAX|, \lstinline|MIN|, \lstinline|AVG|, \lstinline|SUM| determinano un valore numerico (\lstinline|SUM|/\lstinline|AVG|) o alfanumerico (\lstinline|MAX|/\lstinline|MIN|)
 		considerando le tuple significative nel risultato dell’interrogazione.\medskip \\ 
 		\textbf{Esempi: }\\
@@ -492,7 +494,7 @@ FROM Studente;
 		argomento della \lstinline|SELECT| solamente gli attributi utilizzati per il
 		raggruppamento e funzioni aggregate valutate sugli altri attributi.\medskip \\
 		\textbf{Esempi: }\\		
-		Visualizzare tutte le città raggruppate della tabella Studente.
+		Visualizzare tutte le città raggruppate (=no duplicati) della tabella Studente.
 		\begin{lstlisting}
 SELECT città
 FROM Studente
@@ -509,7 +511,7 @@ GROUP BY cognome, LOWER(città);
 		
 		\lstset{moredelim=[is][\sout]{|}{|}}
 		\begin{lstlisting}
-SELECT |cognome|, città
+SELECT |cognome,| città
 FROM Studente
 GROUP BY città;
 		\end{lstlisting}
@@ -663,21 +665,22 @@ FROM Impiegato I RIGHT OUTER JOIN Reparto R
 		il risultato di una interrogazione (possibile insieme di valori). Quindi:
 		\begin{itemize}
 				\item Gli operatori di confronto tradizionali $ (<, >, <>, =, \dots) $ \textbf{NON} possono	essere usati.
-				\item Si devono usare dei nuovi operatori, \lstinline|EXISTS|, \lstinline|IN|, 
-				\lstinline|NOT IN|, \lstinline|ALL|, \lstinline|ANY/SOME|, che estendono i tradizionali
+				\item Si devono usare dei nuovi operatori (\lstinline|EXISTS|, \lstinline|IN|, 
+				\lstinline|NOT IN|, \lstinline|ALL|, \lstinline|ANY/SOME|), che estendono i tradizionali
 				operatori a questo tipo di confronti.
 			\end{itemize}
 			
-	\subsubsection{Operatore EXISTS}
+	\subsubsection*{Operatore EXISTS}
 		\begin{lstlisting}
 EXISTS (subquery)
 		\end{lstlisting}
-			dove \lstinline|(subquery)| è una \lstinline|SELECT|.\\
-			\lstinline|EXISTS| ritorna falso se \lstinline|(subquery)| non contiene righe; vero altrimenti.
-			
-			\noindent
-			\lstinline|EXISTS| è significativo quando nella \lstinline|(subquery)| si selezionano righe
-			usando i valori della riga corrente nella \lstinline|SELECT| principale: data binding. \\
+		\begin{itemize}
+		\item \lstinline|(subquery)| è una \lstinline|SELECT|.
+		\item \lstinline|EXISTS| ritorna falso se \lstinline|(subquery)| non contiene righe, vero altrimenti.
+		\item \lstinline|EXISTS| è significativo quando nella \lstinline|(subquery)| si selezionano righe
+			usando i valori della riga corrente nella \lstinline|SELECT| principale: data binding.
+		\end{itemize}
+			\medskip
 			\textbf{Esempio:} Determinare i nomi degli impiegati che sono diversi tra loro ma di pari lunghezza:
 			\begin{lstlisting}[tabsize=4]
 SELECT I.nome
@@ -693,7 +696,7 @@ WHERE EXISTS(
 			\textbf{Nota: } L’operatore \lstinline|NOT| può essere usato in coppia con \lstinline|EXISTS|.
 			\bigskip
 			
-	\subsubsection{Operatore IN}
+	\subsubsection*{Operatore IN}
 		\begin{lstlisting}
 [ ROW ] (expr [ ,...]) IN (subquery)
 		\end{lstlisting}
@@ -720,18 +723,19 @@ WHERE ROW (I.nome, I.cognome ) IN (
 );
 		\end{lstlisting}
 		
-	\subsubsection{Operatore ANY/SOME}
+	\subsubsection*{Operatore ANY/SOME}
 		\begin{lstlisting}
 expression operator ANY (subquery)
 expression operator SOME (subquery)
 		\end{lstlisting}
-		\noindent
-		dove \lstinline|(subquery)| è una \lstinline|SELECT| che deve restituire UNA sola colonna; \\
-		\lstinline|expression| è un’espressione che coinvolge attributi della \lstinline|SELECT|
-		principale.\\
-		\lstinline|operator| è un operatore di confronto, come '\lstinline|=|' o '\lstinline|>=|'.\\
-		\lstinline|ANY| : ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di una qualsiasi riga del risultato di \lstinline|(subquery)|.\\
-		\lstinline|SOME| è uno sinonimo di \lstinline|ANY|. \medskip
+		\begin{itemize}
+		\item \lstinline|(subquery)| è una \lstinline|SELECT| che deve restituire UNA sola colonna.
+		\item \lstinline|expression| è un’espressione che coinvolge attributi della \lstinline|SELECT|
+		principale.
+		\item \lstinline|operator| è un operatore di confronto, come '\lstinline|=|' o '\lstinline|>=|'.
+		\item Il confronto ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di una qualsiasi riga del risultato di \lstinline|(subquery)|.
+		\end{itemize}
+		\lstinline|SOME| è un sinonimo di \lstinline|ANY|. \medskip
 		
 
 		\textbf{Esempio:} Visualizzare il nome degli insegnamenti che hanno un numero di crediti
@@ -745,18 +749,18 @@ WHERE IE.crediti < ANY (
 );
 		\end{lstlisting}
 		\medskip 
-	\subsubsection{Operatore ALL}
+	\subsubsection*{Operatore ALL}
 		\begin{lstlisting}
 expression operator ALL (subquery)
 		\end{lstlisting}
-		\noindent
-		\lstinline|(subquery)| è una \lstinline|SELECT| che deve restituire UNA sola colonna;\\
-		\lstinline|expression| è un’espressione che coinvolge attributi della \lstinline|SELECT|
-		principale.\\
-		\lstinline|operator| è un operatore di confronto, come ’\lstinline|=|’ o ’\lstinline|>=|’.\\
-		\lstinline|ALL| : ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di ciascuna riga del risultato di \lstinline|(subquery)|. \medskip 
-		
-		
+		\begin{itemize}
+		\item \lstinline|(subquery)| è una \lstinline|SELECT| che deve restituire UNA sola colonna.
+		\item \lstinline|expression| è un’espressione che coinvolge attributi della \lstinline|SELECT|
+		principale.
+		\item \lstinline|operator| è un operatore di confronto, come ’\lstinline|=|’ o ’\lstinline|>=|’.
+		\item Il confronto ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di ciascuna riga del risultato di \lstinline|(subquery)|.
+		\end{itemize}
+\medskip 		
 		\textbf{Esempio:} Trovare il nome degli insegnamenti (o moduli) con almeno un docente e
 		crediti maggiori rispetto ai crediti di ciascun insegnamento del corso di laurea
 		con id=6.
@@ -770,8 +774,8 @@ WHERE IE.crediti > ALL (
     WHERE id_corsostudi = 6
 );
 		\end{lstlisting}
-		
-	\subsubsection{Operatori insiemistici UNION/INTERSECT/EXCEPT}
+		\newpage
+	\subsubsection*{Operatori insiemistici UNION/INTERSECT/EXCEPT}
 		Gli operatori insiemistici si possono utilizzare solo al livello più esterno
 		di una query, operando sul risultato di due o più clausole \lstinline|SELECT|.\\
 		Gli operatori insiemistici sono: \lstinline|UNION|, \lstinline|INTERSECT| e \lstinline|EXCEPT|.\\
@@ -822,7 +826,7 @@ EXCEPT
 SELECT nome
 FROM CorsoStudi ;
 		\end{lstlisting}
-	
+	\newpage
 	\subsection{Viste}
 		\begin{itemize}
 				\item Le viste sono tabelle "virtuali" il cui contenuto dipende dal contenuto
@@ -911,20 +915,24 @@ ON tabella [ USING method ]
 	\end{lstlisting}
 	dove:
 	\begin{itemize}
+		\item \lstinline|UNIQUE| si usa se si vuole che l'indice imponga anche l'unicità dei valori dei dati;
 		\item \verb|method| è il tipo di indice;
 		\item \verb|nomeAttr| o \verb|expression| indicano su quali colonne o espressioni con colonne si deve creare l'indice;
-		\item \lstinline|ASC/DESC| indica se l'attributo è ascendente o discendente;
+		\item \lstinline|ASC/DESC| indica se l’indice è ordinato in modo ascendente o discendente;
 		\item \lstinline|ALTER INDEX| e \lstinline|DROP INDEX| permettono di modificare o rimuovere gli indici.
 	\end{itemize}
 
-	Una volta creato, l'indice è usato dal sistema ogni volta che l'ottimizzatore di query lo ritiene opportuno, ovvero solo quando il vantaggio derivato è di una certa consistenza. Un indice può anche essere utilizzato per ottimizzare l'esecuzione di \lstinline|UPDATE| e \lstinline|DELETE|, se nella clausola \lstinline|WHERE| ci sono attributi indicizzati.
-	
-	\noindent
+	Una volta creato, l'indice è usato dal sistema ogni volta che l'ottimizzatore di query lo ritiene opportuno, ovvero solo quando il vantaggio derivato è di una certa consistenza. Un indice può anche essere utilizzato per ottimizzare l'esecuzione di \lstinline|UPDATE| e \lstinline|DELETE|, se nella clausola \lstinline|WHERE| ci sono attributi indicizzati. \medskip \\
+	\textbf{Esempio:}
+	\begin{lstlisting}
+CREATE INDEX nomeins_index ON Insegn(nomeins) ;
+	\end{lstlisting} \medskip
 	\textbf{Nota: PostgreSQL crea in automatico indici (B-tree) per gli attributi dichiarati come chiave primaria, quindi è inutile indicizzarli.}\\
 	Essendo indici B-tree, un indice (a,b,c,d) permette a query che filtrano ad esempio su (a), (a,b), o (a,b,c) di usare l'indice.
 	
 	\subsection{Comando ANALYZE}
-	Il comando \lstinline|ANALYZE| è usato per forzare l'aggiornamento delle statistiche di esecuzione delle query quando uno o più nuovi indici sono creati.
+	Il comando \lstinline|ANALYZE [nomeTabella]| aggiorna le statistiche circa il contenuto delle tabelle (e indici), statistiche poi usate dall'ottimizzatore di query per decidere quando usare gli indici.\\
+	Con il comando \lstinline|ANALYZE| dopo la creazione di uno o più nuovi indici si forza il DBMS ad aggiornare le statistiche di tutte le tabelle nel database corrente:
 	\begin{lstlisting}
 CREATE INDEX ie_id_corsostudi ON Inserogato (id_corsostudi) ;
 CREATE INDEX ie_id_insegn ON Inserogato (id_insegn);
@@ -940,8 +948,8 @@ ANALYZE;
 	Ognuno di questi tipi usa una tecnica algoritmica diversa e risulta migliore di altri in alcune situazioni (vedi \ref{createindex} per la specifica del tipo di indice da creare).
 	Se il tipo di indice non è specificato, viene creato un indice di tipo B-tree.
 	
-	 Nello specifico caso dell'indice B-tree, questo viene utilizzato quando l'attributo coinvolto è usato con gli operatori di confronto di valore o con i comandi \lstinline|BETWEEN, IN, IS NULL, IS NOT NULL | e \lstinline|LIKE|.
-	 La keyword \textbf{varchar\_pattern\_ops} è inserita quando si vuole che l'indice consideri anche i pattern del tipo \lstinline|LIKE 'stringa%'|.
+	 Nello specifico caso dell'indice B-tree, questo viene utilizzato quando l'attributo coinvolto è usato con gli operatori di confronto di valore ($<$, $<=$, $=$, $>=$, $>$) o con i comandi \lstinline|BETWEEN|,\lstinline|IN|, \lstinline|IS NULL|, \lstinline|IS NOT NULL| e \lstinline|LIKE|.
+	 La keyword \textbf{varchar\_pattern\_ops} abilita l’ottimizzatore a considerare l’indice anche quando ci sono pattern del tipo \lstinline|LIKE 'stringa%'|.
 	 
 	 \subsection{Indici multi-attributo}
 	 Se si hanno query con condizioni su coppie o terne, a volte può essere più efficiente l'uso di un indice dichiarato su due attributi rispetto a due indici mono-attributo.
@@ -956,8 +964,8 @@ WHERE IE.annoaccademico = '2006/2007'
 	 \end{lstlisting}
 	 che controlla gli attributi \verb|annoaccademico| e \verb|id_corsostudi|, è utile usare un indice multi-attributo che indicizzi i due campi:
 	 \begin{lstlisting}
-CREATE INDEX ie_aa_idcs ON Inserogato (annoaccademico,
-	id_corsostudi);
+CREATE INDEX ie_aa_idcs ON 
+	Inserogato (annoaccademico,	id_corsostudi);
 	 \end{lstlisting}
 	 Non sempre gli indici multi-attributo possono essere usati, come nel caso di espressioni con \lstinline|OR|.
 	 
@@ -965,8 +973,8 @@ CREATE INDEX ie_aa_idcs ON Inserogato (annoaccademico,
 	 Le query con condizioni su espressioni/funzioni di uno o più attributi di una tabella possono essere velocizzate creando indici sulle medesime espressioni/funzioni.\\
 Sintassi: \lstinline|CREATE INDEX nome ON nomeTabella(expression);|\\
 dove \lstinline|expression| è una espressione su uno o più attributi.
-Per opportunità, si considerano espressioni che sono frequenti nelle interrogazioni usate.
-\paragraph{Esempio 1.}Indice sull'espressione \lstinline|LOWER(nomeins)|:
+Come nel caso degli indici su attributi, si considera la creazione per espressioni che sono frequenti nelle interrogazioni usate.
+\paragraph{Esempio.}Indice sull'espressione \lstinline|LOWER(nomeins)|, da usare anche con pattern matching:
 \begin{lstlisting}
 CREATE INDEX ins_lower_nonins ON
 	Insegn ( LOWER ( nomeins ) varchar_pattern_ops );
@@ -1008,15 +1016,13 @@ Recheck Cond : ( id < 1000)
 -> Bitmap INDEX Scan ON insegn_pkey(cost=0..18.39 ROWS=815 width=0)
 	INDEX Cond : ( id < 1000)
 	\end{lstlisting}
-	Prima viene eseguito il nodo foglia \lstinline|Bitmap Index Scan| che, grazie all'indice B-tree, permette di ritornare un vettore di bit che marca le righe da considerare. Il vettore viene poi passato al nodo padre \lstinline|Bitmap Heap Scan|, che esegue la selezione delle righe che hanno $id < 1000$. \medskip
+	Prima viene eseguito il nodo foglia \lstinline|Bitmap Index Scan| che, grazie all'indice B-tree, permette di ritornare un vettore di bit che marca il sottoinsieme di righe da considerare (in un B-tree se la chiave cercata non è esplicita in un nodo, esiste un sottoalbero con chiavi maggiori e minori della chiave cercata). Il vettore viene poi passato al nodo padre \lstinline|Bitmap Heap Scan|, che esegue la selezione delle righe che hanno $id < 1000$. 
 	
 	\paragraph{Esempio 3.}
 		Considerare questa query:
 	\begin{lstlisting}
-EXPLAIN SELECT *
-FROM t1, t2
-WHERE t1.unique1 < 100 
-	AND t1.unique2 = t2.unique2 ;
+EXPLAIN SELECT * FROM t1, t2
+	WHERE t1.unique1 < 100 AND t1.unique2 = t2.unique2 ;
 	\end{lstlisting}
 	Il piano corrispondente è:
 	\begin{lstlisting}
@@ -1027,8 +1033,9 @@ Merge JOIN (cost=198.11..268.19 ROWS=10 width=488)
 	-> Sort (cost=197.83..200.33 ROWS=1000..)
 	Sort KEY : t2.unique2
 		-> Seq Scan ON t2 (cost=0.00..148.00 ROWS=1000..)
-	\end{lstlisting}
-\lstinline|Merge JOIN| esegue il join ordinando le due tabelle rispetto agli attributi di join. \medskip
+	\end{lstlisting} \medskip
+\lstinline|Merge JOIN| esegue il join ordinando le due tabelle rispetto agli attributi di join. \lstinline|t1| è già ordinata via indice.
+\lstinline|t2| non è ordinata, quindi c’è un nodo \lstinline|Sort| .\medskip
 
 \paragraph{Esempio 4.}
 		Considerare questa query:
@@ -1052,7 +1059,27 @@ Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
 	\item I 2 nodi foglia restituiscono un vettore di bit: 1 per ogni riga chè può soddisfare il criterio;
 	\item Il nodo padre esegue l'AND dei due vettori di bit;
 	\item Il nodo root recupera le righe e fa la selezione finale.
-	\end{itemize}  \medskip
+	\end{itemize}  
+	
+	\paragraph{Esempio 5.}
+		Considerare questa query, leggermente diversa dalla precendente:
+	\begin{lstlisting}
+EXPLAIN SELECT * FROM Inserogato WHERE id <100 AND
+	id_discriminante >100;
+	\end{lstlisting}
+	Il piano corrispondente è:
+	\begin{lstlisting}
+Bitmap Heap Scan ON Inserogato(cost=4.95..317.09 ROWS=50..)
+	Recheck Cond : (id < 100) 
+	Filter: (id_discriminante > 100)
+	->  Bitmap INDEX Scan ON inserogato_pkey 
+				(cost=0.00..4.94 ROWS=86 width=0)
+		INDEX Cond: (id < 100)
+	\end{lstlisting} \medskip
+	La condizione \lstinline|id < 100| è così forte che conviene fare una lettura sull’indice della chiave e poi fare una selezione sulle righe indicate dal vettore di bit prodotto.
+	  
+	
+	\subsubsection*{EXPLAIN ANALYZE}
 	Esiste una variante estesa di \lstinline|EXPLAIN|, \lstinline|EXPAIN ANALYZE|, che esegue la query senza registrare le modifiche e mostra una stima verosimile dei tempi di esecuzione.\\
 	Esempio:
 	\url{https://robots.thoughtbot.com/reading-an-explain-analyze-query-plan}
@@ -1099,7 +1126,7 @@ Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
 					\item Attendere il \lstinline|COMMIT| o \lstinline|ROLLBACK| della transazione concorrente.
 					\item Riesaminare le righe per verificare che soddisfino ancora i criteri del comando.
 				\end{itemize}
-			\end{itemize}
+			\end{itemize} \medskip
 			\textbf{Esempio di anomalia Nonrepeatable reads:}
 			\begin{multicols}{2}
 				\noindent
@@ -1119,8 +1146,8 @@ DELETE FROM Web WHERE hits=10;
 
 				\end{lstlisting}
 			\end{multicols}
-			\lstinline|DELETE| non riesce a cancellare, anche se esiste un hits=10 sia prima sia dopo l'update: questo perchè \lstinline|SELECT|, che vede solo i valori registrati, ha saltato id=1 in fase di valutazione, perciò quando il \lstinline|DELETE| verrà sbloccato, ricontrollerà solamente se il valore corrispondente a id=2 è ancora valido. 
-			\newpage
+\lstinline|DELETE| non riesce a cancellare, anche se esiste un hits=10 sia prima sia dopo l'update: questo perchè \lstinline|SELECT|, che vede solo i valori registrati, ha saltato id=1 in fase di valutazione, perciò quando il \lstinline|DELETE| verrà sbloccato, ricontrollerà solamente se il valore corrispondente a id=2 è ancora valido. \newpage
+\noindent
 \textbf{Esempio di anomalia Phantom reads:}
 			\begin{multicols}{2}
 				\noindent
