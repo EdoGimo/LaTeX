@@ -84,8 +84,8 @@ CREATE TABLE nomeTabella (
 	I domini di default disponibili in Postgres sono:
 	\begin{itemize}
 		\item \lstinline|BOOLEAN|: valori booleani (true/false);
-		\item \lstinline|INTEGER|: valori interi a 4 byte;
-		\item \lstinline|SMALLINT|: valori interi a 2 bit;
+		\item \lstinline|INTEGER|: valori interi a 4 bytes;
+		\item \lstinline|SMALLINT|: valori interi a 2 bytes;
 		\item \lstinline|NUMERIC(p, s)|: valori decimali esatti, dove \lstinline|p| è la precisione del numero (cifre a sinistra e a destra della virgola) e \lstinline|s| la scala (numero di cifre decimali dopo la virgola);
 		\item \lstinline|DECIMAL(p, s)|: equivalente a \lstinline|NUMERIC|;
 		\item \lstinline|REAL|: valori in virgola mobile approssimati a 6 cifre decimali;
@@ -98,6 +98,7 @@ CREATE TABLE nomeTabella (
 	\begin{itemize}
 		\item \lstinline|CHAR/CHARACTER|: singoli caratteri;
 		\item \lstinline|CHAR(n)/CHARACTER(n)|:stringa di caratteri di lunghezza n;
+		\item \lstinline|VARCHAR|: stringhe di caratteri di lunghezza variabile;
 		\item \lstinline|VARCHAR(n)|: stringhe di caratteri di lunghezza variabile con limite n;
 		\item \lstinline|TEXT|: testo libero (solo Postgres).
 	\end{itemize}
@@ -347,7 +348,7 @@ dove \lstinline|nome_vincolo| è il nome scelto durante la dichiarazione (o defi
 \end{itemize}
 \bigskip
 	\subsection{Query sul database}
-		In SQL, esiste solo un comando per interrogare un base di dati: \lstinline|SELECT|.
+		In SQL esiste solo un comando per interrogare una base di dati: \lstinline|SELECT|.
 		\begin{lstlisting}
 SELECT [ DISTINCT ]
 [ * | expression [[ AS ] output_name ] [ , ...] ]
@@ -2041,7 +2042,7 @@ Codice SQL:
 	CREATE TABLE VOLO(
 		iataCompagnia IATACompagnia 
 			REFERENCES COMPAGNIA(iata),
-		numero INTEGER CHECK (numero > 0),
+		numero INTEGER NOT NULL CHECK (numero > 0),
 		orarioPartenza TIMESTAMP WITH TIME ZONE,
 		aeropPartenza IATAAeroporto
 			REFERENCES AEROPORTO(iata),
