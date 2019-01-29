@@ -390,7 +390,7 @@ WHERE attributo [ NOT ] LIKE 'pattern';
 				\lstinline|+| = ripetizione del precedente match UNA o più volte.
 			\item \lstinline|{n}| = ripetizione del precedente match n volte (\textbf{nè più nè meno}).
 			\item \lstinline|{n,m}| = ripetizione del precedente match almeno n e non più di m volte.
-			\item \lstinline|[...]| = ... è un elenco di caratteri ammissibili. Con '\lstinline|-|' si possono usare intervalli (ad esempio con \lstinline|[A-Z]| si selezionano tutte le lettere maiuscole dell'alfabeto).
+			\item \lstinline|[...]| = ... è un elenco di caratteri ammissibili. Con '\lstinline|-|' si possono selezionare intervalli (ad esempio con \lstinline|[A-Z]| si selezionano tutte le lettere maiuscole dell'alfabeto).
 		\end{itemize}
 		\textbf{Esempio:} Studenti con cognome che inizia con 'A' o 'B', o 'D', o 'N' e finisce con 'a':
 		\begin{lstlisting}
@@ -419,22 +419,18 @@ WHERE matricola IN ('IN0001', 'IN0003', 'IN0005');
 	
 	\subsubsection{Operatore IS NULL}
 		Nella clausola \lstinline|WHERE| può apparire l’operatore \lstinline|IS [ NOT ] NULL| per testare
-		se un valore è NOT KNOWN (=NULL) o no.
-	
-		\noindent
+		se un valore è NOT KNOWN (=NULL) o no. \medskip \\
 		\textbf{Esempio: }Tutti gli studenti che NON hanno una città.
 \begin{lstlisting}
 SELECT cognome, nome, città FROM Studente
 WHERE città IS NULL;
 \end{lstlisting}
-	\textbf{Nota: }In SQL, \lstinline|NULL| non è uguale a \lstinline|NULL|.
-	NON SI PUÒ usare \lstinline|'='| o \lstinline|'<>'| con il valore NULL!
+	\textbf{Nota: }In SQL, \lstinline|NULL| \textbf{non} è uguale a \lstinline|NULL|.
+	\textbf{NON} è possibile usare \lstinline|'='| o \lstinline|'<>'| con il valore NULL!
 	
 	\subsubsection{Operatore ORDER BY}
 		La clausola \lstinline|ORDER BY| ordina le tuple del risultato in ordine rispetto agli
-		attributi specificati.
-		
-		\noindent
+		attributi specificati. \medskip \\
 		\textbf{Esempio: }Tutti gli studenti in ordine decrescente rispetto al cognome e crescente
 		(lessicografico) rispetto al nome.
 		\begin{lstlisting}
@@ -454,7 +450,7 @@ ORDER BY cognome DESC, nome;
 		Quando si usano gli operatori aggregati, dopo la \lstinline|SELECT| \textit{non} possono
 		comparire espressioni che usano i valori presenti nelle singole tuple
 		perché il risultato è sempre e solo una tupla. \\
-		Questi operatori si possono usare solo in \lstinline|SELECT| e \lstinline|HAVING|; il loro uso in una SELECT che richiede \textbf{altri valori}, oltre all'operatore in questione, necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query (esempi più avanti). \bigskip \\
+		Questi operatori si possono usare solo in \lstinline|SELECT| e \lstinline|HAVING|; il loro uso in una SELECT che richiede \textbf{altri valori}, oltre all'operatore in questione, necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query. \bigskip \\
 		L'operatore \lstinline|COUNT| restituisce il numero di tuple significative nel risultato dell’interrogazione:
 		\begin{lstlisting}
 COUNT ({ * | [ALL] expr | DISTINCT expr })
@@ -471,7 +467,7 @@ COUNT ({ * | [ALL] expr | DISTINCT expr })
 		\end{itemize} \medskip
 		\lstinline|MAX|, \lstinline|MIN|, \lstinline|AVG|, \lstinline|SUM| determinano un valore numerico (\lstinline|SUM|/\lstinline|AVG|) o alfanumerico (\lstinline|MAX|/\lstinline|MIN|)
 		considerando le tuple significative nel risultato dell’interrogazione.\medskip \\ 
-		\textbf{Esempi: }\\
+		\textbf{Esempi: }\medskip \\
 		Calcola la media delle medie degli studenti.
 		\begin{lstlisting}
 SELECT AVG(media)::DECIMAL (5,2)
@@ -667,13 +663,13 @@ FROM Impiegato I RIGHT OUTER JOIN Reparto R
 		\begin{itemize}
 				\item Gli operatori di confronto tradizionali $ (<, >, <>, =, \dots) $ \textbf{NON} possono	essere usati.
 				\item Si devono usare dei nuovi operatori (\lstinline|EXISTS|, \lstinline|IN|, 
-				\lstinline|NOT IN|, \lstinline|ALL|, \lstinline|ANY/SOME|), che estendono i tradizionali
+				\lstinline|ALL|, \lstinline|ANY/SOME|), che estendono i tradizionali
 				operatori a questo tipo di confronti.
 			\end{itemize}
 			
 	\subsubsection*{Operatore EXISTS}
 		\begin{lstlisting}
-EXISTS (subquery)
+[NOT] EXISTS (subquery)
 		\end{lstlisting}
 		\begin{itemize}
 		\item \lstinline|(subquery)| è una \lstinline|SELECT|.
@@ -682,7 +678,7 @@ EXISTS (subquery)
 			usando i valori della riga corrente nella \lstinline|SELECT| principale: data binding.
 		\end{itemize}
 			\medskip
-			\textbf{Esempio:} Determinare i nomi degli impiegati che sono diversi tra loro ma di pari lunghezza:
+			\textbf{Esempio:} Determinare i nomi degli impiegati che sono diversi tra loro ma di pari lunghezza.
 			\begin{lstlisting}[tabsize=4]
 SELECT I.nome
 FROM Impiegato I
@@ -693,13 +689,9 @@ WHERE EXISTS(
 			\end{lstlisting}
 			\lstinline|I.nome| nella subquery è il valore di nome nella riga corrente della \lstinline|SELECT| principale.
 			
-			\noindent
-			\textbf{Nota: } L’operatore \lstinline|NOT| può essere usato in coppia con \lstinline|EXISTS|.
-			\bigskip
-			
 	\subsubsection*{Operatore IN}
 		\begin{lstlisting}
-[ ROW ] (expr [ ,...]) IN (subquery)
+[ ROW ] (expr [ ,...]) [NOT] IN (subquery)
 		\end{lstlisting}
 		
 		\begin{itemize}
@@ -714,8 +706,8 @@ WHERE EXISTS(
 			
 				\item Il confronto ritorna vero se i valori sono uguali ai valori di almeno una
 			riga della subquery.
-			\end{itemize}
-		\textbf{Esempio:} 
+			\end{itemize} \medskip 
+		\textbf{Esempio:} Determinare nome e cognome degli impiegati che lavorano anche nell'altra azienda.
 		\begin{lstlisting}
 SELECT I.nome, I.cognome
 FROM Impiegato I
@@ -736,11 +728,9 @@ expression operator SOME (subquery)
 		\item \lstinline|operator| è un operatore di confronto, come '\lstinline|=|' o '\lstinline|>=|'.
 		\item Il confronto ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di una qualsiasi riga del risultato di \lstinline|(subquery)|.
 		\end{itemize}
-		\lstinline|SOME| è un sinonimo di \lstinline|ANY|. \medskip
-		
-
-		\textbf{Esempio:} Visualizzare il nome degli insegnamenti che hanno un numero di crediti
-		inferiore alla media dell’ateneo di un qualsiasi anno accademico:
+		\lstinline|SOME| è un sinonimo di \lstinline|ANY|. \medskip \\
+				\textbf{Esempio:} Visualizzare il nome degli insegnamenti che hanno un numero di crediti
+		inferiore alla media dell’ateneo di un qualsiasi anno accademico.
 		\begin{lstlisting}
 SELECT DISTINCT I.nomeins, IE.crediti
 FROM Insegn I JOIN InsErogato IE ON I.id = IE.id_insegn
@@ -779,8 +769,7 @@ WHERE IE.crediti > ALL (
 	\subsubsection*{Operatori insiemistici UNION/INTERSECT/EXCEPT}
 		Gli operatori insiemistici si possono utilizzare solo al livello più esterno
 		di una query, operando sul risultato di due o più clausole \lstinline|SELECT|.\\
-		Gli operatori insiemistici sono: \lstinline|UNION|, \lstinline|INTERSECT| e \lstinline|EXCEPT|.\\
-		Si possono avere sequenze di \lstinline|UNION/INTERSECT/EXCEPT|
+		Gli operatori insiemistici sono: \lstinline|UNION|, \lstinline|INTERSECT| e \lstinline|EXCEPT|. Possono essere usati in sequenza.
 		\begin{lstlisting}[mathescape]
 query$_1$ { UNION or INTERSECT or EXCEPT } [ ALL ] query$_2$
 		\end{lstlisting}
@@ -1012,10 +1001,10 @@ EXPLAIN SELECT * FROM Insegn WHERE id < 1000;
 	\end{lstlisting}
 	Il piano corrispondente è:
 	\begin{lstlisting}
-Bitmap Heap Scan ON insegn ( cost=18. 60..13 2.79 ROWS=815...)
-Recheck Cond : ( id < 1000)
+Bitmap Heap Scan ON insegn (cost=18.60..132.79 ROWS=815...)
+Recheck Cond : (id < 1000)
 -> Bitmap INDEX Scan ON insegn_pkey(cost=0..18.39 ROWS=815 width=0)
-	INDEX Cond : ( id < 1000)
+   INDEX Cond : (id < 1000)
 	\end{lstlisting}
 	Prima viene eseguito il nodo foglia \lstinline|Bitmap Index Scan| che, grazie all'indice B-tree, permette di ritornare un vettore di bit che marca il sottoinsieme di righe da considerare (in un B-tree se la chiave cercata non è esplicita in un nodo, esiste un sottoalbero con chiavi maggiori e minori della chiave cercata). Il vettore viene poi passato al nodo padre \lstinline|Bitmap Heap Scan|, che esegue la selezione delle righe che hanno $id < 1000$. 
 	
@@ -1028,12 +1017,12 @@ EXPLAIN SELECT * FROM t1, t2
 	Il piano corrispondente è:
 	\begin{lstlisting}
 Merge JOIN (cost=198.11..268.19 ROWS=10 width=488)
-	Merge Cond : ( t1.unique2 = t2.unique2 )
+	Merge Cond : (t1.unique2 = t2.unique2 )
 	-> INDEX Scan USING t1_unique2 ON t1 (cost=0..656 ROWS=101..)
-		Filter : (unique1 < 100)
+	   Filter : (unique1 < 100)
 	-> Sort (cost=197.83..200.33 ROWS=1000..)
-	Sort KEY : t2.unique2
-		-> Seq Scan ON t2 (cost=0.00..148.00 ROWS=1000..)
+	   Sort KEY : t2.unique2
+	   -> Seq Scan ON t2 (cost=0.00..148.00 ROWS=1000..)
 	\end{lstlisting} \medskip
 \lstinline|Merge JOIN| esegue il join ordinando le due tabelle rispetto agli attributi di join. \lstinline|t1| è già ordinata via indice.
 \lstinline|t2| non è ordinata, quindi c’è un nodo \lstinline|Sort| .\medskip
@@ -1041,20 +1030,20 @@ Merge JOIN (cost=198.11..268.19 ROWS=10 width=488)
 \paragraph{Esempio 4.}
 		Considerare questa query:
 	\begin{lstlisting}
-EXPLAIN SELECT * FROM Inserogato WHERE id <1000 AND
-	id_discriminante >100;
+EXPLAIN SELECT * FROM Inserogato WHERE id < 1000 AND
+	id_discriminante > 100;
 	\end{lstlisting}
 	Il piano corrispondente è:
 	\begin{lstlisting}
 Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
-	Recheck Cond : (( id < 1000) AND ( id_discriminante > 100) )
+	Recheck Cond : ((id < 1000) AND (id_discriminante > 100) )
 	-> BitmapAnd (cost=743.92..743.92 ROWS=480 width=0)
-		-> Bitmap INDEX Scan ON inserogato_pkey
+	   -> Bitmap INDEX Scan ON inserogato_pkey
 					(cost=0.00..18.57 ROWS=837 width=0)
-		   INDEX Cond : ( id < 1000)
-		-> Bitmap INDEX Scan ON inserogato_discriminante_index
+		  INDEX Cond : (id < 1000)
+	   -> Bitmap INDEX Scan ON inserogato_discriminante_index
 					(cost=0.00..724.86 ROWS=39009 width=0)
-		   INDEX Cond : ( id_discriminante > 100)
+		  INDEX Cond : (id_discriminante > 100)
 	\end{lstlisting}
 	\begin{itemize}
 	\item I 2 nodi foglia restituiscono un vettore di bit: 1 per ogni riga chè può soddisfare il criterio;
@@ -1065,8 +1054,8 @@ Bitmap Heap Scan ON Inserogato(cost=743.92..2178.36 ROWS=480..)
 	\paragraph{Esempio 5.}
 		Considerare questa query, leggermente diversa dalla precendente:
 	\begin{lstlisting}
-EXPLAIN SELECT * FROM Inserogato WHERE id <100 AND
-	id_discriminante >100;
+EXPLAIN SELECT * FROM Inserogato WHERE id < 100 AND
+	id_discriminante > 100;
 	\end{lstlisting}
 	Il piano corrispondente è:
 	\begin{lstlisting}
@@ -1101,7 +1090,7 @@ Bitmap Heap Scan ON Inserogato(cost=4.95..317.09 ROWS=50..)
 			\item Repeatable Read
 			\item Serializable	
 		\end{itemize}
-		Durante l'esecuzione, in base al livello di isolamento si possono presentare delle anomalie, tra le quali:
+		Durante l'esecuzione, in base al livello di isolamento, si possono presentare delle anomalie, tra le quali:
 		\begin{itemize}
 		\item \textbf{Nonrepeatable reads}: la transazione legge un \lstinline|UPDATE| di cui è stato fatto il commit in un'altra transazione. La stessa riga ha quindi diversi valori rispetto all'inizio della transazione;
 		\item \textbf{Phantom reads}: la transazione legge un \lstinline|INSERT| o un \lstinline|DELETE| di cui è stato fatto il commit in un'altra transazione. Ci sono quindi nuove righe o righe mancanti rispetto all'inizio della transazione.
