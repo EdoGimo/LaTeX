@@ -1136,7 +1136,7 @@ DELETE FROM Web WHERE hits=10;
 
 				\end{lstlisting}
 			\end{multicols}
-\lstinline|DELETE| non riesce a cancellare, anche se esiste un hits=10 sia prima sia dopo l'update: questo perchè \lstinline|SELECT|, che vede solo i valori registrati, ha saltato id=1 in fase di valutazione, perciò quando il \lstinline|DELETE| verrà sbloccato, ricontrollerà solamente se il valore corrispondente a id=2 è ancora valido. \newpage
+Il comando \lstinline|DELETE| di $T_2$ non cancella alcun valore, anche se esiste un hits=10 sia prima sia dopo l'\lstinline|UPDATE|. Questo perchè \lstinline|DELETE|, vedendo solo i valori registrati, in fase di valutazione seleziona il valore corrispondente a id=2 e, quando viene sbloccato dal \lstinline|COMMIT| di $T_1$, ricontrolla solamente la validità della condizione di questo, senza vedere che ora il valore di id=1 rispetta la condizione. \newpage
 \noindent
 \textbf{Esempio di anomalia Phantom reads:}
 			\begin{multicols}{2}
@@ -1293,7 +1293,7 @@ HINT: the TRANSACTION might succeed if retried.
 	cur.execute("CREATE TABLE test (id SERIAL PRIMARY KEY, \ 
 		num integer, data varchar)")
 	cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)",
-		(100, "abc'def"))	#psyconpg2 fa le conversioni!
+		(100, "abc'def"))	#psycopg2 fa le conversioni!
 	\end{lstlisting}
 	\item \lstinline|executemany(comando, parametri)|: prepara ed esegue un \textit{comando} SQL per ciascun valore presente nella lista \textit{parametri}. Per come è attualmente implementato è meno efficiente di un unico insert con più tuple:
 	\begin{lstlisting}
@@ -1757,15 +1757,15 @@ try {
 \end{lstlisting}
 Esempio di url:
 \begin{lstlisting}
-"jdbc:postgresql://dbserver.scienze.univr.it/db0"
+"jdbc:postgresql://dbserver.scienze.univr.it:5432/db0"
 \end{lstlisting}\medskip
-La classse \lstinline|Connection| contiene i seguenti metodi fondamentali:
+La classe \lstinline|Connection| contiene i seguenti metodi fondamentali:
 \begin{itemize}
 \item \lstinline|createStatement()|: ritorna un oggetto \lstinline|Statement|, che permette di invare query statiche.
 \item \lstinline|prepareStatement(query)|: ritorna un oggetto \lstinline|PreparedStatement|, che rappresenta la query ma che permette di reinviare la stessa più volte ma con parametri diversi.
-\item \lstinline|commit()|: registra la transazione corrente (normalmente le connessioni in JDBC sono in auto-commit).
+\item \lstinline|commit()|: registra la transazione corrente (normalmente le connessioni in JDBC sono in auto-commit, il commit viene cioè eseguito al termine dell'esecuzione di ogni comando).
 \item \lstinline|rollback()|: abortisce la transazione corrente.
-\item \lstinline|close|: chiude la connessione corrente
+\item \lstinline|close()|: chiude la connessione corrente
 \end{itemize}
 
 \subsubsection{Differenza tra Statement e PreparedStatement}
@@ -1775,24 +1775,22 @@ La classse \lstinline|Connection| contiene i seguenti metodi fondamentali:
 \end{itemize}
 
 \subsection{Creazione ed esecuzione di statement}
-Gli statement sono le istruzioni SQL da eseguire sul database. Per statement semplici si può usare questo snippet:
+Gli statement sono le istruzioni SQL da eseguire sul database. Per statement semplici:
 \begin{lstlisting}
-try {
-	Statement s = connection.createStatement();
+try(Statement s = connection.createStatement()){
 	ResultSet rs = s.executeQuery("select * from Spese");
 } catch (SQLException e) {
 	e.printStackTrace();
 }
 \end{lstlisting}
 dove \lstinline|connection| è un'istanza della classe \lstinline|Connection|. \\
-Se lo statement è un comando di \lstinline|select| (come in questo caso) si usa il metodo \lstinline|executeQuery|, altrimenti nel caso di comandi di aggiornamento (\lstinline|insert|, \lstinline|update|) si usa il metodo \lstinline|executeUpdate| o \lstinline|executeLargeUpdate|, il quale \textit{ritorna il \textbf{numero di righe che sono state modificate}}.\medskip
+Se lo statement è un comando di \lstinline|select| (come in questo caso) si usa il metodo \lstinline|executeQuery|, altrimenti nel caso di comandi di aggiornamento (\lstinline|insert|, \lstinline|update|) si usa il metodo \lstinline|executeUpdate| (o \lstinline|executeLargeUpdate|), il quale \textit{ritorna il \textbf{numero di righe che sono state modificate}}.\medskip
 
 Se gli statement sono complessi e hanno magari una clausola \lstinline|where| con vari confronti, bisogna prima creare un oggetto \lstinline|PreparedStatement|, con la seguente sintassi:
 
 \begin{lstlisting}
-try {
-	PreparedStatement ps = connection.prepareStatement(
-		"insert into Spese(data, voce, importo) values(?, ?, ?)");
+try(PreparedStatement ps = connection.prepareStatement(
+		"insert into Spese(data, voce, importo) values(?, ?, ?)")){	
 	ps.setDate(1, date);
 	ps.setString(2, descr);
 	ps.setFloat(3, price);
@@ -1805,8 +1803,7 @@ dove \lstinline|connection| è un'istanza della classe \lstinline|Connection|.
 
 I punti interrogativi sono usati come segnaposto da rimpiazzare con i metodi \lstinline|setDate()|, \lstinline|setString()|, ecc.
 I metodi set funzionano passando come parametro un \textbf{indice} (partendo da 1), e il valore che si vuole sostituire nella query.
-In questo modo i punti interrogativi saranno rimpiazzati dai campi passati nei metodi set. \\
-\textbf{Nota: le connessioni sono auto-commit, il commit viene eseguito al termine dell'esecuzione di ogni comando.}
+In questo modo i punti interrogativi saranno rimpiazzati dai campi passati nei metodi set.
 
 \subsection{Accesso ai campi}
 La query eseguita con il metodo \lstinline|executeQuery()| ritorna un oggetto di tipo \lstinline|ResultSet|, il quale contiene lo stato e l'eventuale cursore sulla tabella risultato.
@@ -1831,7 +1828,254 @@ Quando gli statement da eseguire sono terminati, va chiusa la connessione utiliz
 connection.close();
 \end{lstlisting}
 
-\subsection{Modulo JDBC completo}
+\subsection{Esempio modulo JDBC}
+\begin{lstlisting}
+import java.math.BigDecimal;
+import java.sql.*;
+import java.text.*;
+
+public class AccessoPostgreSQL {
+	public static void main(String[] args ) throws SQLException, 
+			ClassNotFoundException, ParseException {
+			
+		// Caricamento driver
+		Class.forName("org.postgresql.Driver");
+		
+		// Creazione connessione
+		try ( Connection con = DriverManager.getConnection (
+		"jdbc:postgresql://dbserver.scienze.univr.it:5432/db0",
+		"user0", "xxx") ) { // try-with-resources
+		
+			try ( Statement st = con.createStatement() ) {
+				st.executeUpdate("DROP TABLE IF EXISTS Spese" );
+
+				// Creazione tabelle
+				st.execute("CREATE TABLE Spese ( id SERIAL PRIMARY
+				KEY, data DATE, voce VARCHAR, importo NUMERIC)");
+				
+				System.out.println("Esito creazione tabella: " +
+					st.getUpdateCount());
+					
+			} catch (SQLException e) {
+				System.out.println("Problema durante creazione
+					tabella: " + e.getMessage());
+				return ;
+			}
+			SimpleDateFormat sdf = new SimpleDateFormat(
+				"dd/MM/yyyy");
+			
+			// Inserimento dati
+			try(PreparedStatement pst = con.prepareStatement (
+				"INSERT INTO Spese(data, voce, importo) VALUES
+				(? ,? ,?),(? ,? ,?),(? ,? ,?),(? ,? ,?)") ) {
+				
+				pst.clearParameters();
+				pst.setDate(1, new Date (sdf.parse("24/02/2016")
+					.getTime()) );
+				pst.setString(2, "Stipendio");
+				pst.setBigDecimal(3, new BigDecimal("0.1") );
+				
+				pst.setDate(4, new Date (sdf.parse("24/02/2016")
+					.getTime()) );
+				pst.setString(5, "Stipendio \"Bis\" ");
+				pst.setBigDecimal(6, new BigDecimal("0.1") );
+
+				pst.setDate(7, new Date (sdf.parse("24/02/2016")
+					.getTime()) );
+				pst.setString(8, "Stipendio \"Tris\" ");
+				pst.setBigDecimal(9, new BigDecimal("0.1") );
+
+				pst.setDate(10, new Date (sdf.parse("27/02/2016")
+					.getTime()) );
+				pst.setString(11, "Affitto");
+				pst.setBigDecimal(12, new BigDecimal("-0.3") );
+				
+				int n = pst.executeUpdate();
+				System.out.println("Inserite " + n + " righe.");
+				
+			} catch ( SQLException e ) {
+				System.out.println("Errore durante inserimento 							dati: " + e.getMessage() );
+				return;
+			}	
+			
+			// Interrogazione e stampa
+			try(Statement st = con.createStatement () ) {
+				ResultSet rs = st.executeQuery("SELECT id,
+					data, voce, importo FROM Spese");
+				System.out.println(String.format("%055d",0)
+					.replace('0', '=') );
+				System.out.println(String.format(
+					"| %-2s | %-10s | %-20s | %10s | ", 
+					"Id", "Data", "Voce", "Importo") );
+				System.out.println(String.format(
+					"%055d", 0).replace('0', '-') );
+				BigDecimal tot = new BigDecimal(0);
+				
+				while(rs.next() ){
+					System.out.println(String.format(
+						"| %2s | %10s | %-20s | %10.2f |",
+						rs.getInt("id"), 
+						sdf.format(rs.getDate("data")), 
+						rs.getString("voce"), 
+						rs.getBigDecimal("importo"))
+					);
+					tot.add(rs.getBigDecimal("importo");
+				}		
+				// fine tabella
+				System.out.println(String.format(
+					"%055d", 0).replace('0', '=') );
+				System.out.println(String.format(
+					"%036d", 0).replace('0', ' ') + 
+					"Totale " + String.format("%10.2f", tot));
+					
+			} catch ( SQLException e ) {
+				System.out.println("Errore durante 
+					estrazione dati:" + e.getMessage());
+				return;
+			}
+		} catch (SQLException e){
+			System.out.println("Problema durante la	connessione 
+				iniziale alla base di dati: " + e.getMessage());
+			return;
+		}
+	}
+}
+\end{lstlisting}
+
+\subsection*{Ulteriore esempio JDBC (non da diapositive)}
+\begin{lstlisting}
+//Esecuzione (Test.java):
+// > javac -sourcepath .:postgresql-42.2.5.jar Test.java
+// > java -cp .:postgresql-42.2.5.jar  Test
+
+//programma per inserire/visualizzare valori nella tabella Mostra
+import java.sql.*;
+import java.text.*;
+import java.util.Scanner;
+
+class Test{
+    public static void main(String[] args) throws
+    		ClassNotFoundException, SQLException, ParseException{
+    		
+        //importo il driver
+        Class.forName("org.postgresql.Driver");
+        String user = "id123abc";
+        String password = "password";
+
+        Scanner scan = new Scanner(System.in);
+        
+        System.out.println("Scrivere 1 per inserire un nuovo
+        	valore, 2 per vedere quelli correnti:");
+        int scelta = scan.nextInt();
+        
+		scan.close();
+		
+        if(scelta != 1 && scelta != 2){
+            System.exit(1);
+        }
+
+        try( Connection connection = DriverManager.getConnection(
+"jdbc:postgresql://dbserver.scienze.univr.it:5432/id123abc", 
+user, password) ){
+
+            if(scelta == 1){
+                exInsert(connection);
+            } else{
+                exQuery(connection);
+            }
+            
+            connection.close();
+
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void exQuery (Connection conn){
+
+        try(Statement s = conn.createStatement()) {
+            ResultSet rs = s.executeQuery("SELECT * FROM Mostra");
+            
+            while(rs.next()){
+                System.out.println(
+                    String.format("| %-20s | %10s | %10s | %20s | \
+                    	%12s | %2d | %2d ",		//'-' formatta a sx  
+                    	rs.getString("titolo"),
+                    	rs.getDate("inizio"), rs.getDate("fine"),
+                    	rs.getString("museo"),
+                    	rs.getString("città"),
+                    	rs.getInt("prezzointero"),
+                    	rs.getInt("prezzoridotto"))
+                );
+            }
+        } catch (SQLException e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void exInsert(Connection connection) throws
+    		SQLException , ParseException{
+
+        Scanner scan2 = new Scanner(System.in);
+
+        //nome mostra
+        System.out.println("Inserire il nome della mostra:");
+        String nome = scan2.nextLine();
+
+        //data inizio mostra
+        System.out.println("Inserire la data di inizio \
+        	(dd/MM/yyyy):");
+        String datain = scan2.nextLine();
+
+        //data fine mostra
+        System.out.println("Inserire la data di fine \
+        	(dd/MM/yyyy):");
+        String datafin = scan2.nextLine();
+
+        //nome museo
+        System.out.println("Inserire il nome del museo:");
+        String museo = scan2.nextLine();
+
+        //città
+        System.out.println("Inserire la città:");
+        String città = scan2.nextLine();
+
+        //città
+        System.out.println("Inserire il costo intero:");
+        int prezzo = scan2.nextInt();
+
+        scan2.close();
+        
+        //INSERIMENTO               
+        try(PreparedStatement ps = connection.prepareStatement(
+                "insert into mostra(titolo, inizio, fine, museo, \
+                 città, prezzointero) values (?,?,?,?,?,?)")){
+                 
+            SimpleDateFormat sdf = new SimpleDateFormat(
+            	"dd/MM/yyyy");
+            ps.clearParameters();
+            ps.setString(1, nome);
+            ps.setDate(2, new Date(sdf.parse(datain).getTime()) );
+            ps.setDate(3, new Date(sdf.parse(datafin).getTime()) );
+            ps.setString(4, museo);
+            ps.setString(5, città);
+            ps.setInt(6, prezzo);
+            
+            ps.executeUpdate();	
+
+            System.out.println("Nuovo record inserito!");
+            System.out.println("Tabella aggiornata:");
+            exQuery(connection);
+            
+        } catch (Exception e){
+            System.out.println(e.getMessage());
+        }
+    }
+}
+\end{lstlisting}
+
+
+\subsection*{Modulo JDBC completo (non da diapositive)}
 Qui di seguito viene inserito un modulo jdbc per il controllo della tabella \lstinline|Spese| utilizzata negli esempi precedenti.
 
 \begin{lstlisting}[tabsize=2]
