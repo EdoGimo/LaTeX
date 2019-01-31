@@ -1748,9 +1748,14 @@ Class.forName("org.postgresql.Driver");
 Per collegarsi al database si effettua una chiamata che, passando gli opportuni parametri, ritorna un oggetto di tipo \lstinline|Connection|, che verrà usato per eseguire gli statement nelle prossime fasi.
 
 \begin{lstlisting}
-try {
-	Connection connection = DriverManager.getConnection(
-		[url], [utente], [password]);
+Connection connection = DriverManager.getConnection(
+	[url], [utente], [password]);
+\end{lstlisting}
+oppure con uno statement \textbf{try-with-resources} (chiusura delle risorse automatica):
+\begin{lstlisting}
+try(Connection connection = DriverManager.getConnection(
+		[url], [utente], [password]){
+	...
 } catch (SQLException e) {
 	System.out.println(e.getMessage());
 }
@@ -1763,9 +1768,9 @@ La classe \lstinline|Connection| contiene i seguenti metodi fondamentali:
 \begin{itemize}
 \item \lstinline|createStatement()|: ritorna un oggetto \lstinline|Statement|, che permette di invare query statiche.
 \item \lstinline|prepareStatement(query)|: ritorna un oggetto \lstinline|PreparedStatement|, che rappresenta la query ma che permette di reinviare la stessa più volte ma con parametri diversi.
-\item \lstinline|commit()|: registra la transazione corrente (normalmente le connessioni in JDBC sono in auto-commit, il commit viene cioè eseguito al termine dell'esecuzione di ogni comando).
-\item \lstinline|rollback()|: abortisce la transazione corrente.
-\item \lstinline|close()|: chiude la connessione corrente
+\item \lstinline|commit()|: registra la transazione corrente (normalmente le connessioni in JDBC sono in \textbf{auto-commit}, il commit viene cioè eseguito al termine dell'esecuzione di ogni comando).
+\item \lstinline|rollback()|: abortisce la transazione corrente (necessario \textit{setAutoCommit(false)} ).
+\item \lstinline|close()|: chiude la connessione corrente (\textbf{non} necessario con try-with).
 \end{itemize}
 
 \subsubsection{Differenza tra Statement e PreparedStatement}
@@ -1983,8 +1988,6 @@ user, password) ){
             } else{
                 exQuery(connection);
             }
-            
-            connection.close();
 
         } catch (SQLException e){
             System.out.println(e.getMessage());
@@ -2318,7 +2321,7 @@ Codice SQL:
 \end{lstlisting}
 (b) (forse troppi join usati)
 \begin{lstlisting}
-	SELECT VB.numeroBiglietto, COUNT(VB.ordinale), SUM(V.durata)
+	SELECT VB.numeroBiglietto, COUNT(*) as numVoli, SUM(V.durata)
 	FROM VOLIBIGLIETTO VB JOIN VOLO V on
  	 	VB.iataCompagnia = V.iataCompagnia and
  		VB.numero = V.numero and
@@ -2383,6 +2386,7 @@ for riga in voli:
         .format(str(riga[0]) , str(riga[1])) )
         
     oraPrecedente =  riga[1]
+    
 conn.close()
 
 \end{lstlisting}
