@@ -1196,7 +1196,7 @@ ERROR: could NOT serialize
 access due to concurrent UPDATE.
 			\end{lstlisting}
 			\end{multicols} 
-			La $T_2$ legge l'\lstinline|UPDATE| concorrente della $T_1$ e annulla. \medskip \\
+			La $T_2$ legge la registrazione dell'\lstinline|UPDATE| concorrente in $T_1$ e annulla. \medskip \\
 			\textbf{Esempio 2: anomalia Phantom reads}
 			\begin{multicols}{2}
 			\noindent
@@ -1266,7 +1266,11 @@ HINT: the TRANSACTION might succeed if retried.
 \section{Python e Database}
 	La API ufficiale di Python è la DB-API v2.0, che descrive come un modulo Python deve accedere a una base di dati esterna. Esistono diversi moduli (librerie) DB-API, si utilizzerà \textbf{psycopg2}.
 	\subsection{Connection}
-	L'accesso ad un database avviene tramite un oggetto di tipo \textbf{Connection}. Il metodo \textbf{connect()} accetta i parametri necessari per la connessione e ritorna un oggetto \textit{Connection}.\\
+	L'accesso ad un database avviene tramite un oggetto di tipo \textbf{Connection}. Il metodo \textbf{connect()} accetta i parametri necessari per la connessione e ritorna un oggetto \textit{Connection}:
+	\begin{lstlisting}
+	conn = psycopg2.connect(host = host, database = db, 
+			user = usr, password = psw)
+	\end{lstlisting}
 	Metodi principali dell'oggetto:
 	\begin{itemize}
 	\item \lstinline|cursor()|: ritorna un cursore della base di dati. Un oggetto cursore permette di inviare comandi SQL al DBMS.
@@ -1278,8 +1282,8 @@ HINT: the TRANSACTION might succeed if retried.
 	\item \lstinline|isolation_level|: proprietà r/w. Modifica il livello di isolamento per la prossima transazione. Valori leciti: \lstinline|'READ UNCOMMITTED'|, \lstinline|'READ COMMITTED'|,  \lstinline|'REPEATABLE READ'|, \\ \lstinline|'SERIALIZABLE'| e  \lstinline|'DEFAULT'| (di solito corrispondente a \lstinline[keywordstyle=\color{black}]|REPEATABLE READ|). \\
  Meglio assegnare questa variabile subito dopo la creazione della connessione.
 	\begin{lstlisting}
-	connector = psycopg2.connect(...)
-	connector.isolation_level = 'REPEATABLE READ'
+	conn = psycopg2.connect(...)
+	conn.isolation_level = 'REPEATABLE READ'
 	\end{lstlisting}
 	\end{itemize}
 	
@@ -1294,6 +1298,10 @@ HINT: the TRANSACTION might succeed if retried.
 		num integer, data varchar)")
 	cur.execute("INSERT INTO test (num, data) VALUES (%s, %s)",
 		(100, "abc'def"))	#psycopg2 fa le conversioni!
+	\end{lstlisting}
+	\textbf{Nota}: il secondo argomento della \lstinline|execute| deve sempre essere una tupla, anche se contiene una sola variabile. Python necessita di una virgola (dopo il valore tra parentesi) per creare una tupla con un singolo elemento:
+	\begin{lstlisting}
+	cur.execute("SELECT * FROM test WHERE id = %s", (100,) )
 	\end{lstlisting}
 	\item \lstinline|executemany(comando, parametri)|: prepara ed esegue un \textit{comando} SQL per ciascun valore presente nella lista \textit{parametri}. Per come è attualmente implementato è meno efficiente di un unico insert con più tuple:
 	\begin{lstlisting}
@@ -1391,7 +1399,8 @@ conn = psycopg2.connect(...)
 with conn :
 	with conn.cursor() as cur:
 		cur.execute([statement],[params])
-		...
+		
+conn.close()
 	\end{lstlisting}
 	\begin{itemize}
 	\item Quando si usa una connessione con il with, all’uscita dal blocco viene fatto un \textbf{commit} automatico, mentre la connessione \textbf{non viene chiusa}.
@@ -1726,15 +1735,11 @@ JDBC è una libreria di funzioni Java che consente di collegarsi ad un database 
 Le fasi principali per eseguire una qualsiasi operazione sono:
 
 \begin{enumerate}
-	\item Caricare il driver \lstinline|org.postgresql.Driver|;
-	
-	\item Collegarsi al database sul quale si intende operare;
-	
-	\item Creare gli statement da eseguire;
-	
-	\item Eseguire gli statement e il commit;
-	
-	\item Chiudere le risorse utilizzate.
+	\item Caricare il driver \lstinline|org.postgresql.Driver|;	
+	\item Collegarsi al database sul quale si intende operare;	
+	\item Creare gli statement da eseguire;	
+	\item Eseguire gli statement e il commit;	
+	\item Chiudere le risorse utilizzate (se necessario).
 \end{enumerate}
 
 \subsection{Caricamento del driver}
@@ -1784,6 +1789,7 @@ Gli statement sono le istruzioni SQL da eseguire sul database. Per statement sem
 \begin{lstlisting}
 try(Statement s = connection.createStatement()){
 	ResultSet rs = s.executeQuery("select * from Spese");
+	...
 } catch (SQLException e) {
 	e.printStackTrace();
 }
@@ -1796,6 +1802,7 @@ Se gli statement sono complessi e hanno magari una clausola \lstinline|where| co
 \begin{lstlisting}
 try(PreparedStatement ps = connection.prepareStatement(
 		"insert into Spese(data, voce, importo) values(?, ?, ?)")){	
+	ps.clearParameters();	
 	ps.setDate(1, date);
 	ps.setString(2, descr);
 	ps.setFloat(3, price);
@@ -1806,7 +1813,7 @@ try(PreparedStatement ps = connection.prepareStatement(
 \end{lstlisting}
 dove \lstinline|connection| è un'istanza della classe \lstinline|Connection|. 
 
-I punti interrogativi sono usati come segnaposto da rimpiazzare con i metodi \lstinline|setDate()|, \lstinline|setString()|, ecc.
+I punti interrogativi sono usati come segnaposto per i metodi \lstinline|set<tipo>(<index>, <valore>)|.
 I metodi set funzionano passando come parametro un \textbf{indice} (partendo da 1), e il valore che si vuole sostituire nella query.
 In questo modo i punti interrogativi saranno rimpiazzati dai campi passati nei metodi set.
 
@@ -1853,9 +1860,9 @@ public class AccessoPostgreSQL {
 		
 			try ( Statement st = con.createStatement() ) {
 				st.executeUpdate("DROP TABLE IF EXISTS Spese" );
-
+				
 				// Creazione tabelle
-				st.execute("CREATE TABLE Spese ( id SERIAL PRIMARY
+				st.execute("CREATE TABLE Spese (id SERIAL PRIMARY
 				KEY, data DATE, voce VARCHAR, importo NUMERIC)");
 				
 				System.out.println("Esito creazione tabella: " +
@@ -1899,10 +1906,10 @@ public class AccessoPostgreSQL {
 				System.out.println("Inserite " + n + " righe.");
 				
 			} catch ( SQLException e ) {
-				System.out.println("Errore durante inserimento 							dati: " + e.getMessage() );
+				System.out.println("Errore durante inserimento
+					dati: " + e.getMessage() );
 				return;
-			}	
-			
+			}			
 			// Interrogazione e stampa
 			try(Statement st = con.createStatement () ) {
 				ResultSet rs = st.executeQuery("SELECT id,
@@ -2332,8 +2339,7 @@ Codice SQL:
     		VB2.iataCompagnia = V2.iataCompagnia and
     		VB2.numero = V2.numero and
     		VB2.orarioPartenza = V2.orarioPartenza
-  		WHERE VB.numeroBiglietto = VB2.numeroBiglietto AND
-        	V2.aeropPartenza = 'X' AND V2.aeropArrivo = 'Y'
+  		WHERE V2.aeropPartenza = 'X' AND V2.aeropArrivo = 'Y'
   	)
 	GROUP BY VB.numeroBiglietto		--necessario per count/sum
 	ORDER BY VB.numeroBiglietto;
@@ -2363,7 +2369,7 @@ with conn:
 	
 			codice = input("Inserire il codice del biglietto: ")	
 			cur.execute("SELECT numero, orarioPartenza, ordinale
-				FROM VOLIBIGLIETTO WHERE numeroBiglietto =  %s
+				FROM VOLIBIGLIETTO WHERE numeroBiglietto = %s
 				ORDER BY orarioPartenza", (codice,) )
 				
 			voli = cur.fetchall()
@@ -2394,7 +2400,7 @@ conn.close()
 \paragraph{Domanda 4}\dotfill
 \\Si consideri la tabella \lstinline|BIGLIETTO| della Domanda 1. Si scrivano due transazioni in cui: 1) nella prima transazione si aumenta del 5\% il prezzo a tutti i biglietti che partono dopo il '2018-11-01 00:00:00 CET', mentre 2) nell'altra si abbassa il prezzo del 10\% a tutti i biglietti che hanno prezzo pari a 1050 euro. Che tipo di errore si può verificare se le due transazioni sono concorrenti? Che tipo di isolamento si deve dichiarare per eliminare l'errore? In quale transazione?
 
-\paragraph{Soluzione}\dotfill \\ 
+\paragraph{Soluzione}\dotfill \medskip \\ 
 \lstset{language=SQL}
 \begin{minipage}{0.5\textwidth}
 Transazione 1:
@@ -2403,13 +2409,14 @@ Transazione 1:
 Transazione 2:
 \end{minipage}
 \begin{footnotesize}
-\begin{minipage}{0.5\textwidth}
+\begin{minipage}{0.49\textwidth}
 \begin{lstlisting}[tabsize=2]
 	BEGIN;
 
 	UPDATE BIGLIETTO 
 	SET prezzo = prezzo * 1.05
-	WHERE dataAcquisto >= '2018-11-01';
+	WHERE dataAcquisto >= '2018-11-01 \
+		00:00:00 CET';
 	
 	COMMIT;
 \end{lstlisting}
@@ -2426,14 +2433,14 @@ Transazione 2:
 \end{lstlisting}
 \end{minipage}
 \end{footnotesize}\medskip \\
-La seconda transazione (T2) è stata scritta con livello di isolamento REPEATABLE READ per evitare anomalie Nonrepeatable reads; se infatti le due transazioni sono concorrenti, è possibile che il controllo della seconda transazione (T2) sul valore di 'prezzo' (se è = 1050) non legga determinati valori corretti (= T2 si ferma quando legge l'UPDATE concorrente di T1). \medskip \\
-Esempio con READ COMMITTED: ci sono 2 biglietti, il primo con prezzo 1050, l'altro 1000. T1 e T2 iniziano contemporaneamente. 
-T1 aumenta il prezzo dei due biglietti (il secondo diventa 1050), T2 controlla i biglietti da modificare; T2 vede che ci sono state modifiche in T1 e aspetta il commit. Nel momento del commit di T1, T2 ricontrolla SOLO il biglietto che aveva prezzo 1050, valore ora diverso, e l'UPDATE non fa modifiche, senza vedere che il biglietto che aveva prezzo 1000 ora lo ha 1050, e sarebbe quindi da aggiornare.
+La $T_2$ è stata scritta con livello di isolamento REPEATABLE READ per evitare anomalie Nonrepeatable reads; se infatti le due transazioni sono concorrenti, è possibile che il controllo della $T_2$ sul valore di 'prezzo' (se è = 1050) non legga determinati valori corretti. \medskip \\
+Esempio con READ COMMITTED: ci sono 2 biglietti, il primo con prezzo 1050, l'altro 1000. $T_1$ e $T_2$ iniziano contemporaneamente. 
+$T_1$ aumenta il prezzo dei due biglietti (il secondo diventa 1050), $T_2$ controlla i biglietti da modificare; $T_2$ vede che ci sono state modifiche in $T_1$ e aspetta il commit. Nel momento del commit di $T_1$, $T_2$ ricontrolla SOLO il biglietto che aveva prezzo 1050, valore ora diverso, e l'UPDATE non fa modifiche, senza vedere che il biglietto che aveva prezzo 1000 ora lo ha 1050, e sarebbe quindi da aggiornare.
 
-Con isolamento REPEATABLE READ invece, T2 fallisce quando legge le modifiche di T1.
+Con isolamento REPEATABLE READ invece, $T_2$ fallisce quando legge la registrazione delle modifiche di $T_1$.
 
 \paragraph{Domanda 5}\dotfill
-\\Si consideri il seguente risultato del comando \lstinline|ANALYZE| su una query inerenti a 2 tabelle:
+\\Si consideri il seguente risultato del comando \lstinline|ANALYZE| su una query inerente a 2 tabelle:
 \begin{small}
 \begin{lstlisting}
 Hash JOIN (cost=17.68..36.19 ROWS=3 width=84
@@ -2692,7 +2699,8 @@ Il \lstinline|JOIN| interno è tra un \lstinline|Bitmap Scan| che utilizza già 
 \item Davide Bianchi (mail: \mail{davideb1912@gmail.com})
 \item Matteo Danzi (mail: \mail{matteodanziguitarman@hotmail.it})
 \end{itemize}
-Documento modificato da Edoardo Righi nell'Anno Accademico 2017/2018. Aggiunte due prove di esame da me risolte (mi auguro correttamente) e modificate alcune sezioni. Lascio un collegamento qui sotto al già ottimo documento originale. \medskip \\
-{\scriptsize \url{https://github.com/davbianchi/dispense-info-univr/tree/master/triennale/basi-di-dati-lab}}
+Documento modificato nell'Anno Accademico 2017/2018. Rispetto al dcumento originale (link sotto) aggiunte due prove di esame risolte (mi auguro correttamente) più modifiche varie e correzioni. \medskip \\
+{\scriptsize Documento originale: \url{https://github.com/davbianchi/dispense-info-univr/tree/master/triennale/basi-di-dati-lab}}\\
+{\scriptsize Per eventuali modifiche di questa versione: \url{https://github.com/edogimo/latex}}
 			
 \end{document}
