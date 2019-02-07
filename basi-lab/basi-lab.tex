@@ -346,7 +346,8 @@ ALTER TABLE nome_tabella DROP CONSTRAINT nome_vincolo;
 \end{lstlisting}
 dove \lstinline|nome_vincolo| è il nome scelto durante la dichiarazione (o definito dal DBMS).
 \end{itemize}
-\bigskip
+\newpage
+
 	\subsection{Query sul database}
 		In SQL esiste solo un comando per interrogare una base di dati: \lstinline|SELECT|.
 		\begin{lstlisting}
@@ -368,7 +369,7 @@ SELECT [ DISTINCT ]
 			\item \lstinline|output_name| è il nome assegnato all’attributo che conterrà il risultato
 			della valutazione dell’espressione \lstinline|expression| nella relazione risultato.
 			\item \lstinline|from_item| è un’espressione che determina una sorgente per gli attributi.
-			\item \lstinline|condition| è un’espressione booleana per selezionare i valori degli
+			\item \lstinline|condition| è un’espressione \textbf{booleana} per selezionare i valori degli
 			attributi.
 			\item \lstinline|grouping_element| è un’espressione per poter eseguire operazioni su
 			più valori di un attributo e considerare il risultato.
@@ -438,6 +439,7 @@ SELECT cognome, nome
 FROM Studente
 ORDER BY cognome DESC, nome;
 		\end{lstlisting}
+		\newpage
 		
 	\subsubsection{Operatori di aggregazione}
 		Sono operatori che permettono di determinare \textbf{un} valore considerando i
@@ -447,10 +449,23 @@ ORDER BY cognome DESC, nome;
 			\item \lstinline|COUNT|
 			\item \lstinline|MAX|, \lstinline|MIN|, \lstinline|AVG|, \lstinline|SUM|
 		\end{itemize}
-		Quando si usano gli operatori aggregati, dopo la \lstinline|SELECT| \textit{non} possono
-		comparire espressioni che usano i valori presenti nelle singole tuple
-		perché il risultato è sempre e solo una tupla. \\
-		Questi operatori si possono usare solo in \lstinline|SELECT| e \lstinline|HAVING|; il loro uso in una SELECT che richiede \textbf{altri valori}, oltre all'operatore in questione, necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query. \bigskip \\
+\textbf{Esempio: }
+		\begin{lstlisting}
+SELECT MAX(matricola) FROM Studenti;
+		\end{lstlisting}		
+		Questi operatori si possono usare solo nei campi:
+		\begin{itemize}
+		\item \lstinline|SELECT| quando selezionano un valore;
+		\item \lstinline|HAVING| quando, in presenza del campo \lstinline|GROUP BY|, vengono utilizzati in un'espressione che ritorna un booleano (esempi nella sezione successiva).
+		\end{itemize} 
+		Quando si usano gli operatori aggregati, dopo la \lstinline|SELECT| \textbf{non} possono
+		comparire espressioni che usano i valori presenti nelle singole tuple, perché il risultato è sempre e solo una tupla:
+		\lstset{moredelim=[is][\sout]{||}{||}}
+		\begin{lstlisting}
+SELECT MAX(matricola)||, città|| FROM Studente;
+		\end{lstlisting}
+		Il loro uso in una \lstinline|SELECT| che richiede \textbf{altri valori} oltre all'operatore in questione, necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query. 
+		\subsubsection*{COUNT}
 		L'operatore \lstinline|COUNT| restituisce il numero di tuple significative nel risultato dell’interrogazione:
 		\begin{lstlisting}
 COUNT ({ * | [ALL] expr | DISTINCT expr })
@@ -460,24 +475,28 @@ COUNT ({ * | [ALL] expr | DISTINCT expr })
 		Tre casi comuni:
 		\begin{itemize}
 			\item \lstinline|COUNT(*)| ritorna il numero di tuple nel risultato dell’interrogazione.
-			\item \lstinline|COUNT([ALL] expr)| ritorna il numero di tuple in ciascuna delle quali il valore
+			\item \lstinline|COUNT(expr)| ritorna il numero di tuple in ciascuna delle quali il valore
 			expr è non nullo.
 			\item \lstinline|COUNT(DISTINCT expr)| come con \lstinline|COUNT(expr)| ma con l’ulteriore
 			condizione che i valori di \lstinline|expr| sono distinti.
 		\end{itemize} \medskip
+		\textbf{Esempio: }Calcola il numero delle distinte città degli studenti.
+		\begin{lstlisting}
+SELECT COUNT(DISTINCT città) FROM Studente;
+		\end{lstlisting}
+		\subsubsection*{MAX/MIN/AVG/SUM}
 		\lstinline|MAX|, \lstinline|MIN|, \lstinline|AVG|, \lstinline|SUM| determinano un valore numerico (\lstinline|SUM|/\lstinline|AVG|) o alfanumerico (\lstinline|MAX|/\lstinline|MIN|)
 		considerando le tuple significative nel risultato dell’interrogazione.\medskip \\ 
 		\textbf{Esempi: }\medskip \\
 		Calcola la media delle medie degli studenti.
 		\begin{lstlisting}
-SELECT AVG(media)::DECIMAL (5,2)
-FROM Studente;
+SELECT AVG(media)::DECIMAL (5,2) FROM Studente;
 		\end{lstlisting}
-		Calcola la media delle medie distinte degli studenti.
+		Calcola la somma delle medie distinte.
 		\begin{lstlisting}
-SELECT AVG(DISTINCT media)::DECIMAL(5,2)
-FROM Studente;
+SELECT SUM(DISTINCT media)::DECIMAL (5,2) FROM Studente;
 		\end{lstlisting}
+		\newpage
 		
 	\subsubsection{Interrogazioni con raggruppamento}
 		Un raggruppamento è un insieme di tuple che hanno medesimi valori su
@@ -506,9 +525,9 @@ GROUP BY cognome, LOWER(città);
 		\textbf{Nota1: }NON SI POSSONO SPECIFICARE attributi che non sono raggruppati dopo il
 		\lstinline|SELECT|.
 		
-		\lstset{moredelim=[is][\sout]{|}{|}}
+		
 		\begin{lstlisting}
-SELECT |cognome,| città
+SELECT ||cognome,|| città
 FROM Studente
 GROUP BY città;
 		\end{lstlisting}
@@ -524,9 +543,9 @@ GROUP BY LOWER(città);
 		\end{lstlisting}
 		
 		\begin{itemize}
-			\item La clausola \lstinline|WHERE| permette di selezionare le righe che devono far parte
+			\item La clausola \lstinline|WHERE| permette di selezionare \textbf{le righe} che devono far parte
 			del risultato.
-			\item La clausola \lstinline|HAVING| permette di selezionare i raggruppamenti che
+			\item La clausola \lstinline|HAVING| permette di selezionare \textbf{i raggruppamenti} che
 			devono far parte del risultato (guardare il primo esempio per un confronto con \lstinline|WHERE|).
 			\item La sintassi è \lstinline|HAVING bool_expr| , dove \lstinline|bool_expr| è un'espressione
 			booleana che può usare gli attributi usati nel \lstinline|GROUP BY| e/o gli altri
@@ -543,10 +562,10 @@ HAVING città LIKE 'V%';
 		Visualizzare tutte le città e i cognomi raggruppati con almeno due studenti
 		con lo stesso cognome.
 		\begin{lstlisting}
-SELECT cognome, LOWER(città)
+SELECT cognome, LOWER(città), COUNT(cognome) as num
 FROM Studente
 GROUP BY cognome, LOWER(città)
-HAVING COUNT(cognome)>1;
+HAVING COUNT(cognome)>1;	--alias non utilizzabile in HAVING
 		\end{lstlisting}
 		N.B: \textbf{le funzioni di aggregazione non sono ammesse in WHERE, solo in HAVING!}
 		
@@ -1403,7 +1422,7 @@ with conn :
 conn.close()
 	\end{lstlisting}
 	\begin{itemize}
-	\item Quando si usa una connessione con il with, all’uscita dal blocco viene fatto un \textbf{commit} automatico, mentre la connessione \textbf{non viene chiusa}.
+	\item Quando si usa una connessione con il with, all’uscita dal blocco viene fatto un \textbf{commit} automatico, ma la connessione \textbf{non viene chiusa}. La chiusura va eseguita manualmente.
 	\item Quando si usa/crea un cursore con il with, all’uscita dal blocco viene fatto un \textbf{close} automatico del cursore (conviene usare sempre lo stesso cursore se possibile).
 	\end{itemize}
 	\subsection{Connessioni e cursori}
