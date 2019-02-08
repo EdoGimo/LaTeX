@@ -366,7 +366,7 @@ SELECT [ DISTINCT ]
 		\begin{itemize}
 			\item \lstinline|*| è un’abbreviazione per indicare tutti gli attributi delle tabelle.
 			\item \lstinline|expression| è un’espressione che determina un attributo.
-			\item \lstinline|output_name| è il nome assegnato all’attributo che conterrà il risultato
+			\item \lstinline|output_name| è il nome assegnato (\textbf{alias}) all’attributo che conterrà il risultato
 			della valutazione dell’espressione \lstinline|expression| nella relazione risultato.
 			\item \lstinline|from_item| è un’espressione che determina una sorgente per gli attributi.
 			\item \lstinline|condition| è un’espressione \textbf{booleana} per selezionare i valori degli
@@ -485,8 +485,11 @@ COUNT ({ * | [ALL] expr | DISTINCT expr })
 SELECT COUNT(DISTINCT città) FROM Studente;
 		\end{lstlisting}
 		\subsubsection*{MAX/MIN/AVG/SUM}
-		\lstinline|MAX|, \lstinline|MIN|, \lstinline|AVG|, \lstinline|SUM| determinano un valore numerico (\lstinline|SUM|/\lstinline|AVG|) o alfanumerico (\lstinline|MAX|/\lstinline|MIN|)
-		considerando le tuple significative nel risultato dell’interrogazione.\medskip \\ 
+\begin{itemize}
+	\item \lstinline|SUM|/\lstinline|AVG|: determinano un valore numerico. Possibile utilizzare \lstinline|DISTINCT| per includere nel calcolo solo i valori distinti.
+	\item \lstinline|MAX|/\lstinline|MIN|: determinano un valore alfanumerico. L'uso di \lstinline|DISTINCT| è inutile (viene comunque selezionato un singolo valore come quello maggiore/minore).
+\end{itemize}				
+		Nel risultato vengono considerate solo le tuple significative.\medskip \\ 
 		\textbf{Esempi: }\medskip \\
 		Calcola la media delle medie degli studenti.
 		\begin{lstlisting}
