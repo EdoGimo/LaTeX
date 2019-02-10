@@ -2269,11 +2269,11 @@ dove \textbf{iataCompagnia} è il codice di 2 lettere della compagnia aerea, \te
 Scrivere il codice PostgreSQL che generi TUTTE le tabelle per rappresentare lo schema relazionale specificando tutti i possibili controlli di integrità referenziale e almeno 3 controlli di correttezza dei dati.
 
 \paragraph{Soluzione}\dotfill
+\begin{small}
 \\VOLO.iataCompagnia$\rightarrow$COMPAGNIA.iata\\
 VOLO.aeropPartenza$\rightarrow$AEROPORTO.iata\\
 VOLO.aeropArrivo$\rightarrow$AEROPORTO.iata\\
 VOLIBIGLIETTO.numeroBiglietto$\rightarrow$BIGLIETTO.numero\\
-\begin{small}
 VB.iataCompagnia,VB.numero,
 VB.orarioPartenza$\rightarrow$V.iataCompagnia,V.numero,
 V.orarioPartenza 
@@ -2357,8 +2357,7 @@ Codice SQL:
     		VB2.iataCompagnia = V2.iataCompagnia and
     		VB2.numero = V2.numero and
     		VB2.orarioPartenza = V2.orarioPartenza
-  		WHERE V2.aeropPartenza = 'X' AND V2.aeropArrivo = 'Y'
-  	)
+  		WHERE V2.aeropPartenza = 'X' AND V2.aeropArrivo = 'Y' )
 	GROUP BY VB.numeroBiglietto		--necessario per count/sum
 	ORDER BY VB.numeroBiglietto;
 \end{lstlisting}
@@ -2371,48 +2370,49 @@ Codice SQL:
 \lstset{language=Python}
 \begin{lstlisting}
 from datetime import date, timedelta
-from decimal import Decimal
 from getpass import getpass
 import psycopg2
 
 bigliettoEsiste = 0
 psw = getpass("Inserire la password: ")
-    
-conn = psycopg2.connect(host="dbserver.scienze.univr.it", \
-	database="id468wfl", user="id468wfl", password=psw)
+
+conn = psycopg2.connect(host="dbserver.scienze.univr.it",
+		database="id468wfl", user="id468wfl", password=psw)
 	
 with conn:
 	with conn.cursor() as cur:
 		while(not bigliettoEsiste):
 	
 			codice = input("Inserire il codice del biglietto: ")	
-			cur.execute("SELECT numero, orarioPartenza, ordinale
-				FROM VOLIBIGLIETTO WHERE numeroBiglietto = %s
-				ORDER BY orarioPartenza", (codice,) )
+			cur.execute( "SELECT V.numero, V.orarioPartenza, \
+				VB.ordinale, V.durata \ 
+				FROM VOLIBIGLIETTO VB JOIN VOLO V ON \
+                	VB.iataCompagnia = V.iataCompagnia and \
+                	VB.numero = V.numero and \
+                	VB.orarioPartenza = V.orarioPartenza \
+                WHERE VB.numeroBiglietto = %s \
+                ORDER BY VB.orarioPartenza" , (codice,) )
 				
-			voli = cur.fetchall()
-			
-			if not voli:	#oppure usare cur.rowcount ?
+			voli = cur.fetchall()	
+			if not voli:
 				print("Il biglietto non esiste!")
 			else:
 				bigliettoEsiste = 1
 
-oraPrecedente = timedelta(seconds = 0)	#non so come usarlo
+durataSosta = timedelta(seconds = 0)	#non so come usarlo
 for riga in voli:
-
 	#dopo il volo con ordinale 1 stampa la sosta
 	if riga[2] > 1:
 		#timestamp - timestamp = interval
-    	durataSosta = riga[1] - oraPrecedente	
+    	durataSosta = riga[1] - oraArrivo	
         print("--sosta: " + str(durataSosta))
         
-	print("numero: {:<6s} | orarioPartenza: {:22s}" \
-        .format(str(riga[0]) , str(riga[1])) )
-        
-    oraPrecedente =  riga[1]
+	print("numero volo: {:<6s} | partenza: {:22s} | durata: {:8s}"
+        .format(str(riga[0]) , str(riga[1]), str(riga[3])) )  
+    #timestamp + interval = timestamp      
+    oraArrivo =  riga[1] + riga[3]  	#orarioPartenza + durata
     
 conn.close()
-
 \end{lstlisting}
 \newpage 
 \paragraph{Domanda 4}\dotfill
