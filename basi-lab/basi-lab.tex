@@ -525,9 +525,7 @@ SELECT cognome, LOWER(città)
 FROM Studente
 GROUP BY cognome, LOWER(città);
 		\end{lstlisting}
-		\textbf{Nota1: }NON SI POSSONO SPECIFICARE attributi che non sono raggruppati dopo il
-		\lstinline|SELECT|.
-		
+		\textbf{Nota1: }nella \lstinline|SELECT| \textbf{NON si possono specificare} attributi che NON sono raggruppati.
 		
 		\begin{lstlisting}
 SELECT ||cognome,|| città
@@ -536,11 +534,11 @@ GROUP BY città;
 		\end{lstlisting}
 		
 		\noindent
-		\textbf{Nota2: }Si possono specificare espressioni con operatori di aggregazione su attributi
-		non raggruppati.
+		\textbf{Nota2: }le espressioni con operatori di aggregazione \textbf{NON si possono raggruppare} (nell'esempio si ottiene la media della media sui raggruppamenti di \lstinline|città|).
 		\begin{lstlisting}
 SELECT LOWER(città) AS città,
   CAST(AVG(media) AS DECIMAL(5,2)) AS media
+  -- CAST(..)  =  avg(media)::decimal(5,2)
 FROM Studente
 GROUP BY LOWER(città);
 		\end{lstlisting}
@@ -694,9 +692,9 @@ FROM Impiegato I RIGHT OUTER JOIN Reparto R
 [NOT] EXISTS (subquery)
 		\end{lstlisting}
 		\begin{itemize}
-		\item \lstinline|(subquery)| è una \lstinline|SELECT|.
-		\item \lstinline|EXISTS| ritorna falso se \lstinline|(subquery)| non contiene righe, vero altrimenti.
-		\item \lstinline|EXISTS| è significativo quando nella \lstinline|(subquery)| si selezionano righe
+		\item \lstinline|subquery| è una \lstinline|SELECT|.
+		\item \lstinline|EXISTS| ritorna falso se \lstinline|subquery| non contiene righe, vero altrimenti.
+		\item \lstinline|EXISTS| è significativo quando nella \lstinline|subquery| si selezionano righe
 			usando i valori della riga corrente nella \lstinline|SELECT| principale: data binding.
 		\end{itemize}
 			\medskip
@@ -718,13 +716,13 @@ WHERE EXISTS(
 		
 		\begin{itemize}
 				\item \lstinline|expr| è un’espressione costruita con un attributo della query principale.
-			Ci possono essere 1 o più espressioni.
+			Ci possono essere una o più espressioni.
 			
-				\item \lstinline|(subquery)| deve restituire un numero di colonne = numero di
+				\item \lstinline|subquery| deve restituire un numero di colonne = numero di
 			espressioni in \lstinline|(expr [,...])|.
 			
 				\item I valori delle espressioni vengono confrontati con i valori di ciascuna riga
-			del risultato di \lstinline|(subquery)|.
+			del risultato di \lstinline|subquery|.
 			
 				\item Il confronto ritorna vero se i valori sono uguali ai valori di almeno una
 			riga della subquery.
@@ -744,11 +742,11 @@ expression operator ANY (subquery)
 expression operator SOME (subquery)
 		\end{lstlisting}
 		\begin{itemize}
-		\item \lstinline|(subquery)| è una \lstinline|SELECT| che deve restituire UNA sola colonna.
+		\item \lstinline|subquery| è una \lstinline|SELECT| che deve restituire UNA sola colonna.
 		\item \lstinline|expression| è un’espressione che coinvolge attributi della \lstinline|SELECT|
 		principale.
 		\item \lstinline|operator| è un operatore di confronto, come '\lstinline|=|' o '\lstinline|>=|'.
-		\item Il confronto ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di una qualsiasi riga del risultato di \lstinline|(subquery)|.
+		\item Il confronto ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di una qualsiasi riga del risultato di \lstinline|subquery|.
 		\end{itemize}
 		\lstinline|SOME| è un sinonimo di \lstinline|ANY|. \medskip \\
 				\textbf{Esempio:} Visualizzare il nome degli insegnamenti che hanno un numero di crediti
@@ -767,11 +765,11 @@ WHERE IE.crediti < ANY (
 expression operator ALL (subquery)
 		\end{lstlisting}
 		\begin{itemize}
-		\item \lstinline|(subquery)| è una \lstinline|SELECT| che deve restituire UNA sola colonna.
+		\item \lstinline|subquery| è una \lstinline|SELECT| che deve restituire UNA sola colonna.
 		\item \lstinline|expression| è un’espressione che coinvolge attributi della \lstinline|SELECT|
 		principale.
 		\item \lstinline|operator| è un operatore di confronto, come ’\lstinline|=|’ o ’\lstinline|>=|’.
-		\item Il confronto ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di ciascuna riga del risultato di \lstinline|(subquery)|.
+		\item Il confronto ritorna vero se \lstinline|expression| è \lstinline|operator| rispetto al valore di ciascuna riga del risultato di \lstinline|subquery|.
 		\end{itemize}
 \medskip 		
 		\textbf{Esempio:} Trovare il nome degli insegnamenti (o moduli) con almeno un docente e
@@ -793,7 +791,7 @@ WHERE IE.crediti > ALL (
 		di una query, operando sul risultato di due o più clausole \lstinline|SELECT|.\\
 		Gli operatori insiemistici sono: \lstinline|UNION|, \lstinline|INTERSECT| e \lstinline|EXCEPT|. Possono essere usati in sequenza.
 		\begin{lstlisting}[mathescape]
-query$_1$ { UNION or INTERSECT or EXCEPT } [ ALL ] query$_2$
+query$_1$ { UNION | INTERSECT | EXCEPT } [ ALL ] query$_2$
 		\end{lstlisting}
 		\begin{itemize}
 				\item Gli operatori si possono applicare solo quando $ \textup{query}_1 $ e 
@@ -820,12 +818,11 @@ SELECT nome
 FROM CorsoStudi
 WHERE NOT nome LIKE 'A%';
 		\end{lstlisting} \medskip
-		Visualizzare i nomi degli insegnamenti che sono anche nomi di corsi di
-		laurea.
+		Visualizzare i nomi degli insegnamenti che sono anche nomi di corsi di	laurea.
 		\begin{lstlisting}
 SELECT nomeins
 FROM Insegn
-INTERSECT ALL
+INTERSECT
 SELECT nome
 FROM CorsoStudi;
 		\end{lstlisting} \medskip
@@ -864,8 +861,7 @@ CREATE [ TEMP ] VIEW nome [ (col_name [ , ...]) ] AS query
 				\item \lstinline|TEMP| : la vista è temporanea. Quando ci si sconnette, la vista viene
 			distrutta. È un’estensione di PostgreSQL. Nella base di dati \lstinline|did2014| si
 			possono fare solo viste temporanee.
-			\item \lstinline|column_name| : nomi delle colonne che compongono la vista. Se non si
-			specificano, si ereditano dalla query.
+			\item \lstinline|column_name| : nomi delle colonne che compongono la vista. Se non specificati, si ereditano dalla query.
 			\item \lstinline|query| deve restituire un insieme di attributi pari e nel medesimo ordine
 			a quello specificato con \lstinline|(column_name [, ...])| se presente.
 			\end{itemize}
@@ -922,8 +918,8 @@ psql -h dbserver database utente
 	\subsection{Comando CREATE INDEX} \label{createindex}
 	\begin{lstlisting}[escapeinside={(*}{*)}]
 CREATE [ UNIQUE ] INDEX [nome]
-ON tabella [ USING method ]
-({ nomeAttr (*| (expression) } [ ASC | DESC ] [ , ...])
+ON nomeTabella [ USING method ]
+({ nomeAttr | expression } [ ASC | DESC ] [ , ...])
 	\end{lstlisting}
 	dove:
 	\begin{itemize}
