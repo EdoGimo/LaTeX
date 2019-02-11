@@ -2068,7 +2068,7 @@ user, password) ){
         System.out.println("Inserire la città:");
         String città = scan2.nextLine();
 
-        //città
+        //prezzo
         System.out.println("Inserire il costo intero:");
         int prezzo = scan2.nextInt();
 
@@ -2642,7 +2642,7 @@ conn.close()
 	FROM INTERVENTO_IN_CONVEGNO IiC JOIN SESSIONE S ON
 		S.nome = IiC.nomeSessione JOIN INTERVENTO I ON
 		I.id = IiC.idIntervento
-	GROUP BY S.nomeConvegno, S.nome
+	GROUP BY S.nomeConvegno, S.nome, S.data
 	ORDER BY S.nomeConvegno, S.data;
 \end{lstlisting}
 (b)
