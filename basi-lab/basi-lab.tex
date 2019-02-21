@@ -97,7 +97,7 @@ CREATE TABLE nomeTabella (
 	\subsubsection{Domini di caratteri}
 	\begin{itemize}
 		\item \lstinline|CHAR/CHARACTER|: singoli caratteri;
-		\item \lstinline|CHAR(n)/CHARACTER(n)|:stringa di caratteri di lunghezza n;
+		\item \lstinline|CHAR(n)/CHARACTER(n)|: stringa di caratteri di lunghezza n;
 		\item \lstinline|VARCHAR|: stringhe di caratteri di lunghezza variabile;
 		\item \lstinline|VARCHAR(n)|: stringhe di caratteri di lunghezza variabile con limite n;
 		\item \lstinline|TEXT|: testo libero (solo Postgres).
@@ -143,12 +143,10 @@ CREATE DOMAIN giorniSettimana AS CHAR(3)
 	\end{lstlisting}
 
 	\subsection{Vincoli di attributo e di tabella}
-	Vincoli di attributo/intrarelazionali specificano proprietà che devono
-	essere soddisfatte da ogni tupla di una singola relazione della base di
-	dati.
+	Vincoli di attributo/intrarelazionali: specificano proprietà che devono essere soddisfatte da ogni tupla di una singola relazione della base di dati.
 	
 	\begin{lstlisting}
-[ CONSTRAINT vincolo ]
+[ CONSTRAINT nomeVincolo ]
 { NOT NULL |
   CHECK ( espressione ) [ NO INHERIT ] |
   DEFAULT valore |
@@ -160,7 +158,7 @@ CREATE DOMAIN giorniSettimana AS CHAR(3)
 	
 	Vincoli di tabella:
 	\begin{lstlisting}
-[ CONSTRAINT vincolo ]
+[ CONSTRAINT nomeVincolo ]
 { CHECK ( espressione ) [ NO INHERIT ] |
   UNIQUE ( attributo [, ... ]) |
   PRIMARY KEY ( attributo [, ... ]) |
@@ -206,10 +204,10 @@ In molti casi, un’espressione è nulla se uno degli operandi è nullo. Convien
 	\begin{lstlisting}
 CREATE TABLE Impiegato (
 	...
-	stipendio NUMERIC (8 ,2) DEFAULT 500.00 NOT NULL
-		CHECK ( stipendio >= 0.0) , -- check di attributo
-	UNIQUE ( cognome , nome ) ,
-	CHECK ( nome <> cognome ) -- check di tabella
+	stipendio NUMERIC(8,2) DEFAULT 500.00 NOT NULL
+		CHECK(stipendio >= 0.0),	-- check di attributo
+	UNIQUE(cognome, nome),
+	CHECK(nome <> cognome)	-- check di tabella
 );
 	\end{lstlisting}
 	
@@ -250,7 +248,8 @@ CREATE TABLE Interna(
 		\begin{itemize}
 			\item Aggiunta di un nuovo attributo con \lstinline|ADD COLUMN|:
 			\begin{lstlisting}
-ALTER TABLE impiegato ADD COLUMN stipendio NUMERIC(8,2);
+ALTER TABLE impiegato ADD COLUMN 
+	stipendio NUMERIC(8,2);
 			\end{lstlisting}
 			\item Rimozione di un attributo con \lstinline|DROP COLUMN|:
 			\begin{lstlisting}
@@ -464,7 +463,8 @@ SELECT MAX(matricola) FROM Studenti;
 		\begin{lstlisting}
 SELECT MAX(matricola)||, città|| FROM Studente;
 		\end{lstlisting}
-		Il loro uso in una \lstinline|SELECT| che richiede \textbf{altri valori} oltre all'operatore in questione, necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query. 
+		Il loro uso in una \lstinline|SELECT| che richiede \textbf{altri valori} oltre all'operatore in questione, necessita la presenza del campo \lstinline|GROUP BY| (che NON può contenere operatori di aggregazione!) nella query. \medskip \\
+		\textbf{NOTA: } \textit{Non è possibile usare due operatori di aggregazione in cascata!}
 		\subsubsection*{COUNT}
 		L'operatore \lstinline|COUNT| restituisce il numero di tuple significative nel risultato dell’interrogazione:
 		\begin{lstlisting}
@@ -493,11 +493,11 @@ SELECT COUNT(DISTINCT città) FROM Studente;
 		\textbf{Esempi: }\medskip \\
 		Calcola la media delle medie degli studenti.
 		\begin{lstlisting}
-SELECT AVG(media)::DECIMAL (5,2) FROM Studente;
+SELECT AVG(media)::DECIMAL(5,2) FROM Studente;
 		\end{lstlisting}
 		Calcola la somma delle medie distinte.
 		\begin{lstlisting}
-SELECT SUM(DISTINCT media)::DECIMAL (5,2) FROM Studente;
+SELECT SUM(DISTINCT media)::DECIMAL(5,2) FROM Studente;
 		\end{lstlisting}
 		\newpage
 		
@@ -508,12 +508,11 @@ SELECT SUM(DISTINCT media)::DECIMAL (5,2) FROM Studente;
 		\noindent
 		La clausola \lstinline|GROUP BY attr [, ...]| permette di determinare tutti i
 		raggruppamenti delle tuple della relazione risultato (tuple selezionate
-		con la clausola \lstinline|WHERE| ) in funzione degli attributi dati.
-		In una interrogazione che fa uso di \lstinline|GROUP BY| , possono comparire come
-		argomento della \lstinline|SELECT| solamente gli attributi utilizzati per il
-		raggruppamento e funzioni aggregate valutate sugli altri attributi.\medskip \\
+		con la clausola \lstinline|WHERE| ) in funzione degli attributi dati. \\
+		In una interrogazione che fa uso di \lstinline|GROUP BY| , possono comparire come argomento della \lstinline|SELECT| solamente gli attributi utilizzati per il raggruppamento e funzioni aggregate.\\
+		Anche se il risultato può essere lo stesso, \lstinline|GROUP BY| è concettualmente diverso da \lstinline|DISTINCT|. \medskip \\
 		\textbf{Esempi: }\\		
-		Visualizzare tutte le città raggruppate (=no duplicati) della tabella Studente.
+		Visualizzare tutte le città raggruppate della tabella Studente.
 		\begin{lstlisting}
 SELECT città
 FROM Studente
@@ -854,7 +853,8 @@ FROM CorsoStudi ;
 					\end{itemize}
 			\end{itemize}
 		\begin{lstlisting}
-CREATE [ TEMP ] VIEW nome [ (col_name [ , ...]) ] AS query
+CREATE [ TEMP ] VIEW nome [ (col_name [ , ...]) ] AS 
+	query;
 		\end{lstlisting}
 		\noindent
 		\begin{itemize}
@@ -867,9 +867,7 @@ CREATE [ TEMP ] VIEW nome [ (col_name [ , ...]) ] AS query
 			\end{itemize}
 		\bigskip
 		\textbf{Esempio:}\\
-		Si vuole determinare qual è il corso di studi con il massimo numero di
-		insegnamenti (esclusi i moduli).
-		Prima si crea una vista:
+		Si vuole determinare qual è il corso di studi con il massimo numero di insegnamenti (esclusi i moduli). Dato che non si possono usare due operatori di aggregazione in cascata, prima si crea una vista per trovare il numero degli insegnamenti:
 	\begin{lstlisting}
 CREATE TEMP VIEW InsCorsoStudi(Nome, NumIns) AS
   SELECT CS.nome, COUNT(*)
@@ -878,7 +876,7 @@ CREATE TEMP VIEW InsCorsoStudi(Nome, NumIns) AS
   WHERE IE.modulo = 0
   GROUP BY CS.nome;
 	\end{lstlisting}
-		Poi la si usa:
+		Poi la si usa per trovare il valore massimo:
 		\begin{lstlisting}
 SELECT Nome, NumIns
 FROM InsCorsoStudi
@@ -887,9 +885,7 @@ WHERE NumIns = ANY (
 );
 
 		\end{lstlisting}
-		
-		\noindent
-		\textbf{NOTA: } \textit{Non è possibile usare due operatori di aggregazione in cascata!}
+
 	\newpage		
 	\section{Indici}
 	Gli indici sono strutture dati che permettono di accedere ad una tabella dati in maniera più efficiente. Dato che un indice è completamente scorrelato dalla tabella dati a cui si riferisce, deve sempre essere mantenuto aggiornato in base al contenuto della tabella cui si riferisce. Il costo dell'aggiornamento di un indice può essere significativo quando ci sono molti indici definiti sulla base di dati, per cui è bene usarli con saggezza ed applicarli nella maniera più efficiente possibile.
@@ -919,7 +915,7 @@ psql -h dbserver database utente
 	\begin{lstlisting}[escapeinside={(*}{*)}]
 CREATE [ UNIQUE ] INDEX [nome]
 ON nomeTabella [ USING method ]
-({ nomeAttr | expression } [ ASC | DESC ] [ , ...])
+({ nomeAttr | expression } [ ASC | DESC ] [ , ...]);
 	\end{lstlisting}
 	dove:
 	\begin{itemize}
@@ -2710,6 +2706,314 @@ Il \lstinline|JOIN| interno è tra un \lstinline|Bitmap Scan| che utilizza già 
 	CREATE INDEX ie_iddiscr ON Inserogato (id_discriminante);
 \end{lstlisting}
 \paragraph{N.B.} \lstinline|ie.id_discriminante| non è chiave di InsErogato, ma il database did2014 contiene già un indice "\lstinline|occorrenzains_discriminante_index|". Questa cosa non è possibile saperla durante la prova perciò, dato che le \textit{reference keys} non creano indici, credo sia comunque corretta questa soluzione.
+\newpage
+
+\section{Soluzione esercitazione 3}
+\subsubsection*{Esercizio 1}
+Trovare nome, cognome dei docenti che nell’anno accademico 2010/2011 hanno tenuto lezioni in almeno due corsi di studio (vale a dire hanno tenuto almeno due insegnamenti o moduli A e B dove A è del corso $C_1$ e B è del corso $C_2$ dove $C_1 \neq C_2$ ).
+\begin{lstlisting}
+select p.id, p.nome, p.cognome
+from persona p join docenza d on d.id_persona = p.id
+	join inserogato ie on d.id_inserogato = ie.id
+where ie.annoaccademico = '2010/2011'
+group by p.id, p.nome, p.cognome
+having count(distinct ie.id_corsostudi) >= 2
+order by p.id;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 2}
+Trovare nome, cognome e telefono dei docenti che hanno tenuto nel 2009/2010 un’occorrenza di insegna-
+mento che non sia un’unità logistica del corso di studi con id=4 ma che non hanno mai tenuto un modulo
+dell’insegnamento di ’Programmazione’ del medesimo corso di studi.
+\begin{lstlisting}
+select p.nome, p.cognome, p.telefono
+from persona p join docenza d on d.id_persona = p.id
+	join inserogato ie on d.id_inserogato = ie.id
+where ie.annoaccademico = '2009/2010' and
+      ie.id_corsostudi = 4 and ie.modulo >= 0 and
+      row (p.nome, p.cognome, p.telefono) not in(
+        select p2.nome, p2.cognome, p2.telefono
+        from persona p2 join docenza d2 on d2.id_persona = p2.id
+	        join inserogato ie2 on d2.id_inserogato = ie2.id
+          join insegn i2 on ie2.id_insegn = i2.id
+        where i2.nomeins ILIKE 'Programmazione' and
+        	ie2.id_corsostudi = 4 and ie2.modulo > 0
+      )
+order by cognome;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 3}
+Trovare identificatore, nome e cognome dei docenti che, nell’anno accademico 2010/2011, hanno tenuto un
+insegnamento (l’attributo da confrontare è nomeins) che non hanno tenuto nell’anno accademico precedente.
+Ordinare la soluzione per nome e cognome.
+\begin{lstlisting}
+select DISTINCT p.id, p.cognome, p.nome
+from persona p join docenza d on d.id_persona = p.id
+  join inserogato ie on d.id_inserogato = ie.id
+  join insegn i on ie.id_insegn = i.id
+where ie.annoaccademico = '2010/2011' and NOT EXISTS(
+  SELECT 1 from insegn i2
+    join inserogato ie2 on i2.id = ie2.id_insegn
+    join docenza d2 on ie2.id = d2.id_inserogato
+  where ie2.annoaccademico = '2009/2010' and
+        d.id_persona = d2.id_persona and
+        i.nomeins = i2.nomeins
+  )
+order by p.id;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 4}
+Trovare per ogni periodo di lezione del 2010/2011 la cui descrizione inizia con ’I semestre’ o ’Primo semestre’
+il numero di occorrenze di insegnamento allocate in quel periodo. Si visualizzi quindi: l’abbreviazione, il
+discriminante, inizio, fine e il conteggio richiesto ordinati rispetto all’inizio e fine.
+\begin{lstlisting}
+select pL.abbreviazione, pD.discriminante, pd.inizio, pd.fine,
+	count(*) as insprimosem
+from InsInPeriodo iip
+  join periodoLez pL on iip.id_periodolez = pL.id
+  join periododid pD on pd.id = pL.id  
+where pd.annoaccademico = '2010/2011' and 
+	(pd.descrizione LIKE 'I semestre%' OR
+	pd.descrizione  LIKE 'Primo semestre%')
+group by pL.abbreviazione, pd.discriminante,  pd.inizio, pd.fine
+order by pd.inizio, pd.fine;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 5}
+Trovare, per ogni facoltà, il numero di unità logistiche erogate (modulo < 0) e il numero corrispondente di
+crediti totali erogati nel 2010/2011, riportando il nome della facoltà e i conteggi richiesti. Usare pure la
+relazione diretta tra InsErogato e Facolta.
+\begin{lstlisting}
+select f.nome, count(ie.modulo), sum(ie.crediti)
+from inserogato ie join facolta f on ie.id_facolta = f.id
+where ie.modulo < 0 and ie.annoaccademico = '2010/2011'
+group by f.nome;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 6}
+Trovare i corsi di studio che non sono gestiti dalla facoltà di “Medicina e Chirurgia” e che hanno insegnamenti erogati con moduli nel 2010/2011. Si visualizzi il nome del corso e il numero di insegnamenti erogati con moduli nel 2010/2011.
+\begin{lstlisting}
+select cs.nome, count(*) as numinsegn
+from corsostudi cs join
+	inserogato ie on ie.id_corsostudi = cs.id
+where ie.annoaccademico = '2010/2011' and ie.hamoduli='1' and
+	cs.id not in(
+		SELECT cif.id_corsostudi
+		from corsoinfacolta cif 
+			join facolta f on f.id = cif.id_facolta
+		where f.nome ILIKE 'Medicina e chirurgia'
+		)
+group by cs.nome
+order by cs.nome;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 7}
+Trovare gli insegnamenti del corso di studi con id=4 che non sono mai stati offerti al secondo quadrimestre.
+Per selezionare il secondo quadrimestre usare la condizione "\lstinline|abbreviazione LIKE '2%' |".
+\begin{lstlisting}
+select DISTINCT i.nomeins
+from insegn i join inserogato ie on i.id = ie.id_insegn
+where ie.id_corsostudi = 4 and not exists(
+  select 1
+  from insegn i2 join inserogato ie2 on i2.id = ie2.id_insegn
+  join insinperiodo iip on ie2.id = iip.id_inserogato
+  join periodolez p on iip.id_periodolez = p.id
+where p.abbreviazione ILIKE '2%' and ie2.id_corsostudi = 4 and
+      i2.nomeins = i.nomeins
+  )
+order by nomeins;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 8}
+Trovare, per ogni facoltà, il docente che ha tenuto il numero massimo di ore di lezione nel 2009/2010, riportando
+il cognome e il nome del docente e la facoltà. Per la relazione tra InsErogato e Facolta usare la relazione
+diretta.
+\begin{lstlisting}
+create temp view orelezione(cognome, nome, facolta, oretot) as
+select p.cognome, p.nome, f.nome, sum(d.orelez)
+from inserogato ie join docenza d on ie.id = d.id_inserogato
+  join facolta f on ie.id_facolta = f.id
+  join persona p on d.id_persona = p.id
+where ie.annoaccademico = '2009/2010'
+group by p.cognome, p.nome, f.nome
+order by p.cognome;
+
+select cognome, nome, facolta, oretot
+from orelezione
+where row(facolta, oretot) in(
+  select facolta, max(oretot)
+  from orelezione
+  group by facolta
+  )
+order by cognome;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 9}
+Trovare gli insegnamenti (esclusi i moduli e le unità logistiche) del corso di studi con id=240 erogati nel
+2009/2010 e nel 2010/2011 che non hanno avuto docenti di nome 'Roberto', 'Alberto', 'Massimo' o 'Luca' in entrambi gli anni accademici, riportando il nome, il discriminante dell’insegnamento, ordinati per nome insegnamento.
+\begin{lstlisting}
+create temp view ins240(nomeins, descrizione, anno) as
+select  i.nomeins, d.descrizione, ie.annoaccademico
+from insegn i join inserogato ie on i.id = ie.id_insegn
+  join discriminante d on ie.id_discriminante = d.id
+  join docenza d2 on ie.id = d2.id_inserogato
+  join persona p on d2.id_persona = p.id
+where id_corsostudi = 240 and modulo = 0 and
+      p.nome not in ('Roberto', 'Alberto', 'Massimo', 'Luca');
+
+select nomeins, descrizione from ins240
+where anno = '2009/2010'
+INTERSECT
+select nomeins, descrizione from ins240
+where anno = '2010/2011'
+order by nomeins;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 10}
+Trovare le unità logistiche del corso di studi con id=420 erogati nel 2010/2011 e che hanno lezione o il
+lunedì (Lezione.giorno=2) o il martedì (Lezione.giorno=3), ma non in entrambi i giorni, riportando il nome dell’insegnamento e il nome dell’unità ordinate per nome insegnamento.
+\begin{lstlisting}
+create temp view lez2o3 as
+  --seleziono gli ie con giorno=2 o giorno=3
+  SELECT ie.id
+  from inserogato ie join lezione l on ie.id = l.id_inserogato
+  where (l.giorno = 2 or l.giorno = 3)
+  except (
+    select ie.id
+        from inserogato ie
+               join lezione l on ie.id = l.id_inserogato
+        where (l.giorno = 2)
+        intersect
+        select ie.id
+        from inserogato ie
+               join lezione l on ie.id = l.id_inserogato
+        where (l.giorno = 3)
+  );
+
+select i.nomeins, ie.nomeunita
+from insegn i join inserogato ie on i.id = ie.id_insegn
+where ie.id_corsostudi = 420 and
+      ie.annoaccademico = '2010/2011' and
+      modulo < 0 and
+      ie.id IN(
+        SELECT * from lez2o3
+      )
+group by i.nomeins, ie.nomeunita
+order by nomeins, nomeunita;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 11}
+Trovare il nome dei corsi di studio che non hanno mai erogato insegnamenti che contengono nel nome la stringa
+’matematica’ (usare \lstinline|ILIKE| invece di \lstinline|LIKE| per rendere il test non sensibile alle maiuscole/minuscole).
+\begin{lstlisting}
+select DISTINCT nome
+from corsostudi
+where id NOT IN(  --MAI EROGATO
+  SELECT cs.id
+  from corsostudi cs join inserogato ie on cs.id = ie.id_corsostudi
+  join insegn i on ie.id_insegn = i.id
+  where i.nomeins ILIKE '%matematica%'
+  )
+order by nome;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 12}
+Trovare gli insegnamenti (esclusi moduli e unità logistiche) dei corsi di studi della facoltà di ’Scienze Ma-
+tematiche Fisiche e Naturali’ che sono stati tenuti dallo stesso docente per due anni accademici consecutivi
+riportando il nome dell’insegnamento, il nome e il cognome del docente. \\
+Per la relazione tra InsErogato e Facolta non usare la relazione diretta.\\
+Circa la condizione sull’anno accademico, dopo aver estratto una sua opportuna parte, si può trasformare que-
+sta in un intero e, quindi, usarlo per gli opportuni controlli. Oppure si può usarla direttamente confrontandola
+con un’opportuna parte dell’altro anno accademico.
+\begin{lstlisting}
+create temp view docenza_Consec(id_insegn, nomeins, 
+	nome, cognome, anno) as
+select i.id, i.nomeins, p.nome, p.cognome,
+       Substring(IE.annoaccademico FROM 6 for 4)::INTEGER
+      --oppure:   CAST(substring(...)) AS INTEGER
+from insegn i join inserogato ie on i.id = ie.id_insegn
+  join docenza d on ie.id = d.id_inserogato
+  join persona p on d.id_persona = p.id
+  join corsostudi cs on ie.id_corsostudi = cs.id
+  join corsoinfacolta cif on cs.id = cif.id_corsostudi
+  join facolta f on cif.id_facolta = f.id
+where ie.modulo = 0 and
+      f.nome ILIKE 'Scienze Matematiche Fisiche e Naturali'
+order by nomeins;
+
+select DISTINCT nomeins, nome, cognome
+from docenza_Consec dc1
+where row(dc1.nome, dc1.cognome) in (
+  SELECT dc2.nome, dc2.cognome
+  from docenza_Consec dc2
+  where dc2.id_insegn = dc1.id_insegn and
+        dc2.anno = dc1.anno +1
+  )
+order by nomeins;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 13}
+Trovare per ogni segreteria che serve almeno un corso di studi il numero di corsi di studi serviti, riportando il nome della struttura, il suo numero di fax e il conteggio richiesto.
+\begin{lstlisting}
+select DISTINCT s.nomestruttura, s.fax, count(*) as corsiServiti
+from corsostudi cs join
+  strutturaservizio s on cs.id_segreteria = s.id
+group by nomestruttura, fax;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 14}
+Considerando solo l’anno accademico 2010/2011, trovare i docenti che hanno insegnato per un numero totale
+di crediti di lezione maggiore della media dei crediti totali insegnati (lezione) da tutti i docenti nell’anno
+accademico. I crediti insegnati sono specificati nella tabella Docenza. Per calcolare la somma o la media, si
+devono considerare solo le ’docenze’ che hanno \lstinline|creditilez| significativi e diversi da 0 (per rendere la selezione
+un po’ più significativa).
+\begin{lstlisting}
+create temp view crediti_view as
+select d.id_persona, sum(d.creditilez) as crediti
+from inserogato ie join
+  docenza d on ie.id = d.id_inserogato
+where ie.annoaccademico = '2010/2011' and d.creditilez > 0
+  and d.creditilez NOTNULL
+group by d.id_persona;
+
+--controllo intermedio
+SELECT avg(cv2.crediti)
+  from crediti_view cv2;
+
+select id_persona, crediti
+from crediti_view cv
+where crediti > (
+  SELECT avg(cv2.crediti)
+  from crediti_view cv2
+  )
+order by id_persona;
+\end{lstlisting}
+
+\subsubsection*{Esercizio 15}
+Trovare per ogni docente il numero di insegnamenti o moduli o unità logistiche a lui assegnate come docente
+nell’anno accademico 2005/2006, riportare anche coloro che non hanno assegnato alcun insegnamento. Nel
+risultato si mostri identificatore, nome e cognome del docente insieme al conteggio richiesto (0 per il caso nessun insegnamento/modulo/unità insegnati).
+\begin{lstlisting}
+create temp view ins_count as
+select p.id, p.cognome, p.nome, count(*) as numDocenze
+from docenza d join persona p on d.id_persona = p.id
+  join inserogato ie on d.id_inserogato = ie.id
+where ie.annoaccademico = '2005/2006'
+group by p.nome, p.cognome, p.id
+order by p.cognome;
+
+--selezione dei docenti che hanno insegnato nel 2005/06
+select id, nome, cognome, numDocenze
+from ins_count
+union
+--selezione dei rimanenti docenti
+select p.id, nome, cognome, 0 as "numDocenze"
+from persona p join docenza d on p.id = d.id_persona
+where p.id not in(
+  SELECT id from ins_count
+  )
+order by nome, cognome;
+\end{lstlisting}
 \newpage
 
 \section{Credits}
