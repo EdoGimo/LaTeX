@@ -1,0 +1,630 @@
+\documentclass[a4paper, 10pt, titlepage]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage[makeroom]{cancel}
+\usepackage{ulem}
+\usepackage{parcolumns}
+\usepackage{multicol}
+\setlength{\columnseprule}{0.4pt}
+\usepackage{lipsum}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage[margin=3cm]{geometry}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{listings}
+\lstset{
+	inputencoding=utf8,
+	basicstyle=\ttfamily,
+	tabsize=4,
+	showstringspaces=false,
+	literate={à}{{\`a}}1
+}
+\usepackage{fancyvrb}
+\pagestyle{fancy}
+\lhead{\nouppercase{\leftmark}}
+\rhead{\nouppercase{\rightmark}}
+
+\begin{document}
+
+	\title{Security Testing}
+	\author{Edoardo Righi}
+	\maketitle
+	
+	\section{Introduction}
+	Bla bla bla
+	
+	\newpage
+	\section{Attack taxonomy}
+	\begin{itemize}
+	\item \textbf{Vulnerability}: the state of being open to attack or damage
+	\item \textbf{Exploit}: take advantage of a weakness (vulnerability)
+	\end{itemize}
+	\subsection{Attacks}
+	Security mistakes are very easy to make and a simple one-line error can be catastrophic. No programming language or platform can make the software secure: this is the programmer’s job!
+	
+	\subsection*{SQL Injection}
+	It is a type of attack that exploit the possibility to add SQL code into a user input; the user provided data is used to form a SQL query that the server executes. An example with PHP:
+	\begin{lstlisting}
+$id = $_GET["id"];
+$query = "SELECT * FROM customers WHERE id =" . $id;
+$result = mysql_query($query);
+	\end{lstlisting}
+	The query could become:
+	\begin{lstlisting}
+SELECT * FROM customers WHERE id = 1 OR 2>1
+SELECT * FROM customers WHERE id = 1; UPDATE accout...
+SELECT * FROM customers WHERE id = 1; DROP accout ...
+	\end{lstlisting}
+	A fix can be made by limiting the types of characters accepted and/or the length of the input. Otherwise a lot of languages have included functions that fix this.
+	
+	\subsection*{Cross Site Scripting (XSS)}
+	It is a vulnerability that enables to insert or execute in a form input (client side) an attack: execute malware, steal data or cookies. The problem is caused by the direct displaying in an output web page, without any sanitization.
+	Typical attack:
+	\begin{enumerate}
+\item The attacker identifies a web site with XSS vulnerabilities
+\item The attacker creates a URL that submits malicious input (e.g.,
+including malicious links or JS code) to the attacked web site
+\item The attacker tries to induce the victim to click on the URL (e.g., by including the link in an email)
+\item The victim clicks the URL, hence submitting malicious input to
+the attacked web site
+\item The web site response page includes malicious links or
+malicious JS code (executed on the victim’s browser)
+	\end{enumerate}
+	As with the SQL Injection, this attack can be avoided by checking the input, manually or using the functions that languages have.	
+	
+	\newpage
+	\section{Laboratory 1}
+	\subsection{OWASP Zap}
+	Zap is a security tool to search vulnerabilities in web applications.
+	\subsection{WebGoat}
+	WebGoat is a localhost server that contains exercises to train with security. In this case, it was used to study SQL injection.
+	\subsection{Homework 1}
+	See the linked PDF for more informations about it. 
+	\subsubsection{After the correction} 
+	The exercise would have been faster with the use of \textbf{Fuzzer}, a Zap tool that makes possible to repeat HTTP requests, without writing again all the unchanged data and by altering selected parts of it with \textit{rules}. For example, by selecting the starting position in substring you can make it change of value in an interval (from 1 to 23 in this case) while also editing the letter to be checked (mantain separeted more conditions if the objective is to concatenate them). To use it just search in the requests history for the desired request, right-click and select \textit{Attack-->Fuz}.
+	\newpage
+	
+	\section{Attack taxonomy (part 2)}
+	Before going on with \textit{Buffer overflow}, a quick review of the call stack.
+	\subsection{Call stack}
+	The call stack is a stack data structure that stores information about the active subroutines of a computer program. The call stack grows to lower memory addresses.
+	\begin{itemize}
+	\item \textbf{ebp}: register pointing to the base (highest address) of the current invocation frame (aka \textbf{fp}) 
+	\item \textbf{esp}: register pointing to top of stack (lowest address) 
+	\item \textbf{eip}: register pointing to the instruction to be executed next
+	\end{itemize} \medskip
+	\begin{minipage}{0.35\textwidth}
+	\includegraphics[scale=0.23]{img/stack1.png}
+	\end{minipage}
+	\begin{minipage}{0.6\textwidth}
+\begin{verbatim}
+	call: f(x1, x2, x3);
+\end{verbatim}
+\begin{enumerate}
+\item The 3 params are saved to the stack
+\item Return address (\textbf{eip} of \textbf{ebp}+ 4) is
+saved to the stack
+\item \textbf{ebp} of previous frame is saved to
+the stack
+\item Local variables are pushed to the
+stack
+\end{enumerate}
+	\end{minipage}\medskip
+	
+	\begin{minipage}{0.32\textwidth}
+	\includegraphics[scale=0.2]{img/stack2.png}
+	\end{minipage}
+	\begin{minipage}{0.6\textwidth}
+\begin{verbatim}
+	return: f(x1, x2, x3);
+\end{verbatim}
+\begin{enumerate}
+\item Local variables are popped from
+the stack
+\item ebp of previous frame is restored
+from the stack
+\item Return address is assigned to eip
+\end{enumerate}
+\end{minipage}
+	\subsection*{Buffer overflow}
+	It stands for the attempt to write more data to a fixed length memory block.
+	
+	\begin{minipage}{0.6\textwidth}
+	\begin{lstlisting}
+	#include <stdio.h>
+	void f(char* input) {
+		char buf[16];
+		strcpy(buf, input);
+		printf("%s\n", buf);
+	}
+	int main(int argc, char* argv[]) {
+		f(argv[1]);
+		return 0;
+	}
+	\end{lstlisting}
+	\end{minipage}
+	\begin{minipage}{0.3\textwidth}
+	\includegraphics[scale=0.25]{img/stack3.png}
+	\end{minipage}\bigskip \\ 
+	\begin{minipage}{0.45\textwidth}
+	\begin{verbatim}
+	> a.out "hello"
+	\end{verbatim} \medskip
+	\includegraphics[scale=0.25]{img/stack4.png}
+	\end{minipage}
+	\begin{minipage}{0.45\textwidth}
+	\begin{verbatim}
+	> a.out "abcdefghijklmnopxxxxyyyy"
+	\end{verbatim} \medskip
+	\includegraphics[scale=0.25]{img/stack5.png}
+	\end{minipage}
+	
+With as input \lstinline|> a.out "HELLO"|, there is no problem as the character occupy 6 chars (ending char included) of the 16 available. But if the input is \lstinline|> a.out "abcdefghijklmnopxxxxyyyy"|, things are different. The string is 24 characters long, so \lstinline|xxxxyyyy| goes out of the buffer:
+\begin{itemize}
+\item \textbf{strcpy} continues copying until it finds \lstinline|'\0'|
+\item \textbf{eip} can then point to arbitrary address
+\item Value of other local variables can be changed
+\end{itemize}
+Instead of “abcd...”, the attacker can input executable code in HEX,
+called shellcode. \\
+To sum it up, the problem is that user data and control flow information (e.g., function pointer tables, return addresses) are mixed together on the stack and on the heap, hence user data exceeding a buffer may corrupt control flow information. How to spot it? The use of unsafe string manipulation functions (e.g., strcpy) is a wake-up call of it. To fix it:
+\begin{itemize}
+\item Use counted versions of string functions
+\item Use safe string libraries, if available, or C++ strings
+\item Check loop termination and array boundaries
+\item Use C++/STL containers instead of C arrays
+\end{itemize}
+\subsubsection*{More examples}
+\begin{lstlisting}
+	void f() {
+		char buf[20];
+		gets(buf);
+	}
+\end{lstlisting}
+Use \textbf{fgets} instead of \textbf{gets}: \lstinline|fgets(buf, 20, stdin);|.
+\begin{lstlisting}
+	void f() {
+		char buf[20];
+		char prefix[] = "http://";
+		strcpy(buf, prefix);
+		strncat(buf, path, sizeof(buf));
+	}
+\end{lstlisting}
+Since there is a prefix, it should be: \lstinline|sizeof(buf)-7|.
+\begin{lstlisting}
+	void f() {
+		char buf[20];
+		sprintf(buf, "%s - %d\n", path, errno);
+	}
+\end{lstlisting}
+Use \textbf{snprintf} instead of \textbf{sprintf}.
+\begin{lstlisting}
+	void f() {
+		char buf[20];
+		strncpy(buf, data, strlen(data));
+	}
+\end{lstlisting}
+Should be the size of \textbf{buf} (20).
+\begin{lstlisting}
+	char src[10];
+	char dest[10];
+	char* base_url = "www.fbk.eu";
+	strncpy(src, base_url, 10);
+	strcpy(dest, src);
+\end{lstlisting}
+The string \textbf{base\_url} is 11 chars long because of the '\lstinline|\0|' at the end of the string, so \textbf{src} will not be null terminated. We will have buffer overflow because \textbf{strcpy} doesn’t know when to stop.
+\begin{lstlisting}
+	void f() {
+		wchar_t wbuf[20];
+		_snwprintf(wbuf, sizeof(wbuf), "%s\n", input);
+	}
+\end{lstlisting}
+Should be half (for 32 bit systems) the size of wbuf.
+\begin{lstlisting}
+	void f(File* f, unsigned long count) {
+		unsigned long i;
+		p = new Str[count];
+		for (i = 0 ; i < count ; i++) {
+			if (!ReadFile(f, &(p[i])))
+				break;
+		}
+	}
+\end{lstlisting}
+With count coming from user input.\\ \lstinline|new Str[count]| $\rightarrow$ \lstinline|malloc(sizeof(Str) * count)| \\
+Multiplication may overflow, causing insufficient memory
+allocation (integer overflow, we will see later). Allocation should be guarded to ensure count is not too big.
+\begin{lstlisting}
+	void f(char* input) {
+		short len; // 16 bits
+		char buf[MAX_BUF];
+		len = strlen(input);
+		if (len < MAX_BUF)
+			strcpy(buf, input);
+	}
+\end{lstlisting}
+If \textbf{input} is longer than 32K, \textbf{len} will be negative, hence lower than \textbf{MAX\_BUF}. If \textbf{input} is longer than 64K, \textbf{len} will be a small positive, possibly lower than \textbf{MAX\_BUF}. Use \textbf{size\_t} instead of \textbf{short}. \medskip
+\subsubsection*{Affected languages}
+\begin{itemize}
+\item \textbf{C}, \textbf{C++}, \textbf{Assembly} and low level languages
+\item Unsafe sections of \textbf{C\#}
+\item High level languages (e.g., \textbf{Java}) implemented in \textbf{C/C++}
+\item High level languages interfacing with the OS (almost certainly
+written in \textbf{C/C++})
+\item High level languages interacting with external libraries written in \textbf{C/C++}
+\end{itemize}
+\newpage
+\subsection*{Format Strings}
+String arguments for Format Functions like printf contain Format String parameters like \%d, \%s.
+\begin{lstlisting}
+	printf("Hello %s, your age is %d", name, age);
+\end{lstlisting}
+To add the value of \textit{name} to \textit{\%s} the system executes a POP from a certain memory area. Prendendo come esempio:
+\begin{lstlisting}
+	int main(int argc, char* argv[]) {
+		if (argc > 1)
+			printf(argv[1]);
+		return 0;
+	}
+\end{lstlisting}
+\begin{verbatim}
+> a.out “hello”
+hello
+\end{verbatim}
+But with:
+\begin{verbatim}
+> a.out “%x %x”
+12ffc0a0 4011e5a1
+\end{verbatim}
+The system POP two values from the call stack and print them (in hex format).
+\begin{itemize}
+\item "\%d \%d" pops two integers in decimal format
+\item "\%c \%c" pops two characters
+\item "\%p \%p" pops two pointers in hexadecimal format
+\item "\%10\$d" pops $10^{th}$ integer
+\end{itemize}
+A tainted string may be used as a format string, hence the attacker can insert formatting instructions that pop (e.g., \%s, \%x) values from the stack or write (e.g., \%n) values onto the call stack/heap. This is possible if the formatting function has an undeclared number of parameters, specified through ellipsis. 
+%SERVE?????????????????????????????????????????
+\begin{lstlisting}	
+	int main(int argc, char* argv[]) {
+		if (argc > 1)
+			printf("%s", argv[1]);
+		return 0;
+	}
+\end{lstlisting}
+To fix it:
+\begin{itemize}
+\item Use constant strings as string formats whenever possible
+\item Sanitize user input before using it as a format string
+\item Avoid formatting functions of the printf family (e.g., use stream operator << in C++)
+\end{itemize}
+
+\subsubsection*{More examples}
+\begin{lstlisting}
+	void f() {
+		fprintf(STDOUT, err_msg);
+	}
+\end{lstlisting}
+If user input can appear in the error message, the attack can be
+mounted:
+\begin{lstlisting}
+	fprintf(STDOUT, "%s", err_msg)
+\end{lstlisting}
+
+\subsubsection*{Affected languages}
+\begin{itemize}
+\item \textbf{C}, \textbf{C++}, \textbf{Perl}: languages supporting (1) format strings, that can be provided externally, and (2) variable number of arguments, which
+are obtained from the call stack without any check
+\item High level languages that use C implementations of their string
+formatting functions
+\end{itemize}
+\newpage
+
+\subsection*{Integer overflow}
+This vulnerability is based on arithmetical specifications of calculators. In the C language there are different types of integers, defined by variables with specific bits. For example on a 32bit machine:
+\begin{itemize}
+\item \textbf{int} is an integer with 32 bits
+\item \textbf{short} is an integer with 16 bits
+\end{itemize}
+A 16-bit integer can store 65,536 distinct values. In an unsigned representation, these values are the integers between 0 and 65,535; using two's complement, possible values range from -32,768 to 32,767.
+An implicit or explicit integer type conversion can produce unexpected results due to truncation or bit extension; integer operations overflow, producing unexpected results.
+\begin{lstlisting}
+	int MAX = 32767000;
+	int main(int argc, char* argv[]) {
+		short len = MAX;
+		char s[len+2000];
+		strncpy(s, argv[1], 32769000);
+	}
+\end{lstlisting}
+The downcast truncates \textbf{MAX} and the sign bit becomes 1:
+\begin{verbatim}
+len = -1000
+char s[len+2000]; // s[1000]
+\end{verbatim}
+To fix integer overflow:
+\begin{itemize}
+\item Use large enough integer types
+\item Use unsigned integers if possible
+\item Do not mix signed and unsigned integers in operations
+\item Check explicitly that expected boundaries are not exceeded
+\item Use \textbf{size\_t} for data structure and array size (guaranteed to be able to hold the size of any data object that the particular C implementation can create)
+\end{itemize}
+
+\subsubsection*{More examples}
+\begin{lstlisting}
+	void f() {
+		short x = -1;
+		unsigned short y = x;
+	}
+\end{lstlisting}
+y is positive (y = 65535).
+
+\begin{lstlisting}
+	void f(){
+		unsigned short x = 65535;
+		short y = x;
+	}
+\end{lstlisting}
+y is negative (y = -1).
+\begin{lstlisting}
+	void f() {
+		unsigned char x = 255;
+		x = x + 1; 			// x == 0
+		x = 2 - 3; 			// x == 255
+		char y = 127;
+		y = y + 1; 			// y = -128
+		y = -y				// y = -128
+		short z1 = 32000;
+		short z2 = 32000;
+		short z = z1 + z2; 	// z == -1536
+		z = z1 * z2;		// z == 0
+	}
+\end{lstlisting}
+\begin{lstlisting}
+	int main(int argc, char* argv[]) {
+		short len = strlen(argv[1]);
+		char* s;
+		if (len < 0)
+			len = -len;
+		s = malloc(len);
+		strncpy(s, argv[1], len);
+	}
+\end{lstlisting}
+Crashes if length of argv[1] = 32768 (max short +1). This is caused by the fact that the \textbf{len} value is a short integer, so it is converted to -32768, it enters the if clause and gets converted again to +32768; but again this number can not be stored in a short and becomes -32768. Crash! \medskip
+
+\subsubsection*{Affected languages}
+\begin{itemize}
+\item \textbf{C}, \textbf{C++}
+\item \textbf{C\#} checks for integer overflows and throws exceptions when these happen; however, programmers can define unchecked code blocks
+\item \textbf{Java}: overflow and underflow is not checked in any way; division by zero is the only numeric operation that throws an exception; however, unsigned types are not supported in Java and downcast is explicit
+\item \textbf{Perl} promotes integer values to floating point, which may produce unexpected results, when the result is used in an integer
+context (e.g., in a printf statement with \%d format)
+\end{itemize}
+Languages (e.g., \textbf{C\#}) and programs (e.g., in \textbf{Java}) that check for overflows and raise exceptions when these happen are anyway exposed to denial of service attacks
+
+\newpage
+\section{Laboratory 2}
+Really simple:
+\begin{itemize}
+\item non-prepared statements \textbf{bad}
+\item prepared statements \textbf{good}
+\end{itemize}
+Queries without prepared statements are subject to SQL injection.
+\begin{lstlisting}
+name_query = "SELECT * FROM names WHERE first_name = " + name + ";"
+cursor = conn.execute(name_query)
+\end{lstlisting}
+To use prepared statements, replace the query parameters with \lstinline|?|, create a tuple of parameters (in the correct order) and execute the query with it:
+\begin{lstlisting}
+query = "SELECT * FROM names WHERE first_name = ?;"
+params = (name, )	#tuple
+c.execute(query, params)
+\end{lstlisting}
+\subsection{Homework 2}
+	See the linked PDF for more informations about it. 
+	
+\newpage
+\section{Attack taxonomy (part 3)}
+\subsubsection*{Command Injection}
+Problem: untrusted user data is passed to an interpreter (or compiler); if the data is formatted so as to include commands the interpreter understands, such commands may be executed and the interpreter might be forced to operate beyond its intended functions.
+
+\subsubsection*{Error handling}
+Problem: the software does not handle some error conditions, leaving the program in an unsecure state, which might eventually produce a crash (hence, potentially a denial of service), possibly accompanied by disclosure of sensitive information about the code itself (when inappropriate error messages propagate to the end user).
+
+\subsubsection*{Network traffic}
+Problem: the network protocol used by the application is not secure (e.g., SMTP/POP3/IMAP without SSL) and the attacker can intercept, understand and change the data communicated over the network, including authentication and sensitive data.
+
+\subsubsection*{Hidden form fields and magic URLs}
+Problem: a web application relies on hidden form fields or magic URL parameters to transmit sensitive information.
+
+\subsubsection*{Improper use of SSL and TLS}
+Problem: programmers using low level SSL/TLS libraries directly might forget some important authentication checks:
+\begin{itemize}
+\item Validate the certification authority
+\item Verify the integrity of the certification authority
+signature
+\item Check the time validity of the certificate
+\item Check the domain name in the certificate
+\item Consult the certificate revocation list
+\end{itemize}
+
+\subsubsection*{Weak passwords}
+Problem: the system does not adopt all appropriate measures to ensure passwords are not easily stolen or guessed.\\
+To fix this:
+\begin{itemize}
+\item Enforce strong passwords
+\item Use secure channel and protocol
+\item Adopt strong password-reset procedures
+\item Restrict the login attempts without denying the service
+\item Store encrypted passwords, in secure persistent memory
+\item Consider strong protection (multi factor authentication, one-time
+\item passwords) for critical applications
+\end{itemize}
+
+\newpage
+\section{Laboratory 3}
+\subsection{Postman}
+Application to make GET requests with parameters. For example in \textit{www.bing.com} you can add a key, which is the name of the parameter, called \textit{q}, and the value \textit{xss}: the request sent is: \textit{https://www.bing.com/search?q=xss}.
+\subsection{XSS Reflected scripting}
+The XSS reflected scripting does not alterate the server data, it just show the changes based on the request.
+The XSS scripts can be avoided by sanitizing the text in input. For example in a Python code this is done by using the \textit{escape()} function.
+\subsection{WebGoat - XSS}
+In the search field:
+\begin{lstlisting}
+	<script>console.log(webgoat.customjs.phoneHome() ) </script>
+\end{lstlisting}
+or:
+\begin{lstlisting}
+	<script>webgoat.customjs.phoneHome()</script>
+\end{lstlisting}
+because the function makes the alert itself.
+\subsection{Homework 3}
+	See the linked PDF for more informations about it. 
+\subsubsection{After the correction}
+From the javascript log in the browser it is possible to get the cookie rapidly. The exercise 3 could have been done also by pressing a button to change page or just to fetch the result. In this last case just use:
+\begin{lstlisting}
+	onclick("fetch('secret?cookies='.concat(x)")
+\end{lstlisting}
+
+\newpage
+\section{Laboratory 4}
+\subsection{Stored XSS}
+It is possible to add a new station with a link in the name:
+\begin{lstlisting}
+	/add?id=543&location=<a href="www.bing.com">Torino</a>
+\end{lstlisting}
+The content is going to be stored in the database (it is permanent).
+It is not possible to inject in the id field because there are some checks made. A check on the client side is not going to be really efficient, so it is better to add the sanitization to the server side (same as with the reflected XSS).
+\subsection{Client-side filtering/tampering}
+NEVER filter sensitive data client-side: the user can see all the data stored in the client!
+\begin{lstlisting}
+	var users = fetch('localhost:5000/users')
+	for(const u of users) {
+		if (u.role != 'ceo') {
+			document.append('<li>' + u.name + u.salary + '</li>')
+		}
+	}
+\end{lstlisting}
+NEVER trust input sent by client: the user can manipulate the requests and pass client limitation. For example, if the service lets you choose, with a dropdown menu, between three possibilities but it lets you know that there is a fourth for specific users, it is possible to edit the request to select it (via ZAP).
+
+\subsection{Direct Object Reference}
+Given for example the URL, with the ending number corresponding to the user ID:
+\begin{lstlisting}
+	See all my personal detail at:
+	https://some.company.tld/app/user/23398
+\end{lstlisting}
+If authorization is not well implemented, it may be easy to access private detail just by changing it with a different ID. Direct Object Reference should be avoided or at least made safe.
+
+
+\subsection{WebGoat - Client Side}
+\subsubsection*{Bypass front-end restrictions}
+Users have a great degree of control over the front-end of the web application. They can alter HTML code, sometimes also scripts. This is why apps that require certain format of input should also validate on server-side. \\
+For the first exercise, go in request editor (right-->open/resend with Request Editor..) of ZAP, edit the request to:
+\begin{lstlisting}
+	select=option3&radio=option3&checkbox=org&shortInput=123456
+\end{lstlisting}
+For the second one, as before:
+\begin{lstlisting}
+	field1=AB&field2=WE&field3=^^^&field4=ven&field5=we&
+		field6=aaaaa&field7=aaa&error=0
+\end{lstlisting}
+Both exercises can also be made by adding a breakpoint (left of the HUD) and edit the requests before sending them.
+
+\subsubsection*{Html tampering}
+Browsers generally offer many options of editing the displayed content. Developers therefore must be aware that the values sent by the user may have been tampered with. \\
+For the exercise, similar to before just edit the request like this:
+\begin{lstlisting}
+	QTY=2&Total=0.99
+\end{lstlisting}
+
+\subsection{Homework 4}
+	See the linked PDF for more informations about it. An alternative: check network tab in ispector, find the request made to:
+\begin{verbatim}
+	http://localhost:8881/WebGoat/clientSideFiltering/challenge-store/coupons/123
+\end{verbatim}	 
+remove '123' and get the URL to the JSON file with the coupons.
+	
+\newpage
+\section{Attack taxonomy (part 4)}
+\subsection*{Data storage}
+Wrong read/write permissions (e.g., world-writable) granted
+to:
+\begin{itemize}
+\item Executables (e.g., scripts)
+\item Configuration files (e.g., including PATH info)
+\item Database files
+\end{itemize}	
+\subsection*{Information leakage}
+\begin{itemize}
+\item \textbf{Time}: time measures can leak information
+\item \textbf{Error messages}: username correctness, version information
+(attackers then know the vulnerabilities to try), network addresses, reasons for failure (e.g., SSL/TLS attacks), path information, exceptions
+\item \textbf{Stack information}: reported to the user when (in C/C++) a function is called with less parameters than expected
+\end{itemize}
+\subsection*{File access}
+Attackers delete or replace files, provide device names, or traverse directories.
+\subsection*{Network name resolution}
+The application relies on a DNS for network name resolution.
+\subsection*{Race conditions}
+The application is crashed by concurrent code accessing unprotected data.
+\subsection*{Unauthenticated keys}
+Cryptographic keys are exchanged without any authentication of the involved parties.
+\subsection*{Random numbers}
+Unpredictable random numbers should be used to prevent an attacker from taking the role of an existing user.
+\subsection*{Usability}
+Security information is communicated, collected or made modifiable through an interface having quite poor usability.
+
+\newpage
+\section{Laboratory 5}
+\subsection{WebGoat - Access Control Flaws}
+The access control flaw covered is the Direct Object Reference.
+Direct Object References are when an application uses client-provided input to access data and objects.
+\begin{verbatim}
+https://some.company.tld/dor?id=12345
+\end{verbatim}
+These are considered insecure when the reference is not properly handled and allows for authorization bypasses or disclose private data that could be used to perform operations or access data that the user should not be able to perform or access. \\
+In exercise 3 analyze the page and in the network tab search for the profile file. It is easy to recover the infos hidden from the page:
+\begin{lstlisting}
+  "role" : 3,
+  "color" : "yellow",
+  "size" : "small",
+  "name" : "Tom Cat",
+  "userId" : "2342384"
+\end{lstlisting}
+In exercise 4 just access the page with:
+\begin{verbatim}
+WebGoat/IDOR/profile/2342384
+\end{verbatim}
+In exercise 5 try to change the id number, until you get to:
+\begin{verbatim}
+http://localhost:8881/WebGoat/IDOR/profile/2342388
+
+"{role=3, color=brown, size=large, name=Buffalo Bill, userId=2342388}"
+\end{verbatim}
+Editing can be done with or without ZAP:
+\begin{itemize}
+\item \textbf{With ZAP}: modify the request, making it a PUT and adding the parameters in the body
+\item \textbf{Without ZAP}: open postman and do a GET with the above URL. The session cookies from the current session ('\lstinline|document.cookie|' in the console of firefox) have to be added to localhost (with path '/WebGoat'), so that the logins are already executed. Then change the request to a PUT and in the \textbf{body} tab change to \textbf{raw} and switch from \textbf{text} to \textbf{JSON}, then write:
+\begin{lstlisting}
+{
+	"role" : 1,
+	"color" : "red",
+	"size" : "large",
+	"name" : "Buffalo Bill",
+	"userId" : "2342388"
+}
+\end{lstlisting}
+\end{itemize}
+
+
+\subsection{Homework 5}
+	See the linked PDF for more informations about it. 
+\end{document}
