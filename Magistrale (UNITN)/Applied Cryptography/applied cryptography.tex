@@ -38,13 +38,18 @@
 \lhead{\nouppercase{\leftmark}}
 \rhead{\nouppercase{\rightmark}}
 
+%TABLE OF CONTENTS
+\setcounter{tocdepth}{1}
+\usepackage{tocstyle}
+
 \begin{document}
 
 	\title{Applied Cryptography}
 	\author{Edoardo Righi}
 	\maketitle
-
 	\thispagestyle{empty}
+	\tableofcontents
+	\newpage
 	\part{CRYPTOGRAPHY}
 	\newpage
 	\section{Introduction}
@@ -635,10 +640,12 @@ A state of AES:
 \end{itemize}
 \includegraphics[scale=0.28]{img/ac7.png}
 
+%\item KeyExpansions: round keys are derived from the cipher key using an algorithm called Rijndael’s key schedule. AES requires a separate 128-bit round key block for each round plus one more.
 \subsection{AES: SuBBytes}
 \begin{minipage}{0.3\textwidth}
 \includegraphics[scale=0.3]{img/ac8.png}
 \end{minipage}
+\hfill
 \begin{minipage}{0.6\textwidth}
 The SubBytes transformation is the application of the same map $\gamma$ (called S-box) to each byte:
 $$\gamma: \mathbb{F}_{256} \rightarrow \mathbb{F}_{256}$$
@@ -646,6 +653,7 @@ $$s_i \mapsto s'_i$$
 for $0 \leq i \leq 15$.
 In AES, SubBytes is the name of the S-Box. It is just a byte-based look-up table with 256 entries. For example, the byte (00000000) is sent to the byte (11000110). Don't worry on how it's been computed.
 \end{minipage}
+
 \subsection{AES: ShiftRows}
 \begin{minipage}{0.3\textwidth}
 \includegraphics[scale=0.3]{img/ac8b.png}
@@ -659,6 +667,7 @@ The bytes in the last three rows of the State are cyclically shifted (towards th
 \end{itemize}
 \includegraphics[scale=0.25]{img/ac9.png}
 \end{minipage}
+
 \subsection{AES: MixColumns}
 Each column of the state is multiplied (in the AES field) by the same
 matrix, which is the following: 
@@ -700,9 +709,10 @@ s_{11}
 \end{figure}
 
 \subsection{AES: AddRoundKey}
-\begin{figure}[h]
+Each byte of the state is combined with a block of the round key using bitwise xor.
+\begin{center}
 \centering \includegraphics[scale=0.3]{img/ac11.png}
-\end{figure}
+\end{center}
 We show only the key schedule of the AES-128 version (the others are similar but more complex).  The round key of round 1 is computed from the round key of round 0, that of round 2 from that of round 1   and so on, all by the same rule, which is described in the figure. Do not worry about the function $F_i$: it is a special method to mix four bytes together.
 
 \subsection{AES: MixingLayer}
@@ -769,10 +779,9 @@ different permutation, each composed of a XORing with the round key $\sigma_k$ ,
 \end{itemize}
 In Serpent, there are eight different SBoxes, that change at every round, cycling every 8 rounds. So at round 1 we use the first SBox, at round 2 the second SBox, etc, but when we arrive at round 9 we use the first SBox again and so on. All eight SBoxes are nibble-base look-up tables, each with 16 entries. \\
 For each input bit the corresponding output bit is as follows:
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.35]{img/ac12.png}
-\end{figure}
+\begin{center}
+\includegraphics[scale=0.45]{img/ac12.png}
+\end{center}
 For example, $S_0$ is sending $(0000)$ to $(0011)$ and $S_7$ is sending $(0011)$ to $(0000)$.
 
 \subsection{PRESENT}
@@ -945,7 +954,7 @@ Examples of hash functions are:
 
 \subsubsection{Keyed hash functions}
 An important family of hash functions used in cryptography are those taking as input two parameters: the message and a secret key. They are called keyed hash functions.
-They are also known as message authentication code (MAC) because they provide data integrity and also authentication of data origin. \\
+They are also known as \textbf{message authentication code} (\textbf{MAC}) because they provide data integrity and also authentication of data origin. \\
 Suppose that Alice and Bob shared a secret key k, which identifies a hash function, denoted by $h_k$.
 Given the message x, both Alice and Bob can compute the corresponding digest $y = h_k(x)$.
 Alice transmits the pair $(x,y)$ to Bob over an insecure channel.
@@ -1020,7 +1029,7 @@ However, sometimes the cipher is breakable with a known-plaintext attack that ne
 
 \subsubsection*{IS IT BETTER TO USE INDEPENDENT ROUND KEYS OR A KEY-SCHEDULE?}
 In general, it is better if the round keys are independent, that is, if each is randomly generated. To do that we need a good entropy source and an (relatively) inexpensive secure channel.
-However If the attacker is able to perform a (very unusual) sophisticated related-key attack, it could be a better choice to use round keys derived deterministically from a session key. But this is unrealistic
+However If the attacker is able to perform a (very unusual) sophisticated related-key attack, it could be a better choice to use round keys derived deterministically from a session key. But this is unrealistic.
 
 \newpage
 \section{DLOG AND DIFFIE-HELLMAN}
@@ -1174,7 +1183,7 @@ We show how Bob creates his public and private keys:
 \end{itemize}
 \subsubsection{Encryption}
 \begin{itemize}
-\item $\mathcal{P} = \mathcal{C} = \mathbb{Z}_N$, $m \in P$
+\item $\mathcal{P} = \mathcal{C} = \mathbb{Z}_N$, $m \in \mathcal{P}$
 \item Alice computes $c = m^e \; mod \; N$
 \item Alice transmits $c$ to Bob
 \end{itemize}
@@ -1511,14 +1520,18 @@ Other signature algorithms in use are those based on RSA.
 
 \subsection{RSA digital signature}
 \subsubsection*{CREATION}
-Bob chooses: \\
-PUBLIC \\
+Bob chooses:
+\begin{center}
+PUBLIC
+\end{center}
 \begin{itemize}
 \item Public key (N, e), \\$n = \log_2 (N) + 1$
 \item a hash function \\Hash : $(\mathbb{F}_2)^n \rightarrow (\mathbb{F}_2)^b$, $b < n$
 \item $f : (\mathbb{F}_2)^b \rightarrow \mathbb{Z}_N$, f injective
 \end{itemize}
-PRIVATE \\
+\begin{center}
+PRIVATE
+\end{center}
 \begin{itemize}
 \item Private key (N, d)
 \item N = pq
@@ -1699,13 +1712,13 @@ Examples are:
 \newpage
 \section{Sketch on more advanced signature schemes}
 \subsection{Threshold signatures (multisig)}
-In some contexts it is convenient to have a (t,w) threshold signature scheme, that is, each of w people has a share and when t of them use their share then they can sign collectively a document.
+In some contexts it is convenient to have a (t,w)-threshold signature scheme, that is, each of w people has a share and when t of them use their share then they can sign collectively a document.
 This can be done in many ways. The easiest way is to deal shares of the private key to w people using a (t,w) secret-sharing scheme, but in this way once the first signature is done the private key is recovered.
 There are more sophisticated ways of doing it, using i.e. secure multi-party computations or zero-knowledge proofs, that allow to sign collectively, without the need of anyone to reveal his/her share.
 
 \subsection{Ring signatures}
 In some contexts, anonimity is highly desired in signing documents (i.e. for unauthorized leaks).
-A way of achiving a high degree of anonimity isby using a scheme with "ring signatures", which we now sketch.
+A way of achieving a high degree of anonimity is by using a scheme with "ring signatures", which we now sketch.
 Each user has a private key/public key pair. To sign a document, Bob uses his own private key and the public keys of an arbitrary large groups of other users (which we call the "innocents"). Alice can verify that the document has been signed by ONE of the people involved, but she cannot understand WHO signed it.
 
 \subsection*{LAST COMMENT}
@@ -1735,7 +1748,7 @@ A payment card is used for goods purchase or money withdrawal. We can distinguis
 \end{itemize}
 
 \subsection{Online/Mobile banking}
-With Online Banking, clients can access their account directly on the bank's website, using their own computer, and conduct the same operations they could conduct by going to their bank branch in person. In particular, they can make wire transfers to another bank account. Mobile Banking is the smilar, but the access is made with a mobile phone.
+With Online Banking, clients can access their account directly on the bank's website, using their own computer, and conduct the same operations they could conduct by going to their bank branch in person. In particular, they can make wire transfers to another bank account. Mobile Banking is similar, but the access is made with a mobile phone.
 
 \subsection{Internet Payment}
 With Internet payment we mean nowadays the payment systems used by e-commerce websites in order to get payments from customers. We discuss two Internet payment systems: \textbf{Card not present} and \textbf{PayPal-like}.
@@ -1829,7 +1842,7 @@ If in a transaction Issuer and Acquirer coincide, we have a three parts card sch
 On the other hand, if in a transaction Issuer and Acquirer do not coincide, we have a four parts card scheme, which is the most common scheme.
 
 \subsection{Card authentication}
-All card authentication methods are offline methods, that is, when authenticating the card, the POS does not need to communicate with the outside and it employs public ke cryptography. Why offline? Because it is faster and cheaper. There is a hierarchy on existing offline authentications, with different security levels:
+All card authentication methods are offline methods, that is, when authenticating the card, the POS does not need to communicate with the outside and it employs public key cryptography. Why offline? Because it is faster and cheaper. There is a hierarchy on existing offline authentications, with different security levels:
 \begin{itemize}
 \item a basic level called SDA (Static Data Authentication);
 \item a medium level called DDA (Dynamic Data Authentication);
@@ -1838,7 +1851,7 @@ All card authentication methods are offline methods, that is, when authenticatin
 
 \subsection{EMV phases overview}
 \begin{center}
-\includegraphics[scale=0.6]{img/ac35.png}
+\includegraphics[scale=0.75]{img/ac35.png}
 \end{center}
 
 \subsubsection{Application selection}
@@ -1947,7 +1960,7 @@ It is the verification that the card is valid and the reservation of money for t
 \subsubsection*{Customer authentication}
 In order to mitigate this problem, 3D Secure is employed, where the customer authentication is demanded to the Issuer (e.g., Verified by Visa, American Express SafeKey, MasterCard SecureCode). In principle, each issuer could use any kind of authentication method.
 \begin{center}
-\includegraphics[scale=0.4]{img/ac37.png}
+\includegraphics[scale=0.5]{img/ac37.png}
 \end{center}
 Whatever two-factor authentication is employed, we call that process \textbf{Strong customer authentication}. A recent document by the European Central Bank reccomends payment service providers to employ strong customer authentication.
 
@@ -2192,7 +2205,7 @@ An e-commerce infrastructure typically follows a three-tier computing model, wit
 \item a processing layer (application), that performs processing fucntions;
 \item a data-storage layer.
 \end{enumerate}
-2 and 3 handle sensitive information so they should never be publically accessible. All three are in scope for PCI DSS.\medskip\\
+2 and 3 handle sensitive information so they should never be publically accessible. All three are in scope for PCI DSS.
 
 \subsection{Components}
 Typical components of e-commerce solutions include:
@@ -2243,22 +2256,6 @@ PDF file for more info.
 Data Encryption Standard (DES) is a block cipher based on Feistel encipherment, developed by IBM. 3DES has been developed to increase the security of DES, since the key space of DES is too small for modern computers, which can explore it fully in a few hours.
 It consists in applying DES three times. The key, called key bundle consists of three keys k1, k2, k3 of 56 bits each.
 
-\subsection{AES}
-AES(=Advanced Encryption Standard): block cipher with blocks
-of fixed length (128 bit). It employs $4 \times 4$ bytes states.
-\begin{itemize}
-\item KeyExpansions: round keys are derived from the cipher key using an algorithm called Rijndael’s key schedule. AES requires a separate 128-bit round key block for each round plus one more.
-\item AddRoundKey: each byte of the state is combined with a block of the round key using bitwise xor.
-\item SubBytes: a non-linear substitution step where each byte is
-replaced with another according to a lookup table.
-\item ShiftRows: a transposition step where the last three rows of the state are shifted cyclically a certain number of steps.
-\item MixColumns: a mixing operation which operates on the columns
-of the state, combining the four bytes in each column.
-\item AddRoundKey is repeated.
-\end{itemize}
-The MixColumns function is not performed; the final round
-consists only of: SubBytes, ShiftRows and AddRoundKey.
-
 \subsection{Hash functions}
 An Hash function takes bit strings with arbitrary (finite) length and associates bit strings with a fixed length n. Hash functions are used for integrity, digital signature, authentication.
 
@@ -2289,13 +2286,12 @@ If an attacker can obtain a pair (message, signature) = (m,s) so that its verifi
 In order to avoid these attacks, usually a Digital signature is obtained from a combination of hash functions and public key cryptography algorithms. \\
 The security of the used public key cryptography algorithm depends on the difficulty of the algebraic problem underlying it. The main algorithms are RSA, based on the Integer Factorization Problem, and DSA (Digital Signature Algorithm) based on the Discrete Logarithm Problem.
 
-
-\newpage
-\section{Lectures 19-20-21: Post Quantum Cryptography and Zero Knowledge proofs.}
+\newpage %lectures 19-20-21
+\section{Post Quantum Cryptography}
 \begin{itemize}
 \item \textbf{Quantum computing}: computers based on phenomena of quantum mechanics to execute calculations;
 \item \textbf{Quantum cryptography}: scientific discipline that exploits properties of quantum mechanics for cryptographic goals, such as the quantum key distribution;
-\item \textbf{Quantum communication}: scientific discipline that exploits properties of quantum mechanics for transmitting information).
+\item \textbf{Quantum communication}: scientific discipline that exploits properties of quantum mechanics for transmitting information.
 \end{itemize}
 In October 2011 was opened the First academic centre devoted to quantum computing (Univ. South. California, Lockheed Martin e D-Wave Systems) and in January 2012 D-Wave claims the production of 84-qubit
 quantum computer. In 2013 Quantum computer D-Wave TwoTM is installed at the NASA centre. Advanced Supercomputing (NAS). In 2017 D-Wave 2000Q is designed with 2000 qubit. Unfortunately, these D-Wave computers are based on quantum annealing, rather than quantum superposition, so their purpose is not general.
@@ -2318,7 +2314,45 @@ The USA federal institute, NIST, is actively researching new PK algorithms, quan
 \item Special publications SP 800-56A Rev 2 and SP 800-56B (key establishment protocols)
 \end{itemize}
 
-\subsection{VIDEO}
+\newpage
+\section{Zero knowledge algorithm}
+Classic example by Micali, with $N=PQ$ (product of P and Q): given x, is there a z such that
+$$x^2 \equiv z \quad (mod \; N) \quad ?$$
+\begin{enumerate}
+\item If x exists, then z is a QR (quadratic residue) else it is a NQR. Half numbers in N are QR and the other half are NQR. If z is QR then there exist 4 \textbf{x}s so that the equation is valid.
+\item You can compute efficiently these 4 \textbf{x}s and, viceversa, get P and Q if you know the 4 roots:
+$$\text{To know } P, Q \iff \text{To know these 4 xs}$$
+\item We don't know any efficient method to decide, given z, wether it is QR or not, unless we have P and Q.
+\end{enumerate}
+Note: 
+$$QR \cdot QR = QR$$
+$$NQR \cdot QR = NQR$$
+if $(x,N) = 1$ and $(z,N) = 1$ ($x$ and $z$ coprime with N).
+
+\subsection{Micali's algorithm}
+There are 2 parties:
+\begin{itemize}
+\item Alice, the \textbf{prover}: knows P and Q, declares N (public) and a number z, which she claims is a QR.
+\item Bob, the \textbf{verifier}: does not believe Alice and she challenges her.
+\end{itemize}
+Alice could just give Bob P and Q, so that he can compute it by himself, but she doesn't want to give him any knowledge except the fact that z is QR (don't reveal factorization of N). First, Alice has acces to a random entropy source and Bob has access to another random source (private sources); Alice calls this source and gets a number $w$ (in $\mathbb{Z}_N$). For this random value Alice computes the square, to get $u = W^2$, which is QR, and send it to Bob. Bob calls its random source and gets a bit \textit{b}, that is sent to Alice.
+Depending on the value of b Alice makes 2 operations:
+\begin{itemize}
+\item $b=0$: Alice sends $w$. 
+\item $b=1$: Alice sends $wx$ ($x$ square root of $z$).
+\end{itemize}
+In the first case, Bob can check that the square is $u$ (still not proving anything on $z$ though).
+In the other case, Bob can square it, so that
+$$w^2x^2 = uz$$
+Since $w^2$, $x^2$ and $u$ (claimed by Alice) are QRs and since $QR \cdot QR = QR$, $z$ has to be a QR.\\
+So why Bob has to send b, which can have value 0? That's because Alice may be cheating and send a number that is not the square root of $u$: so there is a $50\%$ probability that the b bit is 0 and Alice has to send only $w$. Obviously Alice can still cheat by hoping that b will be 1, so this "game" is repeated until Bob is sure that Alice is not cheating. \\
+Also Bob could be cheating (becoming the \textbf{simulator}). Zero knowledge works so that Bob can't get extra informations other than the one required for the computation. \medskip\\
+This is an istance of an Interactive Protocol. The most specific case of IP is the case of an Interactive Proof System: in this case there are conditions on the probability that Bob accepts or rejects.
+\begin{itemize}
+\item \textbf{Rejection.} Bob rejects when he finds that Alice is cheating: this doesn't mean that what Alice originally said was wrong.
+\item \textbf{Acceptance.} Given any small number $\epsilon$, Bob will accept the true claim with a probability of at least $1 - \epsilon$ and the false claim with a probability of at most $\epsilon$. The $\epsilon$ usually depends on the size of the input x, so that $\epsilon \sim \frac{1}{(x)^k}$ (k is a fixed value).
+\end{itemize}
+
 
 \newpage
 \thispagestyle{empty}
@@ -2525,7 +2559,7 @@ approved cryptographic techniques are required
 \end{itemize}
 
 \newpage
-\section{Public Page Infrastructure}
+\section{Public Key Infrastructure}
 The goals of information security are preserving integrity and/or confidentiality of data from sending point to the receiving point in a network and providing for the receiver to be certain that the sender is actually the entity that the information was received from.
 These require:
 \begin{itemize}
@@ -2539,10 +2573,20 @@ Authentication, confidentiality, and key management can be implemented at differ
 \item \textbf{Transport layer}: provides Session Layer security in the OSI model of the internet protocols; plays a central role in the security and privacy needed for web commerce to work. Example: before your laptop uploads your credit card information to on-line shopping, it must make certain that the remote host is indeed what it claims to be. Also known as the "\textit{Session level security}" (session = enduring association between a client and a server consisting of multiple connections).
 \item \textbf{Application layer}: S/MIME, PGP (Pretty Good Privacy), OpenPGP. Initially developed for securing emails, now used for securing information at rest (to mitigate malwares). Also known as "\textit{Email level security}"
 \end{itemize}
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/ac17.png}
-\end{figure}
+\begin{center}
+\includegraphics[scale=0.4]{img/ac17.png}
+\end{center}
+A Public Key Infrastructure (PKI) is the cryptographic primitive that:
+\begin{itemize}
+\item binds public keys with their respective users and, if necessary, revokes specific public keys
+\item guarantees user identification
+\end{itemize}
+The main components of PKI are:
+\begin{itemize}
+\item certificates
+\item certification authorities (CA)
+\item registration authorities (RA)
+\end{itemize}
 
 \subsection{Public key cryptography and key distribution}
 Public Key Cryptography (PKC), or asymmetric cryptography, is a cryptographic system that uses pairs of keys: public keys which may be disseminated widely, and private keys which are known only to the owner. Effective security only requires keeping the private key private; the public key can be openly distributed without compromising security.
@@ -2565,11 +2609,9 @@ With symmetric encryption, it is needed the exchange of $N \cdot (N-1)/2$ key pa
 
 \subsubsection*{RSA Factoring challenge}
 For each RSA number n, there exists prime numbers p and q such that $n = p \times q$. Problem: find p and q primes, given only n.
-Started in 1991, ended in 2007. The practical difficulty of factoring large integers and the cracking of RSA keys used in cryptography (Moore's law) make RSA looks outdated. A better encryption method right now is Elliptic Curve Cryptography (ECC).
+Started in 1991, ended in 2007. The practical difficulty of factoring large integers and the cracking of RSA keys used in cryptography (Moore's law) make RSA looks outdated. Given Moore’s Law (the number of transistors in a dense integrated circuit doubles about every two year), when will that key size be inadequate?
+A better encryption method right now is Elliptic Curve Cryptography (ECC).
 %https://blog.cloudflare.com/a-relatively-easy-to-understand-primer-on-elliptic-curve-cryptography/
-
-\subsubsection{Moore's law}
-Given Moore’s Law (the number of transistors in a dense integrated circuit doubles about every two year), when will that key size be inadequate? Gradually bigger number in RSA have been factored.
 
 \subsubsection{Public key distribution}
 How to find out the right public key of an entity? I.e. how to implement the key ring?\\
@@ -2582,12 +2624,22 @@ Possible answers:
 \item Certificates: binding between public keys and their owners.
 \end{itemize}
 
-\subsubsection{Certificates}
-Certificates are issued by Certificate Authorities and work as an off-line process; they are verified to find out the public key of the entity to which the certificate is associated. For verifying a certificate one must know the public key of the Certificate Authority issuing the certificate and must trust the Certificate Authority.
-The certificate verification is the signature (of the CA) verification. 
+\subsection{Certificates}
+To bind a public key to the identity of a user in an unambiguous
+manner, a PKI employs \textbf{certificates}. Certificates are the building blocks of PKIs, digital documents that typically contain a public key, data referring to the entity that emitted the certificate (CA), data referring to the certificate owner (for example: name,
+country, etc.), a validity period, encryption algorithms, digital signatures and key-exchange algorithms supported. Different fields can be contained in a certificate, depending on the international protocols that define their format.\\
+When Alice wants to send a message to Bob:
+\begin{itemize}
+\item she asks Bob to send his certificate
+\item Bob sends his certificate
+\item Alice opens the certificate, finding Bob’s public key, and she uses it to send her message to Bob.
+\end{itemize} 
+However, even using the certificates, the problem still remains: Alice cannot be sure that the certificate really belongs to Bob.
+To solve the problem a PKI uses trusted third parties, called Certification Authorities (CA), that guarantee the identity of users and control the issuing of certificates. Once the identity of users requiring a public key has been checked, a CA issues a certificate signed with its own private key, to validate the public key of the user. \textbf{The CAs sign their own certificates}.
+%Certificates are issued by Certificate Authorities and work as an off-line process; they are verified to find out the public key of the entity to which the certificate is associated. For verifying a certificate one must know the public key of the Certificate Authority issuing the certificate and must trust the Certificate Authority. The certificate verification is the signature (of the CA) verification. 
 
 \subsubsection*{Certificates issues}
-There are issues also with CA:
+There are issues with CAs:
 \begin{itemize}
 \item \textbf{CA certification policies}: they describe the methodology of certificate issuance. There are different types of identity control practices:
 	\begin{itemize}
@@ -2616,9 +2668,8 @@ Endorsed document/card that serves as a binding between the identity and signatu
 There is a ITU (International Telecommunication Union) standard for certificates, X.509: ISO 9495-2 is the equivalent ISO standard. It defines certificate structure, not PKI, and the authentication protocols. It is used for identity certificates.
 Supports both hierarchical model and cross certificates. End users cannot be CAs.
 \begin{center}
-\includegraphics[scale=0.45]{img/ac18.png}
+\includegraphics[scale=0.5]{img/ac18.png}
 \end{center}
-
 
 \subsection{Public Key Infrastructure}
 The goals of a PKI are to assure that the public key is \textbf{available}, \textbf{authentic} and \textbf{valid}. It also has to enforce \textbf{security} and \textbf{interoperability}.
@@ -2662,7 +2713,8 @@ PKI is a complete system and defined mechanisms for certificates
 \item certificate distribution
 \end{itemize}
 Their business practice consists in issueing certificates and make money. Several CAs are also necessary due to political, geographical and trust reasons. An entity assumes CA will establish and maintain accurate binding (secure the binding, CA’s keys binding, security, etc...) of attributes and public keys. \\
-There are 3 interconnection models, that also limit/control trust in a given environment:
+In a PKI the CAs can be organized in different structures, called
+trust models, that also limit/control trust in a given environment:
 \begin{itemize}
 \item hierarchical
 \item cross certificates
@@ -2670,18 +2722,16 @@ There are 3 interconnection models, that also limit/control trust in a given env
 \end{itemize}
 
 \subsubsection*{Hierarchical PKI}
-\begin{figure}[h]
-\centering
+\begin{center}
 \includegraphics[scale=0.38]{img/ac20.png}
-\end{figure}
+\end{center}
 It has a tree architecture, with a single root CA and a number of subordinate CA’s (recursively); parent certifies children and leaves are non-CA (end-) entities.
 Typically CA either certifies other CA’s or end-entities, but not both. Everyone has root CA PK.
 
 \subsubsection*{Cross certificate PKI}
-\begin{figure}[h]
-\centering
+\begin{center}
 \includegraphics[scale=0.38]{img/ac21.png}
-\end{figure}
+\end{center}
 Cross-certification extends third-party trust relationships between CA domains. Certificates are for CAs (not end-entities).  A cross-certificate is called an "inter-domain cross-certificate" if the subject and issuer CAs belong to different administrative domains; it is called an "intra-domain cross-certificate" otherwise.
 There are one or two directions (CA1 certifies CA2 and/or CA2 certifies CA1). Control is implemented because cross-certificate limits trust (name, policy, path length, etc. constraints).
 
@@ -2689,7 +2739,7 @@ There are one or two directions (CA1 certifies CA2 and/or CA2 certifies CA1). Co
 \begin{center}
 \includegraphics[scale=0.38]{img/ac22.png}
 \end{center}
-A set of independent hierarchies; may evolve as independent historically. Provides cross-certification or PKI networking to connect the hierarchies. It is fully-meshed  (all CAs are cross-certified). Hub \& spokes or bridge CA (Not= Hierarchy; no root CA: every end-entity holds its CA PK). %TODO ???
+A set of independent hierarchies that may evolve as independent historically. Provides cross-certification or PKI networking to connect the hierarchies. It is fully-meshed  (all CAs are cross-certified). Hub \& spokes or bridge CA (Not= Hierarchy; no root CA: every end-entity holds its CA PK). %TODO ???
 
 \subsubsection{Certificate paths}
 Verifier must know public key of the first CA, other public keys are found out one by one. All CAs on the path must be trusted by the verifier.
@@ -2727,7 +2777,7 @@ Does the application using certificates take users into account?
 Example: a user makes a decision whether to interact with a SSL/TLS-protected web page based on what is displayed on that page. Certificate is not displayed and does not have a relation to what is displayed; SSL/TLS security cannot control or react to the content of the web page, only its DNS address.\medskip\\
 The certificate of the server is not shown to the user who cannot verify anything. The check on the server certificate is performed at the cryptographic level only. See also the issue of certificate
 management in mobile applications verified by TLSAssistant: would it be meaningful to involve the user in checking server certificates somehow?
-\subsubsection*{Was it one CA or a CA + a Ra?}
+\subsubsection*{Was it one CA or a CA + a RA?}
 In response to the lack of authority on the content of certificates, some CAs have created a 2-part certification structure:
 \begin{itemize}
 \item Registration Authority (RA) for content
@@ -2755,10 +2805,11 @@ For ID Cards, when used as a 2nd factor authentication, it can be blended with S
 
 \subsection{ACME and Let's Encrypt}
 \subsubsection{Obtaining a certificate}
-\begin{figure}[h]
-\centering
+
+\begin{center}
 \includegraphics[scale=0.3]{img/ac23.png}
-\end{figure}
+\end{center}
+
 \begin{enumerate}
 \item User-A generates a Public and Private key-pair or is assigned a key-pair by some authority in their organization
 \item User-A first requests the certificate of the CA Server
@@ -3389,7 +3440,7 @@ GET /SAML2/SSO/Redirect?SAMLRequest=request
 	&RelayState=token HTTP/1.1
 Host: idp.example.org
 \end{lstlisting}
-where the values of the SAMLRequest and RelayState parameters are the same as those provided in the redirect. The SSO Service at the identity provider processes the <samlp:AuthnRequest> element (by URL-decoding, base64-decoding and inflating the request, in that order) and performs a security check. If the user does not have a valid security context, the identity provider identifies the user with any mechanism.
+where the values of the SAMLRequest and RelayState parameters are the same as those provided in the redirect. The SSO Service at the identity provider processes (by URL-decoding, base64-decoding and inflating the request, in that order) the <samlp:AuthnRequest> element and performs a security check. If the user does not have a valid security context, the identity provider identifies the user with any mechanism.
 \item \textbf{Respond with an XHTML form.} The SSO Service validates the request and responds with a document containing an XHTML form:
 \begin{lstlisting}
 <form method="post" action=
@@ -3415,7 +3466,7 @@ where the values of the SAMLResponse and RelayState parameters are taken from th
 
 \subsection{Possible to use cookies instead?}
 \subsubsection{Cookies}
-An HTTP cookie is a small file left in a Web browser by a Web server, that carries a name/value pair (its useful payload) and a set of management attributes. Cookies were introduced by Netscape as a state management mechanism to the otherwise stateless HTTP protocol in 1994. The current implemented standard for HTTP cookies is RFC 2109; it defines the cookie format and the rules for proper handling of cookies by Web browsers, servers, and proxies. \medskip\\
+An HTTP cookie is a small file left in a Web browser by a Web server, that carries a name-value pair (its useful payload) and a set of management attributes. Cookies were introduced by Netscape as a state management mechanism to the otherwise stateless HTTP protocol in 1994. The current implemented standard for HTTP cookies is RFC 2109; it defines the cookie format and the rules for proper handling of cookies by Web browsers, servers, and proxies. \medskip\\
 \begin{tabular}{|c|l|} \hline
 \textbf{attribute} & \textbf{description} \\ \hline \hline
 Comment & Short description of the intended use of the cookie \\ \hline
@@ -3425,7 +3476,7 @@ Max-Age & Maximum period after which the cookie must be discarded \\ \hline
 Path & Subset of URLs on qualifying hosts for which the cookie is valid \\ \hline
 Port & List of TCP ports on qualifying hosts for which the cookie is valid\\ \hline
 Secure & \thead{If present, the cookie may be transported only over a secure \\(e.g., SSL-protected) channel} \\ \hline
-\end{tabular} 
+\end{tabular} \medskip \\
 Cookies may be subdivided into:
 \begin{itemize}
 \item session cookies: erased when the browser is closed;
