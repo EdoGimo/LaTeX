@@ -1032,7 +1032,7 @@ In general, it is better if the round keys are independent, that is, if each is 
 However If the attacker is able to perform a (very unusual) sophisticated related-key attack, it could be a better choice to use round keys derived deterministically from a session key. But this is unrealistic.
 
 \newpage
-\section{DLOG AND DIFFIE-HELLMAN}
+\section{DLog and Diffie-Hellman}
 \subsection{Discrete Logarithm}
 Given a multiplicative group $(G , \cdot)$ and a fixed element $g \in G$, we can consider the powers of $g$:
 $$g^0, g^1, g^2, g^3, \dots , g^a, \dots \quad \text{ where } a \in \mathbb{N}$$
@@ -3161,25 +3161,32 @@ Most of this activity is hidden from applications. This complexity has turned ou
 \item \textbf{Logical flaws}: a set of logical loopholes can be used to "trick" both client and server.
 \end{itemize}
 The set of viable attacks can be structured as a tree:
-\begin{figure}[h]
-\centering
+\begin{center}
 \includegraphics[scale=0.35]{img/ac25}
-\end{figure}\\
-\begin{minipage}{0.55\textwidth}
-\includegraphics[scale=0.3]{img/ac26}
+\end{center}
+\begin{minipage}{0.7\textwidth}
+\includegraphics[scale=0.45]{img/ac26}
 \end{minipage}
-\begin{minipage}{0.35\textwidth}
+\begin{minipage}{0.25\textwidth}
 \includegraphics[scale=0.3]{img/ac27}
 \end{minipage}
 
 \subsection{Digression on cookies}
+HTTP is a stateless, application-level protocol for distributed, collaborative, hypermedia information systems. It is:
+\begin{itemize}
+\item \textbf{Connectionless}: a client (e.g., a browser) initiates an HTTP request and after a request is made, the client disconnects from the server and waits for a response. The server processes the request and re-establishes the connection with the client to send a response back;
+\item \textbf{Media independent}: any type of data can be sent by HTTP as long as both the client and the server know how to handle the data content;
+\item \textbf{Stateless}: the server and client are aware of each other only during a current request. Afterwards, both of them forget about each other. Due to this nature of the protocol, neither the client nor the browser can retain information between different requests across the web pages.
+\end{itemize}
+An HTTP \textbf{cookie} (also called web cookie, Internet cookie, browser cookie, or simply cookie) is a small piece of data sent from a website and stored on the user's computer by the user's web browser while the user is browsing. It is designed to be a reliable mechanism for websites to remember stateful information (such as items added in the shopping cart in an online store) or to record the user's browsing activity (including clicking particular buttons, logging in, or recording which pages were visited in the past). Authentication cookies are the most common method used by web servers to know whether the user is logged in or not, and which account they are logged in with; without such a mechanism, the site would not know whether to send a page containing sensitive information, or require the user to authenticate themselves by logging in. The security of an authentication cookie generally depends on the security of the issuing website and the user's web browser, and on whether the cookie data is encrypted. Security vulnerabilities may allow a cookie's data to be read by a hacker, used to gain access to user data, or used to gain access (with the user's credentials) to the website to which the cookie belongs (see cross-site scripting and cross-site request forgery for examples). There are \textbf{privacy} concerns: tracking cookies, and especially third-party tracking cookies, are commonly used as ways to compile long-term records of individuals' browsing histories. The European law requires that all websites targeting EU member states gain "informed consent" from users before storing non-essential cookies on their device. \medskip\\
+Cookies can be exchanged in clear, or in the httpsOnly version sent by the server only over HTTPS: this allows \textbf{confidentiality} but not \textbf{integrity}, since a network attacker can rewrite cookies over http.
 
 \subsection{Example of attacks}
 \subsubsection*{Firesheep}
 Firesheep was an extension for the Firefox web browser that used a packet sniffer to intercept unencrypted session cookies from popular websites (e.g., Facebook and Twitter). The plugin eavesdropped on Wi-Fi communications, listening for session cookies. When it detected a session cookie, the tool used this cookie to obtain the identity belonging to that session. Collected identities (victims) are displayed in a side bar in Firefox. By clicking on a victim's name, the victim's session is taken over by the attacker. The extension was released October 2010 as a demonstration of the security risk of session hijacking vulnerabilities to users of web sites that only encrypt the login process and not the cookie(s) created during the login process. Session hijacking as a service!
 
 \subsubsection{SSLStrip}
-An SSLStrip attack is an instance of Men In The Middle (MITM) attack. Instead of the victim connecting directly to a website; the victim would connect to the attacker, and the attacker would initiate the connection back to the website.
+An SSLStrip attack is an instance of Men In The Middle (MITM) attack. Instead of the victim connecting directly to a website, the victim would connect to the attacker, and the attacker would initiate the connection back to the website.
 In 2009 at Blackhat DC, it was shown the SSLStrip tool that would intercept HTTP traffic and whenever it spotted redirects or links to sites using HTTPS, it would transparently strip them away. Recall that there are two ways to follow https links:
 \begin{itemize}
 \item clicking on links with prefix https;
@@ -3188,18 +3195,10 @@ In 2009 at Blackhat DC, it was shown the SSLStrip tool that would intercept HTTP
 Attacker wants to read the traffic between two entities communicating via SSL/TLS. The idea underlying strip attack is to downgrade connection so that encryption is no more used. How is it possible to perform downgrading? Intercept web traffic and strip the 's' from all the links to https. The interceptor would make the encrypted connection back to the web server in HTTPS, and serve the traffic back to the site visitor unencrypted (logging any interesting passwords or credit card information in the process).
 
 \subsubsection*{HSTS}
-To avoid this problem, a protocol called HTTP Strict Transport Security (HSTS) was created in 2012 and specified in RFC 6797. The protocol works by the server responding with a special header called Strict-Transport-Security which contains a response telling the client that whenever they reconnect to the site, they must use HTTPS. While this provided an improvement in preventing interception attacks, it was not perfect and there remain a number of shortcomings:
-\begin{itemize}
-\item HSTS requires a previous connection to know to always connect securely to a particular site;
-\item When visitors first connect to the website, they will not have received the HSTS rule that tells them to always use HTTPS;
-\item Only on subsequent connections will the visitor's browser be aware of the HSTS rule that requires them to connect over HTTPS.
-\end{itemize}
-Mitigation:
-\begin{itemize}
-\item HSTS Preload Lists are one potential mitigations, they effectively work by hardcoding a list of websites that need to be connected to using HTTPS-only;
-\item Sites with HSTS enabled can be submitted to the Chrome HSTS Preload List at hstspreload.org; which is also used as the basis of the preload lists used in other browsers;
-\item Inside the source code of Google Chrome, there is a file which contains a hardcoded file listing the HSTS properties for all domains in the Preload List.
-\end{itemize}
+To avoid this problem, a protocol called HTTP Strict Transport Security (HSTS) was created in 2012 and specified in RFC 6797. The protocol works by the server responding with a special header called Strict-Transport-Security which contains a response telling the client that whenever they reconnect to the site, they must use HTTPS. While this provided an improvement in preventing interception attacks, it was not perfect and there remain a number of shortcomings.\medskip\\
+For example HSTS requires a previous connection to know to always connect securely to a particular site: when visitors first connect to the website, they will not have received the HSTS rule that tells them to always use HTTPS. Only on subsequent connections will the visitor's browser be aware of the HSTS rule that requires them to connect over HTTPS. \medskip\\
+HSTS Preload Lists are one potential mitigations: they effectively work by hardcoding a list of websites that need to be connected to using HTTPS-only. Sites with HSTS enabled can be submitted to the Chrome HSTS Preload List at \textit{hstspreload.org}, which is also used as the basis of the preload lists used in other browsers. Inside the source code of Google Chrome, there is a file which contains a hardcoded file listing the HSTS properties for all domains in the Preload List.
+
 \subsubsection{Sweet32 - birthday attack}
 Known since long time, only recently (2016) the attack has become
 feasible. This attack allows to recover small portions of plaintext when encrypted with 64-bit block ciphers under some circumstances.  3DES roughly combines 3 times the symmetric block cipher DES (which
@@ -3214,18 +3213,17 @@ Install Javascript code in the victim’s browser by inducing him/her to visit a
 To mitigate this, disable 3DES in TLS 1.2 (in TLS 1.3 it is no more supported).
 
 \subsubsection{3SHAKE}
-TLS Handshake protocol does a good job in establishing a common key but it does not guarantee the key to be unique. The idea underlying 3SHAKE is to exploit this lack of uniqueness by setting up two session using very similar artifacts (keys, session parameters, different certificates) and then to exploit the session resumption facilities to force the two similar sessions to share the same common keys.
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/ac28.png}
-\end{figure}
-Mallory mediates two handshakes that generate the same MasterSecret: the handshakes have different hashes so they cannot be mistaken.
-The attacker triggers a session resumption: now the two sessions can be mistaken (same "finished" message)!
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/ac29.png}
-\end{figure}
-Within the resumed session, Mallory injects malicious traffic (e.g. "send money from Alice to Mallory"). By exploiting the renegotiation mechanism, Mallory merges the sessions so that the malicious request is executed into Alice’s context. How to mitigate? %TODO
+TLS Handshake protocol does a good job in establishing a common key but it does not guarantee the key to be unique. The idea underlying 3SHAKE is to exploit this lack of uniqueness by setting up two sessions using very similar artifacts (keys, session parameters, different certificates) and then to exploit the session resumption facilities to force the two similar sessions to share the same common keys.
+\begin{center}
+\includegraphics[scale=0.4]{img/ac28.png}
+\end{center}
+Mallory mediates two handshakes: she can generate and force both connections to use the same \textbf{MasterSecret}. While the attacker has tricked the client into using a specific MS value, the handshake Finished messages (which the client will attach to the renegotiation handshake) will not be the same in both handshakes, because (among other things) the certificates sent on each connection were very different, hence the handshake hashes are not identical. \\
+However, if the attacker triggers a session resumption (with a “session resumption handshake”, to resume their session with new encryption keys), which uses no public-key cryptography or certificates at all (to make it faster), now the two sessions can be mistaken: both connections now see exactly the same (resumption) handshake messages, hence the hash of these handshakes will be identical, which means that their “Finished” message will be identical.
+\begin{center}
+\includegraphics[scale=0.4]{img/ac29.png}
+\end{center}
+Within the resumed session, Mallory injects malicious traffic (e.g. "send money from Alice to Mallory"). By exploiting the renegotiation mechanism, Mallory merges the sessions so that the malicious request is executed into Alice’s context. How to mitigate? \\
+One proposed fix is to change the derivation of the Master Secret such that it includes the handshake hash. This should wipe out most of the attacks above. Another fix is to bind the “session resumption” handshake to the original handshake that led to it.
 
 \subsubsection{More on TLS vulnerabilities}
 TLSAssistant is an automated tool that combines state-of-the-art TLS analyzers with a report system that suggests appropriate mitigations and shows the full set of viable attacks. TLSAssistant is currently able to detect and provide mitigations for: 3SHAKE, Bar Mitzvah, BREACH, Client-Initiated Renegotiation DoS, CRIME, DROWN, HSTS not preloaded, HSTS not set, HTTPS not enforced, Lucky13, Missing Certificate Transparency, POODLE, RC4NOMORE, ROBOT, SLOTH, Sweet32, ...
@@ -3280,8 +3278,8 @@ SSO system relies on other infrastructure/procedures: the authentication system,
 A federated identity is the means of linking a person's electronic identity and attributes, stored across multiple distinct identity management systems. Federated identity is related to single sign-on (SSO), in which a user's single authentication ticket, or token, is trusted across multiple IT systems or even organizations. SSO is a subset of federated identity management, as it relates only to authentication and is understood on the level of technical interoperability and it would not be possible without some sort of federation.
 
 \subsection{SAML}
-SAML simplifies federated authentication and authorization processes for users, Identity providers, and service providers. It provides a solution to allow an identity provider and service providers to exist separately from each other, which centralizes user management and provides access to SaaS solutions. SAML implements a secure method of passing user authentications and authorizations between the identity provider and service providers: when a user logs into a SAML enabled application, the service provider requests authorization from the appropriate identity provider, that authenticates the user’s credentials and then returns the authorization for the user to the service provider, and the user is now able to use the application. \medskip\\
-SAML (Security Assertion Markup Language) 1.0 was defined in 2002, SAML 2.0 in 2005. It is a common language and flow between systems that want to provide an SSO experience to users and answer to the lack of standards and interoperable solutions for exchanging authentication and authorisation information across security domains. Its is XML-based, an open standard and a product of OASIS; its main goals are Cross-Domain Single Sign-On (SSO) and Identity federation.
+SAML (Security Assertion Markup Language) 1.0 was defined in 2002, SAML 2.0 in 2005. It is a common language and flow between systems that want to provide an SSO experience to users and answer to the lack of standards and interoperable solutions for exchanging authentication and authorisation information across security domains. It is XML-based, an open standard and a product of OASIS; its main goals are Cross-Domain Single Sign-On (SSO) and Identity federation.\medskip\\
+SAML simplifies federated authentication and authorization processes for users, Identity providers, and service providers. It provides a solution to allow an identity provider and service providers to exist separately from each other, which centralizes user management and provides access to SaaS solutions. SAML implements a secure method of passing user authentications and authorizations between the identity provider and service providers: when a user logs into a SAML enabled application, the service provider requests authorization from the appropriate identity provider, that authenticates the user’s credentials and then returns the authorization for the user to the service provider, and the user is now able to use the application. 
 
 \subsubsection{SAML federation}
 SAML distinguish two main resources:
@@ -3359,11 +3357,11 @@ SAML 2.0 profiles combine protocols, assertions, and bindings to create a federa
 
 \subsubsection*{Authentication context}
 It indicates how a user authenticated at an Identity Provider. The Identity Provider includes the authentication context in an assertion at the request of a Service Provider or based on configuration at the Identity Provider. A Service Provider can require information about the authentication process to establish a level of confidence in the assertion before granting access to resources.
-The motivation is due to the fact thar existing SAML federation deployments have adopted a “Levels Of Assurance” (or LOA) model for categorizing the wide variety of authentication methods into a small number of levels, typically based on some notion of the strength of the authentication. Service Providers then decide which level of assurance is required to access specific protected resources, based on some assessment of “value” or “risk”.
+The motivation is due to the fact that existing SAML federation deployments have adopted a “Levels Of Assurance” (or LOA) model for categorizing the wide variety of authentication methods into a small number of levels, typically based on some notion of the strength of the authentication. Service Providers then decide which level of assurance is required to access specific protected resources, based on some assessment of “value” or “risk”.
 
 \subsection*{NIST LOA Levels}
 \begin{center}
-\includegraphics[scale=0.5]{img/ac31.jpg}
+\includegraphics[scale=0.6]{img/ac31.jpg}
 \end{center}
 
 \subsubsection*{Identity Assurance Level}
@@ -3405,7 +3403,8 @@ A SAML metadata document describes a SAML deployment such as a SAML identity pro
 \item Protocol Endpoints (bindings and URLs)
 \end{itemize}
 Every SAML system entity has an entity ID, a globally unique identifier used in software configurations, relying-party databases, and client-side cookies. On the wire, every SAML protocol message contains the entity ID of the issuer.
-For authentication purposes, a SAML message may be digitally signed by the issuer. To verify the signature on the message, the message receiver uses a public key known to belong to the issuer. Similarly, to encrypt a message, a public encryption key belonging to the ultimate receiver must be known to the issuer. In both situations (signing and encryption) trusted public keys must be shared in advance. Once the message is signed and encrypted, the issuer sends the message to a trusted protocol endpoint, the location of which must be known in advance. Upon receipt, the message receiver decrypts the message (using its own private decryption key) and verifies the signature (using a trusted public key in metadata) before mapping the entity ID in the message to a trusted partner. This scenario requires each party to know the other in advance. To establish a baseline of trust, parties share metadata with each other. Initially, this may be as simple as sharing information via email; over time, as the number of SAML partners grows, the natural tendency is to automate the metadata sharing process. An implementation that supports SAML Web Browser SSO requires a schema-valid SAML metadata file for each SAML partner.
+For authentication purposes, a SAML message may be digitally signed by the issuer. To verify the signature on the message, the message receiver uses a public key known to belong to the issuer. Similarly, to encrypt a message, a public encryption key belonging to the ultimate receiver must be known to the issuer. In both situations (signing and encryption) trusted public keys must be shared in advance. Once the message is signed and encrypted, the issuer sends the message to a trusted protocol endpoint, the location of which must be known in advance. Upon receipt, the message receiver decrypts the message (using its own private decryption key) and verifies the signature (using a trusted public key in metadata) before mapping the entity ID in the message to a trusted partner. This scenario requires each party to know the other in advance. To establish a baseline of trust, parties share metadata with each other. Initially, this may be as simple as sharing information via email; over time, as the number of SAML partners grows, the natural tendency is to automate the metadata sharing process.  \medskip\\ 
+An implementation that supports SAML, Web Browser SSO, requires a schema-valid SAML metadata file for each SAML partner.
 
 \subsection*{Web Browser SSO}
 \begin{center}
@@ -3485,7 +3484,36 @@ Cookies may be subdivided into:
 Persistent cookies are used as an inexpensive way to store users’ preferences for a Web site; the advantage is that the Web site operator does not need to maintain an account for the user; all pertinent information is stored in the browser, and made available to the site when the user visits it. Browsers use the Same Origin Policy to determine whether to send a cookie to a Web site: a HTTP request sent to a host will contain those and only those cookies whose Domain attribute identifies the host itself or the DNS domain to which the host belongs. One of the requirements of the \textbf{same origin policy} is that cookies be shared only between Web sites within the same administrative domain. Subsequent standards did not change this basic assumption. SSO uses browser cookies to maintain state so that re-authentication is not required, but browser cookies are not transferred across domains. Using assertions, SAML offers SSO across domains. In conclusion, cookies cannot replace SAML assertions!
 
 \subsection{An attack to SAML}
-\textbf{PDF page 29.}
+\subsubsection*{Recap}
+\begin{itemize}
+\item \textbf{SSO experience}: authenticate once, access to multiple applications. This implies an improvement of user experience on N-passwords for N-applications (reduced password fatigue);
+\item \textbf{Three entities involved in SSO}
+	\begin{itemize}
+	\item Identity Provider (IdP): the service at which users authenticate
+	\item User Agent (UA): web browser used for message passing (redirections)
+	\item Service Provider (SP): the service users want to get access to
+	\end{itemize}
+\item \textbf{SSO flow}: once authenticated IdP passes a message through browser, which takes the message and passes it to the SP. The SP validates the message and then authenticates you to the service.
+\end{itemize}
+
+\subsubsection*{A SAML assertion}
+\includegraphics[scale=0.4]{img/ac40-2.png}
+
+\subsubsection*{Signature element}
+\begin{lstlisting}
+	<Assertion ID="123456">[...]</Assertion>
+	<Signature Id="signature_id">
+	<SignedInfo>
+		<CanonicalizationMethod Alg="xml-c14n11"/>
+		<SignatureMethod Algorithm="rsa-sha256"/>
+		<Reference URI="123456">
+		<Transforms>
+			<Transform Algorithm="xmldsig#base64"/>
+		</Transforms>
+		<DigestMethod Algorithm="sha1"/>
+		<DigestValue>eW8=</DigestValue>
+	</Reference></SignedInfo></Signature>[...]
+\end{lstlisting}
 
 \subsubsection{XML canonicalization}
 XML canonicalizes data prior to signature operations: logically equivalent documents have the same signature. The creation of XML Signatures is substantially more complex than the creation of an ordinary digital signature because a given XML Document may have more than one “legal” representation. Example: whitespace inside an XML Element is not syntactically significant, so that <Elem > is syntactically identical to <Elem>. Since the digital signature ensures data integrity, a single-byte difference would cause the
@@ -3493,8 +3521,21 @@ signature to vary.
 There are also interoperability issues: if an XML document is transferred from computer to computer, the line terminator may vary: a program that digests and validates an XML document may later render the XML document in a different way, e.g., using relative (vs. absolute) URLs. To avoid these problems and guarantee that logically-identical XML documents give identical digital signatures, an XML canonicalization (abbreviated C14n) is employed when signing XML documents: for signing the SignedInfo, a canonicalization is mandatory. XML canonicalization algorithms guarantee that semantically-identical documents produce exactly identical representations.
 
 \subsubsection{SAML library}
-SAML defines a "language" to convey data. What to do with the data is up to implementers; APIs often provide non-canonical doc to users after verification. \medskip \\
-\textbf{PDF page 32}
+SAML defines a "language" to convey data. What to do with the data is up to implementers; APIs often provide non-canonical doc to users after verification. 
+
+\subsubsection*{Text extraction}
+\begin{lstlisting}
+	saml_response = init_saml_auth(http_request)
+	saml_response.process_response()
+	errors = saml_response.get_errors()
+	if len(errors) == 0:
+		user_id = saml_response.get_nameid()
+		authenticate(user_id)
+	else:
+		# user is not authenticated
+\end{lstlisting}
+Consider the string \lstinline|"<NameID>ranise@fbk.eu</NameId>"| is in \lstinline|saml_response|, what is the content of \lstinline|user_id| after the execution of \lstinline|get_nameid|? It is the string \textit{"ranise@fbk.eu"}. \medskip\\
+Now, consider the string \lstinline|"<NameID>ranise<!---->@fbk.eu</NameId>"| is in \lstinline|saml_response|, what is the content of \lstinline|user_id| after the execution of \lstinline|get_nameid|? With some APIs, it is again the string\textit{"ranise@fbk.eu"}! \medskip
 
 \subsubsection{Recap}
 SAML documents:
@@ -3513,34 +3554,35 @@ SAML APIs:
 
 \subsubsection{An attack}
 \begin{lstlisting}
-<NameID>
-	admin@victim.com.evil.com
-</NameID>
+	<NameID>
+		admin@victim.com.evil.com
+	</NameID>
 \end{lstlisting}
 This can be edited to:
 \begin{lstlisting}
-<NameID>
-	admin@victim.com<!--inserted-->.evil.com
-</NameID>
+	<NameID>
+		admin@victim.com<!--inserted-->.evil.com
+	</NameID>
 \end{lstlisting}
 This does not affect signature validity, becuase it is truncated by the SP. Idea: use own credential to pivot to other user accounts. \medskip\\
 To detect the vulnerabilities use tests such as:
 \begin{lstlisting}
-doc = "[...]<NameID>us<!---->er</NameID>[...]"
-doc.verifySignature()
-assert doc.nameID == "user"
+	doc = "[...]<NameID>us<!---->er</NameID>[...]"
+	doc.verifySignature()
+	assert doc.nameID == "user"
 \end{lstlisting}
 If assertion fails, then NameID is likely to be truncated. \medskip
 
-\subsubsection{Exploitation of SP}
-Attacker has account on Identity Provider so he uses foothold to gain access to Service Providers and uses the XML comment bug to pivot into Service Providers for different users. Does the SAML Response convey role information? SAML defines the AttributeStatement element which can contain fairly generic attribute values and can be used to define role information:
+\subsubsection*{Exploitation of SP and IdP}
+The attacker has an account on Identity Provider so he uses foothold to gain access to Service Providers and uses the XML comment bug to pivot into Service Providers for different users.\\ 
+Does the SAML Response convey role information? SAML defines the AttributeStatement element which can contain fairly generic attribute values and can be used to define role information:
 \begin{lstlisting}
-<AttributeStatement>
-<Attribute Name="Groups">
-<AttributeValue>Administrators (HR)</AttributeValue>
-<AttributeValue>Employees</AttributeValue>
-</Attribute>
-</AttributeStatement>
+	<AttributeStatement>
+	<Attribute Name="Groups">
+		<AttributeValue>Administrators (HR)</AttributeValue>
+		<AttributeValue>Employees</AttributeValue>
+	</Attribute>
+	</AttributeStatement>
 \end{lstlisting}
 
 \subsection{SPID}
@@ -3553,7 +3595,7 @@ SPID is a single set of credentials to access any Public Administration service:
 \item Legal persons: company name, tax code or VAT number, registered office, Chamber of Commerce perusal attesting the status of legal representative of the person requesting the identity on behalf of the company (alternatively notary deed of legal power of attorney) details of the identity card used by the legal representative, a mobile phone number and an e-mail address.
 \end{itemize}
 
-\subsubsection{AGID (Agency for Digital Italy)}
+\subsubsection{AgID (Agency for Digital Italy)}
 AGID controls \textbf{accreditation} and \textbf{supervisory activities} to activate SPID:
 \begin{itemize}
 \item Management of accreditation applications
@@ -3565,7 +3607,7 @@ AGID controls \textbf{accreditation} and \textbf{supervisory activities} to acti
 \end{itemize}
 
 \subsubsection{Identity providers}
-The IP are required to use reliable systems that guarantee the technical and cryptographic security of procedures, in accordance with international standards and AgID guidelines. They must adopt appropriate measures to ensure confidentiality, integrity and security in generating access credentials, continuously monitoring the use of credentials to prevent or detect attempts of violation or improper use while respecting the criteria of necessity and proportionality to protect the privacy of users. Every two years, tehy are subject to verification of compliance with current provisions. Disclosure to AgID:
+The IdPs are required to use reliable systems that guarantee the technical and cryptographic security of procedures, in accordance with international standards and AgID guidelines. They must adopt appropriate measures to ensure confidentiality, integrity and security in generating access credentials, continuously monitoring the use of credentials to prevent or detect attempts of violation or improper use while respecting the criteria of necessity and proportionality to protect the privacy of users. Every two years, they are subject to verification of compliance with current provisions. They must disclose to AgID:
 \begin{itemize}
 \item Intention to make changes
 \item Any violation/intrusion to user personal data
@@ -3626,8 +3668,11 @@ Repository of all the information related to the entities adhering to the SPID a
 The federation registry is populated by AgID following stipulation of the agreements and updated by said Agency during the activities related to management of the agreements and the supervision of the parties of the SPID circuit. \medskip\\
 It turns out that few Service Providers implement the Single Logout procedure in the right way: usually, a SP closes only its session but not the SSO session. This may have some security consequences. SSO at SPID level 2 (substantial) is a bit delicate as stated in the legal documents, it seems to be impossible to enter only once the credentials (username, password, and OTP) and have access to any resource or perform any operation. Entering credentials should be done for every access (resource or operation): this has usability consequences.
 
-\subsubsection{EIDAS}
+\subsubsection{EIDAS (Electronic Identification, Authentication and trust Services)}
 SPID is integrated into the eIDAS Interoperability Framework. The Italian eIDAS-Node, hosted by AgID, is currently operational and it is based on the eIDAS reference. In order to provide a cross-border authentication mechanism, the Italian eIDAS-Node is based on "Proxy to Proxy“ architecture. The FICEP (First Italian Crossborder eIDAS Proxy) project enables Italian citizens to access online services from other European countries using the credentials obtained in the SPID public digital identity system. At the same time, European citizens with national digital identities recognised in eIDAS will be able to access the services of Italian Public Administrations.
+\begin{center}
+\includegraphics[scale=0.3]{img/ac40-3.png}
+\end{center}
 If an Italian citizen wants to authenticate against a German online service, first the German eIDAS-Node (eIDAS-Connector) is directed by the web application to initiate the authentication process; it sends a request to the Italian eIDAS-Node (eIDAS-Service). The Italian eIDAS-Node forwards the user to a system that is equipped to authenticate the Italian citizen using the national eID scheme. After authentication, the German eIDAS-Connector receives the citizen’s information which it forwards to the web application. 
 eIDAS relies on SAML for communication between the eIDAS-Connector and eIDAS-Service (called eIDAS-Nodes).
 
@@ -3643,7 +3688,7 @@ CIE can be used as a 2nd factor authentication (example in badging), generating 
 \item OpenID Connect is for remote authentication (with Single-Sign-On experience): gives the possibility to use one login and password for accessing multiple services. It is built on top of OAuth 2.0.
 \end{itemize}
 
-\subsection{OAut 2.0}
+\subsection{OAuth 2.0}
 Its goal is to allow service authorization.
 The user wants an app to access (a selection of) his/her data stored in a given service S (e.g., allow printing service to access pictures stored in some server) without revealing passwords of service S, plus restrict data and operations available to the app (e.g., only retrieving a sub-set of the pictures stored). The user must be capable to revoke the app's access to the data. \medskip\\
 OAuth is based on:
@@ -3729,9 +3774,9 @@ Why do clients need to obtain authorization codes before access tokens? Clients 
 The attacker manages to register a malicious application on the client device and registers a custom URI scheme that is also used by another application. The attacker has access to the OAuth 2.0 "client\_id" and "client\_secret". If the client is a mobile app, then nothing can be assumed to remain "secret".
 \end{minipage}
 \hfill
-\begin{minipage}{0.4\textwidth}
+\begin{minipage}{0.45\textwidth}
 \begin{center}
-\includegraphics[scale=0.3]{img/ac32.png}
+\includegraphics[scale=0.35]{img/ac32.png}
 \end{center}
 \end{minipage}\medskip\\
 Mitigation: \textbf{PKCE} (Proof Key Code Exchange)
@@ -3752,21 +3797,21 @@ JWT consists of 3 components:
 \begin{itemize}
 \item \textbf{Header}: identifies algorithm used to sign;
 \begin{center}
-\includegraphics[scale=0.2]{img/ac33a.png}
+\includegraphics[scale=0.35]{img/ac33a.png}
 \end{center}
 \item \textbf{Payload}: information actually used for access control;
 \begin{center}
-\includegraphics[scale=0.2]{img/ac33b.png}
+\includegraphics[scale=0.35]{img/ac33b.png}
 \end{center}
 \item \textbf{Signature}: used to validate that the token has not been tampered with. Calculated by concatenating the header with the payload, then signing with the algorithm specified in the header.
 \begin{center}
-\includegraphics[scale=0.2]{img/ac33c.png}
+\includegraphics[scale=0.35]{img/ac33c.png}
 \end{center}
 \end{itemize}
-The complete token obtained by concatenating the 3 components above.
+The complete token is obtained by concatenating the 3 components above.
 
 
-\subsection{Digression on JOSE (Javascript Object Signing and Encryption)} %TODO da sapere?
+\subsection{Digression on JOSE}
 JWT defines a container to transport data between interested parties; it became an IETF standard in May 2015 with the RFC 7519. There are multiple usages of JWT:
 \begin{itemize}
 \item propagate one’s identity between interested parties;
@@ -3775,15 +3820,15 @@ JWT defines a container to transport data between interested parties; it became 
 \item assert one’s identity, given that the recipient of the JWT trusts the asserting party.
 \end{itemize}
 \begin{center}
-\includegraphics[scale=0.35]{img/ac41.png}
+\includegraphics[scale=0.4]{img/ac41.png}
 \end{center}
 
 \subsubsection{JWS vs JWE}
 \begin{center}
-\includegraphics[scale=0.4]{img/ac42.png}
+\includegraphics[scale=0.25]{img/ac42.jpeg}
 \end{center}
 
-\subsubsection{JOSE}
+\subsubsection{JOSE (Javascript Object Signing and Encryption)}
 JOSE is a standard saying how to use cryptographic primitives to implement JWT (integrity protection and encryption). In March 2017, a serious flaw was discovered in many popular implementations of JSON Web Encryption (part of JOSE), the invalid curve attack (a vulnerability in the implementation of a primitive of ECC leads to an attack).
 
 
@@ -3804,17 +3849,19 @@ If the application does not restrict the algorithm type used in the JWT, an atta
 \item \textbf{Switching between RSA and HMAC}: with HMAC, the token would be signed with a key, then later verified with the same key. It is critical that the secret key for HMAC tokens is kept secret. With RSA, the token is first created with a private key, then verified with corresponding public key. Consider RSA scenario where tokens are signed with private key A and verified with private key B: if attackers change the alg to HMAC, they might be able to create valid tokens by signing the forged tokens with the RSA public key B. Originally when the token is signed with RSA, the program verifies it with the RSA public key B, when the signing algorithm is switched to HMAC, the token is still verified with the RSA public key B, but this time, the token can be signed with the same public key B.
 \end{itemize}
 
-\subsubsection*{Provide a non-valid signature}: it is possible that the signature of the token is never verified after it arrives at the application, so an attacker could simply bypass the security mechanism by providing an invalid signature.
+\subsubsection*{Provide a non-valid signature}
+It is possible that the signature of the token is never verified after it arrives at the application, so an attacker could simply bypass the security mechanism by providing an invalid signature.
 
-\subsubsection*{Brute force the secret key}: The attacker knows a lot of information: algorithm used to sign the token, payload that was signed, and the resulting signature. If the key used to sign the token is not complex enough, guessing becomes possible.
+\subsubsection*{Brute force the secret key}
+The attacker knows a lot of information: algorithm used to sign the token, payload that was signed, and the resulting signature. If the key used to sign the token is not complex enough, guessing becomes possible.
 
-\subsubsection*{Leak the secret key}: If another vulnerability (like a directory traversal) exists that allows the attacker to read the file where the key value is stored, the attacker can steal the key and sign arbitrary tokens.
+\subsubsection*{Leak the secret key}
+If another vulnerability (like a directory traversal) exists that allows the attacker to read the file where the key value is stored, the attacker can steal the key and sign arbitrary tokens.
 
 \subsubsection*{KID manipulation}
 KID stands for \textbf{Key Identifier}: it is a optional header field in JWTs allowing developers to specify the key to be used for verifying the token.
 \begin{itemize}
-\item \textbf{Directory traversal}: 
-§ KID often used to retrieve a key file from the file system; if not sanitized before use, it can lead to a directory traversal attack. The attacker can force the application into using a publicly available file as the key, and sign an HMAC token using that file.
+\item \textbf{Directory traversal}: KID often used to retrieve a key file from the file system; if not sanitized before use, it can lead to a directory traversal attack. The attacker can force the application into using a publicly available file as the key, and sign an HMAC token using that file.
 \item \textbf{SQL injection}: KID could also be used to retrieve the key from a database; if SQL injection is possible on the KID parameter, attackers can use this injection to return any value they want.
 \end{itemize}
 
