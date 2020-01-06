@@ -155,7 +155,7 @@ However, do not forget our setting: all plaintexts are encrypted with the same c
 \subsection{KNOWN-PLAINTEXT}
 In a known-plaintext attack Eve has obtained, somehow, a set of
 ciphertexts $\{c_1, \dots , c_N \}$ and their corresponding plaintexts $(m_1, c_1), \dots, (m_N, c_N)$.
-It is also customary to assume that Eve has full knowledge of the cipher. With this extra information Eve might aim at something more interesting than some decrytpions. Her main goal becomes to \textbf{recover the key}. This kind of attack is called a Key-Recovery attack. When Eve gets the key, she will be able to encrypt and decrypt any message, since she will have the same information shared by Alice and Bob.
+It is also customary to assume that Eve has full knowledge of the cipher. With this extra information Eve might aim at something more interesting than some decryptions. Her main goal becomes to \textbf{recover the key}. This kind of attack is called a Key-Recovery attack. When Eve gets the key, she will be able to encrypt and decrypt any message, since she will have the same information shared by Alice and Bob.
 The possession of plaintext-ciphertext pairs can be insufficient to get the key in a reasonable time with Eve’s resources. However, Eve does not need to recover the key in order to break the system. An alternative goal for Eve is to discover a functionally equivalent algorithm for encryption and decryption. In other words, Eve might write down an algorithm whose output is the same as that of $\varphi_k$ , even without getting $k$. This kind of attack is known as \textbf{Global Deduction} (or Global Reconstruction).
 
 \subsection{CHOSEN-PLAINTEXT}
@@ -202,8 +202,8 @@ The two probability distributions $P(\mathcal{P})$ and $P(\mathcal{K})$ determin
 \end{figure}\\
 Let $x$ and $y$ be two events.
 \begin{enumerate}
-\item The joint probability $P(x \wedge y )$ denotes the probability that $x$ occurs \textbf{and} also $y$ occurs.
-\item The conditional probability $P(x | y )$ denotes the probability that $x$ occurs \textbf{given that} $y$ occurred.
+\item The \textbf{joint probability} $P(x \wedge y )$ denotes the probability that $x$ occurs \textbf{and} also $y$ occurs.
+\item The \textbf{conditional probability} $P(x | y )$ denotes the probability that $x$ occurs \textbf{given that} $y$ occurred.
 \item We say that $x$ and $y$ are \textbf{independent} if $P(x \wedge y ) = P(x)P(y )$.
 \end{enumerate}
 \subsection{Clever boy}
@@ -221,7 +221,7 @@ In other words, in a perfect cipher Eve cannot obtain any new information on the
 In particular, although Eve knows the probability distribution of the plaintexts, she cannot get any information from $c$. Hence a perfect cipher is \textbf{unbreakable} if Eve can use \textbf{only one} ciphertext.
 
 \subsection{Shannon's theorem}
-Let us fix an integer n. Assume that the keys have $n$ bits and also the ciphertext have $n$ bits.
+Let us fix an integer n. Assume that the keys have $n$ bits, the plaintexts have $n$ bits and also the ciphertexts have $n$ bits.
 Assume also that:
 \begin{itemize}
 \item the plaintexts and the keys are independent (Clever boy assumption)
@@ -230,7 +230,7 @@ Assume also that:
 then $\varphi$ is a perfect cipher if and only if both the following conditions hold:
 \begin{enumerate}
 \item the keys are perfectly random;
-\item for any plaintext $m$ and any ciphertext $c$ there is one and only one key $k$ such $c$ is the encryption of $m$ with the key $k$.
+\item for any plaintext $m$ and any ciphertext $c$ there is one and only one key $k$ such that $c$ is the encryption of $m$ with the key $k$.
 \end{enumerate}
 \subsubsection{Shannon’s theorem: comments}
 Given \textbf{any} probability distribution of the plaintexts and even if such distribution is known, what Eve observes is a perfectly random cipher. Hence Eve cannot recover any information on the sent message from the ciphertext she intercepted. 
@@ -475,8 +475,8 @@ $$(100) \rightarrow (010) \rightarrow (001) \rightarrow (100)$$
 These considerations suggest that as feedback polynomial $x^3 + x + 1$ is better than $x^3 + 1$.
 
 \section{Linear Feedback Shift Registers}
-The previous examples show how a linear feedback shift register works.
-A linear feedback shift register of length $n$ is a shift register
+The previous examples show how a linear feedback shift register (LFSR) works.
+A LFSR of length $n$ is a shift register
 composed by $n$ bits.
 At any clock the following operations are executed:
 \begin{itemize}
@@ -486,15 +486,16 @@ At any clock the following operations are executed:
 the left.
 \end{itemize}
 The bits in the LFSR that influence the new input bit are called taps. The feedback polynomial of an LFSR of length $n$ is a polynomial in $\mathbb{F}_2[x]$ of degree $n$ whose non-zero terms of degree less than $n$ correspond to the taps.
-$$n=3; \quad S_0 = (100); \text{feedback polynomial: }x^3 + x + 1$$
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.2]{img/ac6.png}
-\end{figure}
+$$n=3; \quad S_0 = (100); \quad \text{feedback polynomial: }x^3 + x + 1$$
+\begin{center}
+\includegraphics[scale=0.3]{img/ac6.png}
+\end{center}
 As already seen, if the initial state is the zero vector, we always obtain the zero state using an LFSR.
-The non-zero initial states are $2^n - 1$. When the initial state is different from zero, we want to obtain a number of distinct states which is as large as possible.  \\
-\textit{Theorem}: For any register length $n$ there is always at least one LFSR able to produce ALL non-zero states starting from any non-zero initial state. \\
-The LFSR in the theorem is called "maximum-length LFSR" and its  feedback polynomial is called "primitive". 
+The non-zero initial states are $2^n - 1$. When the initial state is different from zero, we want to obtain a number of distinct states which is as large as possible.
+\begin{quote}
+\textbf{Theorem}: For any register length $n$ there is always at least one LFSR able to produce ALL non-zero states starting from any non-zero initial state.
+\end{quote}
+The LFSR in the theorem is called "maximum-length LFSR" and its  feedback polynomial is called "\textbf{primitive}". 
 \subsection{LFSR: pseudorandom generator (PRNG)}
 Any binary sequence contains runs of $0$ and $1$. For example, the sequence $000110111001$ is composed by 6 runs of length 3, 2, 1, 3, 2, 1, respectively. m-sequences have been studied extensively in cryptography because they \textbf{simulate} the behaviour of a \textbf{random} sequence very well.
 
@@ -632,26 +633,35 @@ AES-256 & 256 & 14 \\ \hline
 \end{tabular} \medskip \\
 For simplicity, we consider only the variant AES-128 with 128 bits.
 In other words, we have $\mathcal{P} = \mathcal{K} = (\mathbb{F}_2) ^{128}$.
-We can see an element of $(\mathbb{F}_2)^{128}$ as an element of $(\mathbb{F}_{256} )^{16}$ , which means it is composed by 16 bytes. \\
+We can see an element of $(\mathbb{F}_2)^{128}$ as an element of $(\mathbb{F}_{256} )^{16}$ , which means it is composed by 16 bytes ($128/8=16$). \\
 A state of AES:
 \begin{itemize}
 \item is the partial cipher resulting from the application of a round function.
 \item can be depicted as a $4 \times 4$ matrix composed by 16 bytes.
 \end{itemize}
+\begin{center}
 \includegraphics[scale=0.28]{img/ac7.png}
+\end{center}
+AES consists in an inital step of \textbf{AddRoundKey}, followed by different rounds of these 4 steps:
+\begin{itemize}
+\item \textbf{SubBytes};
+\item \textbf{ShiftRows};
+\item \textbf{MixColumns} (not in the last round);
+\item \textbf{AddRoundKey}.
+\end{itemize}
 
 %\item KeyExpansions: round keys are derived from the cipher key using an algorithm called Rijndael’s key schedule. AES requires a separate 128-bit round key block for each round plus one more.
-\subsection{AES: SuBBytes}
+\subsection{AES: SubBytes}
 \begin{minipage}{0.3\textwidth}
 \includegraphics[scale=0.3]{img/ac8.png}
 \end{minipage}
 \hfill
 \begin{minipage}{0.6\textwidth}
-The SubBytes transformation is the application of the same map $\gamma$ (called S-box) to each byte:
+The SubBytes transformation provides \textbf{non-linearity} and is the application of the same map $\gamma$ (called S-Box) to each byte:
 $$\gamma: \mathbb{F}_{256} \rightarrow \mathbb{F}_{256}$$
 $$s_i \mapsto s'_i$$
 for $0 \leq i \leq 15$.
-In AES, SubBytes is the name of the S-Box. It is just a byte-based look-up table with 256 entries. For example, the byte (00000000) is sent to the byte (11000110). Don't worry on how it's been computed.
+In AES, SubBytes is the name of the S-Box, a byte-based look-up table with 256 entries. For example, the byte (00000000) is sent to the byte (11000110). Don't worry on how it's been computed.
 \end{minipage}
 
 \subsection{AES: ShiftRows}
@@ -659,7 +669,7 @@ In AES, SubBytes is the name of the S-Box. It is just a byte-based look-up table
 \includegraphics[scale=0.3]{img/ac8b.png}
 \end{minipage}
 \begin{minipage}{0.6\textwidth}
-The bytes in the last three rows of the State are cyclically shifted (towards the left) with increased shift:
+In ShiftRows, bytes in the last three rows of the State are cyclically shifted (towards the left) with increased shift:
 \begin{itemize}
 \item the second row is shifted by one;
 \item the third row is shifted by two;
@@ -709,15 +719,14 @@ s_{11}
 \end{figure}
 
 \subsection{AES: AddRoundKey}
-Each byte of the state is combined with a block of the round key using bitwise xor.
+Each byte of the state is combined with a block of the round key using bitwise XOR.
 \begin{center}
 \centering \includegraphics[scale=0.3]{img/ac11.png}
 \end{center}
 We show only the key schedule of the AES-128 version (the others are similar but more complex).  The round key of round 1 is computed from the round key of round 0, that of round 2 from that of round 1   and so on, all by the same rule, which is described in the figure. Do not worry about the function $F_i$: it is a special method to mix four bytes together.
 
 \subsection{AES: MixingLayer}
-The map $\lambda: (\mathbb{F}_{256})^{16} \rightarrow (\mathbb{F}_{256})^{16}$ is a composition of two linear operations: ShiftRows and MixColumns. We can see the whole Mixing Layer as a matrix \textbf{M}.
-The order of \textbf{M} is equal to 8 (i.e. $\textbf{M}^8 = Id$). The low order of the Mixing Layer can be used to reveal some weakness of
+The map $\lambda: (\mathbb{F}_{256})^{16} \rightarrow (\mathbb{F}_{256})^{16}$ is a composition of two linear operations: ShiftRows and MixColumns. These two steps provide full diffusion. We can see the whole Mixing Layer as a matrix \textbf{M}: the order of \textbf{M} is equal to 8 (i.e. $\textbf{M}^8 = Id$). The low order of the Mixing Layer can be used to reveal some weakness of
 the cipher. On the contrary, the order of the Mixing Layer of SERPENT is greater than $2^{116}$.
 
 \subsection{AES: best attacks}
@@ -745,20 +754,20 @@ Key & Rounds & Texts & Time & Type & Year \\ \hline
 256 & 10 & $2^{48}$ & $2^{45}$ & Related Key & 2010 \\
 256 & 10 & $2^{114}$ & $2^{173}$ & Rectangle & 2005 \\
 256 & 14 & $2^{40}$ & $2^{254.4}$ & BKR & 2011 \\ \hline
-\end{tabular} \\
+\end{tabular} \medskip\\
 The first key-recovery attack to AES-128, AES-192, AES-256 was published recently (2011).
 In this attack, proposed by Andrey Bogdanov, Dmitry Khovratovich and Christian Rechberger, a novel technique of block cipher cryptanalysis with bicliques has been exploited, which is 4 times more efficient than brute force.
 In particular, the BKR attack recovers the key of
 \begin{itemize}
-\item AES-128 in $2^{126.1}$ (k = 128, k = 126) operations
-\item AES-192 in $2^{189.7}$ (k = 192, k = 190) operations
-\item AES-256 in $2^{254.4}$ (k = 256, k = 254).
+\item AES-128 in $2^{126.1}$ (k = 128, k = 126) operations;
+\item AES-192 in $2^{189.7}$ (k = 192, k = 190) operations;
+\item AES-256 in $2^{254.4}$ (k = 256, k = 254) operations.
 \end{itemize}	
 Due to its extremely high cost, the proposed attack is still impractical but it proves that AES is NOT ideal. It is still the BEST-KNOWN attack on the full AES.
 
 \newpage
 \section{Serpent \& Present}
-We recall the parameters for the block ciphers AES, SERPENT and PRESENT. We take $\mathcal{P} = (\mathbb{F}_2)^n$, $K = (\mathbb{F}_2)^k$ and N is the number of rounds.
+We recall the parameters for block ciphers AES, SERPENT and PRESENT. We take $\mathcal{P} = (\mathbb{F}_2)^n$, $K = (\mathbb{F}_2)^k$ and N is the number of rounds.
 The usual parameters are: \medskip \\
 \begin{tabular}{|c|c|c|c|} \hline
 Block cipher & n & k & N \\ \hline
@@ -772,12 +781,12 @@ Note that $k \geq n$.
 Let $\mathcal{P} = \mathcal{C} = (\mathbb{F}_2)^n$, with $n = 128$. We consider $\mathcal{K} = (\mathbb{F}_2 )^l$, with fixed length $l = 128$ (although the key is designed with variable length).
 The encryption consists of $N = 32$ similar rounds and works as follows:
 \begin{itemize}
-\item As usual, before the real rounds start we perform a XOR with a key (whitening key)
+\item As usual, before the real rounds start we perform a XOR with a key (\textbf{whitening key});
 \item $N - 1$ rounds with the same structure are applied, but using a
-different permutation, each composed of a XORing with the round key $\sigma_k$ , a parallel S-box $\gamma$ and a linear mixing layer $\lambda$ ( we denote the round $\rho$ by Round $\rho$, with $\rho = 1, \dots, 31)$;
-\item the last round (Round 32) is atypical and consists only of the SBOX and the mixing layer.
+different permutation, each composed of a XORing with the round key $\sigma_k$ , a parallel S-Box $\gamma$ and a linear mixing layer $\lambda$ ( we denote the round $\rho$ by Round $\rho$, with $\rho = 1, \dots, 31)$;
+\item the last round (Round 32) is atypical and consists only of the S-Box and the mixing layer.
 \end{itemize}
-In Serpent, there are eight different SBoxes, that change at every round, cycling every 8 rounds. So at round 1 we use the first SBox, at round 2 the second SBox, etc, but when we arrive at round 9 we use the first SBox again and so on. All eight SBoxes are nibble-base look-up tables, each with 16 entries. \\
+In Serpent, there are eight different S-Boxes, that change at every round, cycling every 8 rounds. So at round 1 we use the first S-Box, at round 2 the second S-Box, etc, but when we arrive at round 9 we use the first S-Box again and so on. All eight S-Boxes are nibble-base look-up tables, each with 16 entries. \\
 For each input bit the corresponding output bit is as follows:
 \begin{center}
 \includegraphics[scale=0.45]{img/ac12.png}
@@ -839,19 +848,19 @@ PRESENT is an iterated block cipher (translation based):
 \item A typical round consists of $\gamma \lambda \sigma_{k^{(\rho)}}$ where the non-linear operation $\gamma$ is called sBoxLayer, the linear transformation pLayer and the addition with the round key is $\sigma_{k^{(\rho)}}$.
 \end{itemize}
 \subsubsection*{sBoxLayer}
-PRESENT uses only one 4-bit SBOX, as in the table below. \medskip \\
+PRESENT uses only one 4-bit S-Box, as in the table below. \medskip \\
 \begin{tabular}{|c||c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|c|} \hline
 x & 0 & 1& 2& 3& 4& 5& 6& 7& 8& 9& A& B& C& D& E& F \\ \hline
 $\gamma(x)$ & C &5 &6 &B &9 &0 &A &D &3 &E &F &8 &4 &7 &1 &2 \\ \hline
 \end{tabular} \medskip \\
-Using a classification of all 4-bit S-boxes due to Leander and Poschmann, the designers chose an optimal S-box and in particular one well suited to have an efficient hardware implementation.
-Nevertheless, the S-box of PRESENT is not optimal with respect to the refined classification (+ link).
+Using a classification of all 4-bit S-Boxes due to Leander and Poschmann, the designers chose an optimal S-Box and in particular one well suited to have an efficient hardware implementation.
+Nevertheless, the S-Box of PRESENT is not optimal with respect to the refined classification (+ link).
 
 \subsection*{pLayer}
 The pLayer has to maximize the diffusion and have a cheap implementation. In general, two possible solutions are possible:
 \begin{itemize}
-\item to use MDS matrices
-\item to use binary permutation matrices
+\item to use MDS matrices;
+\item to use binary permutation matrices.
 \end{itemize}
 PRESENT’s pLayer employs the latter approach, hence it has less diffusion per round and it uses more rounds.\\
 The affine map $\lambda: (\mathbb{F}_2)^{64} \rightarrow (\mathbb{F}_2)^{64}$ is a bit permutation defined by the following table, where the i-th bit of the vector is moved to the bit
@@ -860,7 +869,7 @@ position $P(i)$ of the output.
 \centering
 \includegraphics[scale=0.35]{img/ac13.png}
 \end{figure} \\
-The order of $\lambda$ is equal to 3. \medskip \\
+The order of $\lambda$ is equal to 3 (number of steps to return at the initial value). \medskip \\
 \begin{tabular}{|c|c|c|c|}\hline
 Rounds & Key size &Attack & Complexity \\ \hline
 5 & 80 bit &Algebraic & 64 plaintext (Known Plaintext) \\
@@ -987,11 +996,11 @@ permutation
 products of two simple non-commuting operations.
 (C. Shannon, 1949)” 
 \end{quote}
-When we design a block cipher, we must choose components that do not commute; for example both AES and SERPENT would be trivially breakable if S-box, MixingLayer and AddRoundKey would commute.
-If all the components are linear then the whole cipher is linear and hence easy to reconstruct, even without knowing the key. The same holds for affine components. The S-box is the only non-linear part and its choice is crucial: using a weak S-box leads to a great number of attacks.
+When we design a block cipher, we must choose components that do not commute; for example both AES and SERPENT would be trivially breakable if S-Box, MixingLayer and AddRoundKey would commute.
+If all the components are linear then the whole cipher is linear and hence easy to reconstruct, even without knowing the key. The same holds for affine components. The S-Box is the only non-linear part and its choice is crucial: using a weak S-Box leads to a great number of attacks.
 \begin{itemize}
-\item provided that the S-box is well chosen, the role of MixingLayer becomes very important, because it is the only part that provides diffusion
-\item provided that the S-box and MixingLayer are well chosen, the security of a block cipher lies in the secrecy of the key and the role played by the key in the round function
+\item provided that the S-Box is well chosen, the role of MixingLayer becomes very important, because it is the only part that provides diffusion
+\item provided that the S-Box and MixingLayer are well chosen, the security of a block cipher lies in the secrecy of the key and the role played by the key in the round function
 \end{itemize}
 The number of rounds is approximately double the number of rounds
 that guarantees the absence of any measurable statistical difference
@@ -1058,7 +1067,7 @@ and
 $$2^3 = 1 \;\text{ in } \; \mathbb{Z}_7$$
 
 \subsubsection*{Problem (DLOG)}
-Let $(G, \cdot)$ be a multiplicative group, and $g \in G$
+Let $(G, \cdot)$ be a multiplicative group, and $g \in G$.
 Given $h = g^a$ for some (unknown) $a \in \mathbb{N}$, can we find $a$? \\
 In other words, we know:
 \begin{itemize}
@@ -1106,16 +1115,34 @@ Eve can try to find a or b solving DLOG and obtain a from $g^a$ or b from $g^b$.
 \item Alice and Bob agree on a public group $(\mathbb{Z}_{61} \backslash \{0\}, \cdot)$ and the element $2 \in G$.
 \item Alice chooses randomly $2 \in \mathbb{N}$ and transmits $2^2 = 4$ to Bob
 \item Bob chooses randomly $3$ and transmits $2^3 = 8$ to Alice
-\item Alice and Bob have the same key $k = 2^{3\cdot2} = 2^{2\cdot3} = 3$.
+\item Alice and Bob have the same key $k = 2^{3\cdot2} = 2^{2\cdot3} = 64 \equiv 3$ in mod $61$.
 \end{enumerate}
 Eve knows: the group $(\mathbb{Z}_{61} \backslash \{0\}, \cdot)$, the generator 2, the powers $g^a = 4$, $g^b = 8$.\\
 Eve does not know the exponents: 2, 3. \\
 To recover the shared secret of Alice and Bob, $2^{2\cdot3} = 3$, Eve needs to find one of the secret exponents between 2 or 3. This is usually a hard problem, but in this case it is very easy for Eve to
-recover the secret exponents. Indeed, since $2^2 < 61$ and $2^3 < 61$, no reductions are performed in $mathbb{Z}_61$ and Eve can find the secret exponents computing the usual logarithm on the real numbers:
+recover the secret exponents. Indeed, since $2^2 < 61$ and $2^3 < 61$, no reductions are performed in $\mathbb{Z}_{61}$ and Eve can find the secret exponents computing the usual logarithm on the real numbers:
 $$log_2(4) = 2, \quad log_2(8) = 3.$$
 Hence, a first trivial request of security is that $g^a$ and $g^b$ are greater than |G|, the size of G.
 
 \subsubsection*{The Diffie-Hellman algorithm: example 2}
+Let $p = 7$. We consider as multiplicative group $G = \mathbb{Z}_7 \backslash \{0\} = \{1, 2, 3, 4, 5, 6\}$ and $g = 3$ as generator.
+\begin{itemize}
+\item Alice chooses $1 \leq a \leq 6$, for example $a = 2$;
+\item Alice computes $g^a = 3^2 = 9 \equiv 2$ mod $7$ and sends $2$ to Bob;
+\item Bob chooses $1 \leq b \leq 6$, for example $b = 3$;
+\item Bob computes $g^b = 3^3 = 27 \equiv 6$ mod $7$ to Alice, and sends $6$ to Alice;
+\item Alice receives 6 and computes $6^a = 6^2 = 36 \equiv 1$ mod $7$;
+\item Bob receives 2 and computes $2^b = 2^3 = 8 \equiv 1$ mod $7$ ;
+\item Alice and Bob get the same shared secret: $1 \in \mathbb{Z}_7 \backslash \{0\}$.
+\end{itemize}
+Eve knows the group $(\mathbb{Z}_7 \backslash \{0\}, \cdot)$, the generator 3, the powers $g^a = 2$, $g^b = 6$.\\
+Eve does not know the exponents: $a = 2$, $b = 3$.\\
+To recover a and b, Eve tries to compute all possible powers $3^t$, with $1 \leq t \leq 6$, obtaining:
+$$3^1 = 3 \quad \quad 3^3 = 6 \quad \quad 3^5 = 5$$
+$$3^2 = 2 \quad \quad 3^4 = 4 \quad \quad 3^6 = 1$$\\
+concluding that $a = 2$ and $b = 3$.
+In this case Eve is able to recover a and b because p is very small and hence a brute force attack is feasible. To avoid a brute force attack we need the size of the group hg i to be huge.
+
 \subsubsection*{The Diffie-Hellman algorithm: comments}
 The previous example shows that if p is too small, Eve might be able to break the system. Nevertheless, if p is large enough, it is infeasible for Eve to compute all distinct powers of g, unless g or p are wrongly chosen. Indeed, we have to choose g such that the powers $g^t$, with $1 \leq t \leq p - 1$, give a lot of distinct values, so that Eve would have to compute a lot of powers to recover a secret exponent. The best choice is to take as g the primitive element of $\mathbb{Z}_p$, so that all the powers $g^t$, $1 \leq t \leq p - 1$, are distinct.\\
 A necessary condition for the Diffie-Hellman algorithm to be secure is that we choose a group $(G, \cdot)$ where DLOG is hard to solve.
@@ -1464,20 +1491,13 @@ A cryptographic primitive is a set of low-level algorithms that are the building
 \item hash functions $\rightarrow$ to ensure the integrity of a message 
 \end{itemize}
 We call these \textbf{principal primitives}. \\
-Other cryptographic primitives:
-\begin{itemize}
-\item block ciphers
-\item stream ciphers
-\item random sequence generators (PRBG)
-\item DH (e ECDH)
-\item RSA
-\end{itemize}
+Other cryptographic primitives are block ciphers, stream ciphers, random sequence generators (PRBG), DH (and ECDH), RSA. \medskip\\
 Anything else is a "cryptographic function" (which means that it is defined using some "cryptographic primitives").
 We can obtain them from the principal primitives:
 \begin{itemize}
-\item Message authentication code $\rightarrow$ to demonstrate the authenticity of a digital message and its integrity.
+\item MAC $\rightarrow$ to demonstrate authenticity and integrity of a digital message;
 \item Digital signature $\rightarrow$ to demonstrate the authenticity of a digital message and its integrity.
-\item Public Key Infrastructure (PKI) $\rightarrow$ to guarantee user identity in a public-key cryptographic context.
+\item Public Key Infrastructure $\rightarrow$ to guarantee user identity in a public-key cryptographic context.
 \item Secret Sharing $\rightarrow$ to establish a secret shared between several users, who have to cooperate in order to recover the secret.
 \end{itemize}
 
