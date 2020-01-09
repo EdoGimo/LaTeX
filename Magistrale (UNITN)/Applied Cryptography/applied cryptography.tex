@@ -622,6 +622,40 @@ RC4 does not specify how to construct the session key from the seed and the init
 RC4 is widely used in popular protocols, especially in wireless protocols, WEP and WPA (but also TLS). There are dangerous practical attacks to WEP. Nowadays WPA2 is used for wi-fi, which is no longer based on stream ciphers but on block ciphers. To our knowledge, no practical attacks are known if RC4 is used with a careful choice of the key and a suitable warm-up phase.
 
 \newpage
+\section{DES-3DES}
+Data Encryption Standard (DES) is a block cipher based on Feistel encipherment, developed by IBM. 
+
+\subsection{Feistel cipher}
+A Feistel cipher is a multi-round cipher that divides the current internal state of the cipher into two parts and operates only on a single part in each round of encryption or decryption.
+Feistel encipherment is used by several block ciphers.
+The input is a plaintext of 2w bits and a secret key K , which is divided in subkeys in the key schedule. The plaintext is divided in two blocks $L_0$, $W_0$ of $w$ bits length.
+n rounds are performed and at the end the ciphertext is a 2w bits ciphertext. For decryption, the rounds are performed in inverse order.\\
+\begin{minipage}{0.55\textwidth}
+\subsubsection*{Generic round i}
+INPUT: $L_{i-1}$, $R_{i-1}$ and the subkey $K_i$.\\
+OUTPUT: $L_i \text{ := } R_{i-1}$ and $R_i \text{ := } L_{i-1} + F(R_{i-1}, K_i)$, where F depends on the chipher using Feistel encipherment.
+\subsubsection*{Last round}
+The final output is the couple $(R_n, L_n )$, resulting from the last
+round.
+\subsubsection*{Decryption}
+It is very similar to encipherment: the input is the ciphertext and the application order of the subkeys is reversed, from $K_n$ to $K_1$ .
+\end{minipage}\hfill
+\begin{minipage}{0.4\textwidth}
+\includegraphics[scale=0.3]{img/acfe.png}
+\end{minipage} \medskip
+For DES, there are $n = 16$ rounds and the blocks are 64 bits long. The key is 64 bits long: 56 bits are randomly generated and are employed in the algorithm. The last 8 bits are used in the error detection. The plaintext is permuted with a permutation IP, elaborated in the Feistel structure and then $IP^{-1}$ is performed on it. The $n = 16$ rounds depend on a function F , operating in two blocks, one of 32 bits and one of 48 bits, to produce a 32-bits block. The function is composed by:
+\begin{itemize}
+\item an expansion function E which transforms a 32 bits block to a 48 bits block;
+\item the resulting block E (R) is XORed with the round key;
+\item $E(R) \oplus K$ is divided in 8 blocks of 6 bits: $B_1, \dots, B_8$;
+\item $B_1, \dots, B_8$ are processed by 8 S-boxes;
+\item a permutation is applied.
+\end{itemize}
+In order to decrypt the scheme is the same, but the keys are in
+inverse order. \medskip\\
+3DES has been developed to increase the security of DES, since the key space of DES is too small for modern computers, which can explore it fully in a few hours. It consists in applying DES three times. The key, called key bundle consists of three keys k1, k2, k3 of 56 bits each.
+
+\newpage
 \section{Advanced Encryption Standard (AES)}
 The plaintext of AES is of length 128 bits, $\mathcal{P}= (\mathbb{F}_ 2)^{128}$ . There are three variants of AES: \medskip \\
 \begin{tabular}{|c|c|c|}
@@ -883,7 +917,7 @@ The previous table shows that the number of rounds of PRESENT should not be dram
 
 \newpage
 \section{HASH functions}
-A hash function, $h : \mathcal{X} \rightarrow \mathcal{Y}$ is a computationally efficient function mapping a string of arbitrary length (the message) to string of fixed length, called hash value, message fingerprint or message digest. Usually $X = (\mathbb{F}_2)^m$ and $Y = (\mathbb{F}_2)^n$, with $m >> n$. \\
+A hash function, $h : \mathcal{X} \rightarrow \mathcal{Y}$ is a computationally efficient function mapping a string of arbitrary length (the message) to string of \textbf{fixed} length, called hash value, message fingerprint or message digest. Usually $X = (\mathbb{F}_2)^m$ and $Y = (\mathbb{F}_2)^n$, with $m >> n$. \\
 Common choices in cryptography are $m \geq 2n$ and $n \geq 160$. 
 \subsubsection*{Applications}
 Hash functions are widely used in many applications, like:
@@ -922,8 +956,8 @@ output: A6B6EA31C49A8E944EFE9ECBC072A26903A1461A
 To consider a cryptographic hash function secure, it has to satisfy the following properties.
 \begin{itemize}
 \item \textbf{Preimage resistance}: given $h : \mathcal{X} \rightarrow \mathcal{Y}$ and $\bar{y} \in \mathcal{Y}$, it is computationally infeasible to find $\bar{x} \in \mathcal{X}$ such that $h(\bar{x}) = \bar{y}$.
-\item \textbf{2nd-preimage resistance}: given $h: \mathcal{X} \rightarrow \mathcal{Y}$ and $\bar{x} \in \mathcal{X}$, it is computationally infeasible to find $\hat{x} \in \mathcal{X}$, $\bar{x} \neq \hat{x}$ such that $h(\bar{x}) = h(\hat{x})$.
-\item \textbf{Collision resistance}: given $h : \mathcal{X} \rightarrow \mathcal{Y}$, it is computationally infeasible to find $\hat{x} \in \mathcal{X}$ e $\bar{x} \in \mathcal{X}$, $\bar{x} \neq \hat{x}$, such that $h(\bar{x}) = h(\hat{x})$.
+\item \textbf{Weak Collision (2nd-preimage) Resistance}: given $h: \mathcal{X} \rightarrow \mathcal{Y}$ and $\bar{x} \in \mathcal{X}$, it is computationally infeasible to find $\hat{x} \in \mathcal{X}$, $\bar{x} \neq \hat{x}$ such that $h(\bar{x}) = h(\hat{x})$.
+\item \textbf{Strong Collision resistance}: given $h : \mathcal{X} \rightarrow \mathcal{Y}$, it is computationally infeasible to find $\hat{x} \in \mathcal{X}$ e $\bar{x} \in \mathcal{X}$, $\bar{x} \neq \hat{x}$, such that $h(\bar{x}) = h(\hat{x})$.
 \end{itemize}
 From now on, when writing hash function we implicitly assume it to be a cryptographic hash function. \\
 A good cryptographic hash function must satisfy the following requirements:
@@ -1175,7 +1209,7 @@ In cryptographic applications the most popular choices for G and g are:
 \end{itemize}
 \item $G = (E,+)$, where E is an elliptic curve on $\mathbb{Z}_p$, g is a point of E having as order a prime number, typically $o(g) = |E|/h$ with $h = 1, 2, 4$;
 \begin{itemize}
-\item an example of groups which is very often used nowadays is formed by the points of a s-called "Elliptic Curve"; you don't need to know what is, but you must know that most web sites now use this group for their Diffie-Hellman key-agreement; you will find this method referred to as "ECDH".
+\item an example of groups which is very often used nowadays is formed by the points of a so-called "Elliptic Curve"; you don't need to know what is, but you must know that most web sites now use this group for their Diffie-Hellman key-agreement; you will find this method referred to as "ECDH".
 \end{itemize}
 \item $G = (E,+)$, where E is an elliptic curve on $\mathbb{F}_{2^n}$, g is a point of E having as order a prime number, typically $o(g) = |E|/h$ with $h = 2$ or $4$;
 \begin{itemize}
@@ -1339,10 +1373,10 @@ Oak Ridge National Laboratory: \\
 
 \subsection{PUBLIC VS SYMMETRIC: A COMPARISON}
 To attack an ideal cipher with a key of k bits, the only possible attack is by brute force, which costs $2^k$. \\
-The robustness of any cipher is given by comparison with the security provided by an ideal cipher. We use k for effective robustness (i.e. $k = k$ if we consider an ideal cipher, but in general $k \geq k$). \\
+The robustness of any cipher is given by comparison with the security provided by an ideal cipher. We use $k'$ for effective robustness (i.e. $k = k'$ if we consider an ideal cipher, but in general $k \geq k'$). \\
 For example, if a system has a space of keys containing $2^{10} = 1024$ keys, but there is an attack able to break the system using only $2^6$ encryptions, we have that:
 $$k = 10$$
-$$k =6$$
+$$k' =6$$
 NIST proposes the following comparison between the ideal security provided by a symmetric encryption and the effective security provided by DH-ECDH-RSA (IMPORTANT TABLE!).\medskip \\
 \begin{tabular}{|c|c|c|}\hline
 Symmetric Key Size (bits) & RSA/DH Key Size (bits) & Elliptic Curve Key Size (bits) \\ \hline
@@ -1352,7 +1386,7 @@ Symmetric Key Size (bits) & RSA/DH Key Size (bits) & Elliptic Curve Key Size (bi
 192 & 7680 & 384 \\
 256 & 15360 & 512 \\ \hline
 \end{tabular} \medskip \\
-From the tabular it is easy to deduce that public key cryptography based on elliptic curves is the most robust.
+From the tabular it is easy to deduce that public key cryptography based on elliptic curves is the most robust: RSA and DH require bigger keys than EC to offer a protection similar to symmetric cryptography.
 
 \newpage
 \section{Randomness}
@@ -1656,7 +1690,7 @@ D distributes a secret $S \in \mathbb{Z}_p$, with p prime, among $w < p$ players
 \subsubsection*{Initialization Phase}
 \begin{enumerate}
 \item D sets $a_0 = S$;
-\item D chooses $t - 1$ random values $0 \leq ai \leq p - 1$, $1 \leq i \leq t - 1$;
+\item D chooses $t - 1$ random values $0 \leq a_i \leq p - 1$, $1 \leq i \leq t - 1$;
 \item D defines the polynomial.
 \end{enumerate}
 $$f(x) = \sum_{i=0}^{t-1} a_ix^i = S + \sum_{i=1}^{t-1}a_ix^i$$
@@ -1729,7 +1763,6 @@ Examples are:
 \item the Benaloh scheme
 \end{itemize}
 
-\newpage
 \section{Sketch on more advanced signature schemes}
 \subsection{Threshold signatures (multisig)}
 In some contexts it is convenient to have a (t,w)-threshold signature scheme, that is, each of w people has a share and when t of them use their share then they can sign collectively a document.
@@ -1741,7 +1774,7 @@ In some contexts, anonimity is highly desired in signing documents (i.e. for una
 A way of achieving a high degree of anonimity is by using a scheme with "ring signatures", which we now sketch.
 Each user has a private key/public key pair. To sign a document, Bob uses his own private key and the public keys of an arbitrary large groups of other users (which we call the "innocents"). Alice can verify that the document has been signed by ONE of the people involved, but she cannot understand WHO signed it.
 
-\subsection*{LAST COMMENT}
+\subsection*{Last comment}
 Beware of using one elliptic curve to protect a widely-used signature systems (like a cryptocurrency).
 Indeed, for some specific curves there are very dangerous attacks and if Eve breaks your curve then your entire system (i.e. your cryptocurrency) will collapse. If someone breaks the Bitcoin curve she will destroy Bitcoin for good.
 
@@ -1762,38 +1795,33 @@ In a payment card four elements are usually present:
 \end{itemize}
 A payment card is used for goods purchase or money withdrawal. We can distinguish 3 types:
 \begin{itemize}
-\item Credit card: allows the cardholder to obtain goods (or services) delaying the payment to a later moment.
+\item Credit card: allows the cardholder to obtain goods (or services) delaying the payment.
 \item Debit card: the money is immediately subtracted from the cardholder's (bank) account, to whom the card is directly connected.
 \item Prepaid card: a particular case of debit card where the cardholder's account is not a bank account, but rather an account periodically recharged by the cardholder.
-\end{itemize}
+\end{itemize} 
 
-\subsection{Online/Mobile banking}
-With Online Banking, clients can access their account directly on the bank's website, using their own computer, and conduct the same operations they could conduct by going to their bank branch in person. In particular, they can make wire transfers to another bank account. Mobile Banking is similar, but the access is made with a mobile phone.
-
-\subsection{Internet Payment}
-With Internet payment we mean nowadays the payment systems used by e-commerce websites in order to get payments from customers. We discuss two Internet payment systems: \textbf{Card not present} and \textbf{PayPal-like}.
-
-\subsubsection{Card Not Present}
-The CNP system is the traditional Internet payment system. It is still used by websites such as those of some airlines. In this system only the cardholder's details, the PAN, the CVV and the card's expiry date are needed to pay.
-
-\subsubsection{PayPal-like}
-A PayPal-like system is a system in which a costumer can store her credit card(s) data in a (secure) server. Once the costumer wants to make a purchase on a website supporting the system, she will login to the system and select one of the stored credit cards. 
-
-\subsection{Mobile payment}
-It refers to payment services performed from or via a mobile device. Two examples are:
+\subsection{Online solutions}
+The following points regarding payments online will be explored later:
 \begin{itemize}
-\item \textbf{Card emulation}: software architecture providing a virtual representation of a payment card. There are special POSes which can recognize the mobile phone as a contactless card.
-\item \textbf{Digital wallet}: e-commerce transactions can be made with the mobile phone, in a way similar to the PayPal-like systems.
+\item \textbf{Online/Mobile banking}: clients can access their account directly on the bank's website, using their own computer, and conduct the same operations they could conduct by going to their bank branch in person. In particular, they can make wire transfers to another bank account. Mobile Banking is similar, but the access is made with a mobile phone.
+\item \textbf{Internet Payment}: meaning nowadays the payment systems used by e-commerce websites in order to get payments from customers. We discuss two Internet payment systems: 
+	\begin{itemize}
+	\item \textbf{Card Not Present}: the CNP system is the traditional Internet payment system. It is still used by websites such as those of some airlines. In this system only the cardholder's details, the PAN, the CVV and the card's expiry date are needed to pay.
+	\item \textbf{PayPal-like}: a system in which a costumer can store her credit card(s) data in a (secure) server. Once the costumer wants to make a purchase on a website supporting the system, she will login to the system and select one of the stored credit cards. 
+	\end{itemize}
+\item \textbf{Mobile payment}: payment services performed from or via a mobile device. Two examples are:
+	\begin{itemize}
+	\item \textbf{Card emulation}: software architecture providing a virtual representation of a payment card. There are special POSes which can recognize mobile phones as contactless cards.
+	\item \textbf{Digital wallet}: e-commerce transactions can be made with the mobile phone, in a way similar to the PayPal-like systems.
+	\end{itemize}
+\item \textbf{Peer-to-peer and Micropayments}: Peer-to-peer payments are online systems permitting to a single individual to perform a financial transaction directly with another person. They include \textbf{cryptocurrencies}, such as \textbf{Bitcoin}. 
+\textbf{Micropayments} are payments performed online and involving a tiny amount of money.
 \end{itemize}
 
-\subsection{Peer-to-peer and Micropayments}
-\textbf{Peer-to-peer payments} are online systems permitting to a single individual to perform a financial transaction directly with another person. They include \textbf{cryptocurrencies}, such as \textbf{Bitcoin}. \medskip\\
-\textbf{Micropayments} are payments performed online and involving a tiny amount of money.
-
-\subsection*{Direct data entry transactions} 
+\subsubsection*{Direct data entry transactions} 
 Namely fast paths to transmit transaction data. Divided in:
 \begin{itemize}
-\item Direct credit: a payer gives instruction to her financial institution to pay funds into a payee's account;
+\item Direct credit: payer gives instruction to her financial institution to pay funds into a payee's account;
 \item Direct debit: payer authorises a payee to initiate the collection of funds periodically.
 \end{itemize}
 
@@ -1801,21 +1829,12 @@ Namely fast paths to transmit transaction data. Divided in:
 \subsubsection*{Public key cryptography}
 A set of algorithms using two different keys to encrypt(with the public key) and to decrypt (via the private key).
 \subsubsection*{Symmetric key cryptography}
-A collection of algorithms that use the same key both to encrypt a message and to decrypt it. The sender and the receiver have to share the same key, securely produced, stored, exchanged and kept secret.
+A collection of algorithms that use the same key, both to encrypt a message and to decrypt it; sender and receiver have to securely produce, store and exchange it.
 \subsubsection*{Digital signature}
-A cryptographic primitive that is used in connection with a sender, which can be a person or a device. A digital signature must satisfay three requirements:
-\begin{itemize}
-\item authenticity: any receiver can verify the sender's identity;
-\item non-repudiation: the sender cannot deny to have sent a message with her signature on;
-\item integrity: the receiver (or someone else) cannot alter a signed message.
-\end{itemize}
+A cryptographic primitive that is used in connection with a sender, which can be a person or a device. A digital signature must satisfay three requirements: authenticity, non-repudiation and integrity.
 A digital signature scheme typically consists of three algorithms:
-\begin{itemize}
-\item a \textbf{key generation algorithm} that selects a private key uniformly at random from a set of possible private keys and outputs the private key and a corresponding public key;
-\item a \textbf{signing algorithm} that, given a message and a private key, outputs a signature;
-\item a \textbf{signature verifying algorithm} that, given a message, a public key and a signature, checks the message's claim to authenticity.
-\end{itemize}
-Autentication is a process of verifying the authenticity of a user or a device. Digital signature is one of the tools that can be used for devices; for users, other tools such as passwords and ID numbers can be used for authentication.
+a \textbf{key generation algorithm}, that selects a private key uniformly at random from a set of possible private keys and outputs the private key and a corresponding public key, a \textbf{signing algorithm} that, given a message and a private key, outputs a signature and a \textbf{signature verifying algorithm} that, given a message, a public key and a signature, checks the message's claim to authenticity.\\
+Digital signature is one of the tools that can be used for devices; for users, other tools such as passwords and ID numbers can be used for authentication.
 
 \subsubsection{PKI}
 A problem in public key cryptography is to verify public keys' authenticity: if Alice wants to send Bob a message, she has to use Bob's public key. For this reason, Alice would like to be sure that the public key she is using is really Bob's. Generally speaking, a Public Key Infrastructure (PKI) is a cryptographic function that allows to:
@@ -1899,9 +1918,9 @@ All these previous steps are the same also in SDA, but with the next step differ
 Instead, in DDA, the card tells the POS the ICC certificate, which is the card's own certificate. The POS verifies the ICC certificate, via the Issuer's public key, and so it can extract the ICC PK, which is the card's public key. Obviously, if the authentication fails, the communication is interrupted.
 \end{minipage}
 \hfill
-\begin{minipage}{0.4\textwidth}
+\begin{minipage}{0.45\textwidth}
 \begin{center}
-\includegraphics[scale=0.6]{img/ac36.png}
+\includegraphics[scale=0.52]{img/ac36.png}
 \end{center}
 \end{minipage} \medskip\\
 At this stage the POS knows that the inserted card has the public key of a valid card "NiceCard", which was issued by a valid Issuer (for that circuit).
@@ -1930,29 +1949,25 @@ There are 2 possibilities for the ICC cryptographic parameters:
 \item the ICC does not possess a specific ICC PIN encipherment key pair, so a ICC key pair already used in the last stage of the DDA is reused.
 \end{itemize}
 The POS is linked to a device, called PIN pad. The PIN pad is temper evident and supports the entry of a 4-12 digit PIN. The PIN is entered in plaintext format on the PIN pad, formatted, possibly encrypted and sent to the POS, which creates a \textbf{PIN block}, a sequence of 16 nibbles containing the plaintext PIN.
-The POS sends a \textbf{Get Challenge} command to the card, that answers with an 8-bytes UN (Unpredictable Number). Then the POS generates some random bytes, called Random Padding. \\
+The POS sends a \textbf{Get Challenge} command to the card, that answers with an 8-bytes UN. Then the POS generates some random bytes, called Random Padding. \\
 The POS:
 \begin{itemize}
 \item applies the PIN encipherment public key (if present) to encrypt the string
 $$\text{PIN block} + \text{Header} + \text{Card UN} + \text{Random Padding}$$
 \item sends to the card a \textbf{Verify} command and the ciphertext.
 \end{itemize}
-The card:
-\begin{itemize}
-\item uses its private key in order to decrypt the ciphertext;
-\item verifies that the plaintext is exactly as expected.
-\end{itemize}
+The card uses its private key in order to decrypt the ciphertext and verifies that the plaintext is exactly as expected.
 
 \subsubsection*{Online PIN verification}
 The CVM is performed directly by the Issuer host, based on the PIN typed in the PIN pad. The Issuer compares the PIN image control value, which is generated from the digited PIN and sent to the Issuer, with the PIN image stored value, which is held by the Issuer itself. \\
-Online PINs must be encrypted using a block cipher, which is a cryptographic algorithm that transforms a bit string of a fixed number of bits into another; this transformation depends on a parameter called a "symmetric key", which is needed by both the encryptor and the decryptor. The longer the symmetric key, the better. At the moment, for online PIN encryption, only TDEA (Triple DES) and AES (Advanced Encryption Standard) can be used:
+Online PINs must be encrypted using a block cipher; the longer the symmetric keys used, the better. At the moment, for online PIN encryption, only TDEA (Triple DES) and AES (Advanced Encryption Standard) can be used:
 \begin{itemize}
 \item TDEA supports different key length, but for PIN online encryption the version with a 112-bit key must be used;
 \item AES supports three key lengths (128, 192, 256) and any of them can be used for PIN online encryption.
 \end{itemize}
 The cardholder types the PIN in the PIN pad, which creates a PIN block. The PIN pad hashes and encrypts the PIN block with symmetric cryptography (TMS and PIN pad have previously exchanged a key) and sends it to the TMS, which decrypts it, re-encrypts it with a symmetric key previously exchanged  with the Issuer and finally sends it to the Issuer.
 The Issuer decrypts the PIN block and verifies the PIN. \medskip\\
-The actual number of symmetric keys is large, because more sophisticated cryptography algorithms, in particular key-derivation algorithms, and more actors using symmetric encryptions are employed. What matters is that the PIN must arrive at the Issuer from the PIN pad using successive encryption/decryption phases, all of these protected by symmetric encryption.
+The actual number of symmetric keys is large, because more sophisticated cryptography algorithms and more actors are employed. What matters is that the PIN must arrive at the Issuer from the PIN pad using successive encryption/decryption phases, protected by symmetric encryption.
 
 \subsubsection{The transaction}
 Both the POS and the card execute some risk analysis on the transaction in object, in order to decide wether/how to perform it. There are three possible decisions:
@@ -1961,31 +1976,30 @@ Both the POS and the card execute some risk analysis on the transaction in objec
 \item Decline the transaction offline $\rightarrow$ \textbf{AAC} (Application Authentication Cryptogram);
 \item Process the transaction online and so involve the Issuer $\rightarrow$ \textbf{ARQC} (Authorization Request Cryptogram)
 \end{enumerate}
-The POS generates a cryptogram, containing its decision, and sends it to the card. The card is not obliged to follow the terminal's decision, it performs its own decision-making process; even if the POS has sent a TC, the card can send and ARQC or an AAC. However, when a transaction is declined by the POS, the card cannot approve it and can only request to go online, that is, to involve the Issuer in the decision.
+The POS generates a cryptogram, containing its decision, and sends it to the card. The card is not obliged to follow the terminal's decision, it performs its own decision-making process; even if the POS has sent a TC, the card can send and ARQC or an AAC. However, when a transaction is declined by the POS, the card cannot approve it and can only request to go online.
 %TODO image with receipt + important fields (D1Chunk4 from 22:00)
 
 %Chunk5
 \section{CNP and Traditional Internet Payment}
-With Internet payment we mean the payment systems used by e-commerce websites in order to get payments from costumers.
-\subsection{Card Not Present}
-The CNP system is the traditional Internet payment system: it consists of transactions made where the cardholder does not or cannot physically show the card to a merchant in order to pay. It is difficult to establish the legitimacy of the cardholder and the validity of the card, since the cardholder provides card information indirectly. The two biggest issues, often interrelated, associated with processing CNP payments are \textbf{fraud} and \textbf{chargebacks}.
+With Internet payment we mean the payment systems used by e-commerce websites in order to get payments from costumers. \medskip\\
+The \textbf{Card Not Present} system is the traditional Internet payment system: it consists of transactions made where the cardholder does not or cannot physically show the card to a merchant in order to pay. It is difficult to establish the legitimacy of the cardholder and the validity of the card, since the cardholder provides card information indirectly. The two biggest issues, often interrelated, associated with processing CNP payments are \textbf{fraud} and \textbf{chargebacks}.
 
-\subsubsection{The Payment Acceptance Process}
+\subsection{The Payment Acceptance Process}
 It is the verification that the card is valid and the reservation of money for the merchant; in an Internet payment it starts when a credit card is entered into the shopping cart checkout page. A payment getaway in the CNP environment is similar to a credit card terminal in a physical store: it allows the payment details to be communicated from the merchant to their merchant processor and eventually to the card Issuer. To pay, the cardholder has to digit her data and the card's PAN, CVV and expiry date. Communication is protected by TLS/SSL, but two issues remain:
 \begin{itemize}
-\item the customer authentication: there is no guarantee that the customer of the payment transaction is the cardholder;
-\item the remote card data protection: to improve the usability of CNP systems usually e-commerce websites store some card information such as the PAN, the cardholder name and the expiration date.
+\item the \textbf{customer authentication}: there is no guarantee that the customer of the payment transaction is the cardholder;
+\item the \textbf{remote card data protection}: to improve the usability of CNP systems usually e-commerce websites store some card information such as the PAN, the cardholder name and the expiration date.
 \end{itemize}
 
 \subsubsection*{Customer authentication}
 In order to mitigate this problem, 3D Secure is employed, where the customer authentication is demanded to the Issuer (e.g., Verified by Visa, American Express SafeKey, MasterCard SecureCode). In principle, each issuer could use any kind of authentication method.
 \begin{center}
-\includegraphics[scale=0.5]{img/ac37.png}
+\includegraphics[scale=0.43]{img/ac37.png}
 \end{center}
-Whatever two-factor authentication is employed, we call that process \textbf{Strong customer authentication}. A recent document by the European Central Bank reccomends payment service providers to employ strong customer authentication.
+Whatever two-factor authentication is employed, we call that process \textbf{Strong customer authentication}; a recent document by the European Central Bank reccomends payment service providers to employ it.
 
 \subsubsection*{Card data protection}
-In order to obtain the protection of the card data stored remotely on a merchant's server, different security standard requirements are employed: the most complete one is PCI DSS.
+In order to obtain the protection of the card data stored remotely on a merchant's server, different security standard requirements are employed: the most complete one is PCI DSS (\ref{section:pci}).
 
 %TODO SSL/TLS (D1Chunk5 from 12:15)
 
@@ -1998,26 +2012,19 @@ There are two important security aspects:
 \item \textbf{protection} of the browser-server communication.
 \end{itemize}
 
-\subsection*{User credentials' protection}
+\subsubsection*{User credentials' protection}
 Usernames are stored in plaintext in the bank's server, whereas only a hash of the password is stored. Who wants to steal the user credentials has to recover the password from its hash, which is assumed to be infeasible, especially if salt is used.
 
-\subsection*{Protection of the browser-server communication}
+\subsubsection*{Protection of the browser-server communication}
 To establish a private communication, the browser of the client and the bank's server start a https session, meaning that they are exploiting the TLS protocol. 
 
 \subsection{Authentication}
 In the case of online banking the user can safely insert her username and password to login to the online platform of the bank. 
-The authentication requiring only the knowledge of username and password is an example of Single-factor authentication (SFA). To improve the security, modern online banking systems provide a Two-factor authentication (2FA) to improve the security, a process that uses a combination of two different components (something that the user knows, owns or that is part of her). 
+The authentication requiring only the knowledge of username and password is an example of Single-factor authentication (SFA). To improve the security, modern online banking systems provide a Two-factor authentication (2FA), a process that uses a combination of two different components (something that the user knows, owns or that is part of her). 
 
 \subsubsection{OTP}
-Another possible solution is the use of a One Time Password (OTP), which is valid only for one login session or one transaction; OTPs are exempt from reply attacks. The device producing an OTP, small with a LCD display, is commonly called OTP device: the passwords produced by each device have to be unpredicatable by an attacker. Moreover, even possessing the OTPs produced by one device, it should be infeasible to obtain any information about the OTPs produced by another one. OTPs are based on CSPRNG, i.e. Cryptographically-Secure Pseudo-Random Number Generators. The sequences generated are not really random since they depend on two secret values: the \textbf{seed} and the \textbf{counter}. The seed is fixed (for a given device) and the counter is increased at any use of the device. A PRNG is a function f of seed and counter, where the seed is a small string of bits. In a good PRNG, for each seed s and used counter c, even if an attacker knows all the $f(s,1), \dots, f(s,c)$ she cannot find $f(s, c+1)$, and if she knows s and f(s,c) she cannot find c. Not only the sequences have to be pseudorandom, also the seed distribution has to be random: if an attacker knows $s_1, \dots, s_{i-1}$ she cannot recover $s_i$. \medskip\\
-There are no mathematical proofs of (pseudo)entropy of algorithms. NIST list more than 180 properties to verify entropy, plus a list of 15 tests, including:
-\begin{enumerate}
-\item frequency;
-\item block frequency;
-\item cumulative sums;
-\item runs;
-\item longest runs of ones.
-\end{enumerate}
+Another possible solution is the use of a One Time Password (OTP), which is valid only for one login session or one transaction; OTPs are exempt from reply attacks. The device producing an OTP, small with a LCD display, is commonly called OTP device: the passwords produced by each device have to be unpredicatable by an attacker. Moreover, even possessing the OTPs produced by one device, it should be infeasible to obtain any information about the OTPs produced by another one. OTPs are based on CSPRNG, i.e. Cryptographically-Secure Pseudo-Random Number Generators. The sequences generated are not really random since they depend on two secret values: the \textbf{seed} (small string of bits) and the \textbf{counter}. The seed is fixed (for a given device) and the counter is increased at any use of the device. In a good PRNG function $f$, for each seed s and used counter c, even if an attacker knows all the $f(s,1), \dots, f(s,c)$ she cannot find $f(s, c+1)$, and if she knows s and f(s,c) she cannot find c. Not only the sequences have to be pseudorandom, also the seed distribution has to be random: if an attacker knows $s_1, \dots, s_{i-1}$ she cannot recover $s_i$. \medskip\\
+There are no mathematical proofs of (pseudo)entropy of algorithms. NIST list more than 180 properties to verify entropy, plus a list of 15 tests, including \textbf{frequency}, \textbf{block frequency}, \textbf{cumulative sums}, \textbf{runs} and \textbf{longest runs of ones}.
 
 \subsubsection*{How to generate an OTP}
 \begin{itemize}
@@ -2051,13 +2058,13 @@ It is the oldest version of Mobile Banking. Two types of SMSs:
 Nowadays, Mobile Banking is mostly performed via ad-hoc apps, with undisclosed internal security protection mechanisms.
 
 \subsection{Security}
-A first layer of security in Mobile Banking is provided by TLS, then a second layer is provided by an additional encryption on top of it. A problem of Mobile Banking is the device enrolment: when the customer installs an app, she has to insert a secret in her mobile phone, to ensure that the device is actually her own and it does not belong to a potential attacker. The protection of the secret is stored in the mobile phone (similar to the seed protection problem in smartphones).
+A first layer of security in Mobile Banking is provided by TLS, then a second layer is provided by an additional encryption on top of it. A problem of Mobile Banking is the device enrolment: when the customer installs an app, she has to insert a secret in her mobile phone, to ensure that the device is actually her own and it does not belong to a potential attacker. This secret, like all meaningful data, has to be stored in a way such as it is protected (like with encryption). \medskip\\
+Other security aspects are:
 \begin{itemize}
-\item Security of any thick-client application running on the device. In the case the device is stolen, the user should provide at least an ID/password to access the application $\rightarrow$ PIN.
-\item Device authentication: thanks to enrolment only the authorized devices will be able to connect.
+\item Security of any thick-client application (running on the device). In case the device is stolen, the user should provide at least an ID/password to access the application $\rightarrow$ PIN.
+\item Device authentication: thanks to enrolment only authorized devices will be able to connect.
 \item User ID/Password authentication of bank's customer $\rightarrow$ hash.
-\item Encryption of the data being transmitted over the air $\rightarrow$ SSL plus additional encryption layer.
-\item Encryption of the data that will be stored in the device.
+\item Encryption of the data transmitted over the air $\rightarrow$ SSL plus additional encryption layer.
 \end{itemize}
 Sometimes OTPs are used to prevent cyber frauds.
 
@@ -2065,7 +2072,7 @@ Sometimes OTPs are used to prevent cyber frauds.
 It is the hard-coding (=inserting code that cannot be modified without re-building the source code) of the certificate known to be used by the server in the mobile application. More precisely, the app allows only SSL connections to hosts signed with certificates stored inside the application, thus the app can ignore the device's trust storage.
 
 \section{PayPal}
-PayPal is a worldwide online payment system provided by an american company: it allows any business or individual with an email address to send and receive payments online. The paypal network builds on the existing financial infrastructure of bank accounts and credit cards to create a global, real-time payment solution. The \textbf{Payments API} allows to accept online and mobile payments and \textbf{Payout APIs} enable to manage payments to multiple PayPal accounts. Payments can be made with PayPal and with credit cards; a customer can accept an immediate payment, or authorize a payment and capture it later.
+PayPal is a worldwide online payment system provided by an american company: it allows any business or individual with an email address to send and receive payments online. The paypal network builds on the existing financial infrastructure of bank accounts and credit cards to create a global, real-time payment solution. The \textbf{Payments API} allows to accept online and mobile payments and \textbf{Payout APIs} enable to manage payments to multiple PayPal accounts. Payments can be made with PayPal and with credit cards; a customer can accept an immediate payment, or authorize a payment and capture it later (like with subscriptions).
 
 \subsubsection*{Using payments}
 The Payments API enables customers to accept PayPal and credit card payments. When creating a payment, customers set an intent (sale or authorize), and specify the transaction details. The customer can get details on completed payments (sale transactions), make full or partial refunds and similar operations.
@@ -2073,12 +2080,12 @@ The Payments API enables customers to accept PayPal and credit card payments. Wh
 \subsection{Vault overview}
 The Vault API provides a secure way to store credit cards: by storing cards with PayPal, customers can avoid storing them on the e-commerce site.
 \begin{itemize}
-\item To store a customer credit card, it is necessary to specify the cards details in a call to the Vaul API: a card ID is returned
+\item To store a customer credit card, it is necessary to specify the cards details in a call to the Vault API: a card ID is returned
 \item To take a payment with the card, it is necessary to specify the card ID (instead of specifying its details). If a payer ID is provided during the card storing, it is necessary to include the payer ID when charging the card.
 \end{itemize}
 
 \subsection{Identity overview}
-If you own a website PayPal offers an Identity API that lets your customer sign in using their PayPal credentials. The Identity API manages and verifies your customer account data for you.
+If you own a website, PayPal offers an Identity API that lets your customer sign in using their PayPal credentials. The Identity API manages and verifies your customer account data for you.
 \begin{itemize}
 \item Use Log in with PayPal, a sign-on system that manages the customer log in process.
 \item Use seamless checkout to checkout the  items in the cart.
@@ -2088,14 +2095,14 @@ If you own a website PayPal offers an Identity API that lets your customer sign 
 It enables the e-commerce site to create, send and manage invoices. By using it, PayPal emails the customer a link to the invoice and the customer can view the invoice on the PayPal website. Then customers can pay with PayPal, a check, a debit card or a credit card.
 
 \subsection{PCI compliance}
-As a payment service provider, PayPal has to comply with PCI DSS. However, for some of PayPal's products it is the e-commerce site which is responsible for its own compliance.
+As a payment service provider, PayPal has to comply with PCI DSS (\ref{section:pci}). However, for some of PayPal's products, it is the e-commerce site which is responsible for its own compliance.
 
 \subsection{Security Key}
 The PayPal Security Key gives a second authentication factor when logging in to a PayPal account: in addition to her password, the user must digit an OTP received in an SMS sent by the PayPal server.
 
 \subsection{Data encryption}
 When the customer (registers or) logs into PayPal, its server enforces a communication with TLS 1.0 or higher, ensuring that old Cipher Suites (and their weak ciphers) are not used. This might be rejected by the user's browser during the TLS handshake, making it impossible for her to log in, but it is in her security's interest.\\
-All of her information is protected by SSL, which ensures that her information is encrypted, but no further encryption layer is employed.
+All of her informations are protected by SSL, which ensures that they are encrypted, but no further encryption layer is employed.
 
 \section{Mobile Payment}
 Mobile Payments refers to payment services performed from or via a mobile device. Two of them are:
@@ -2104,24 +2111,24 @@ Mobile Payments refers to payment services performed from or via a mobile device
 \item digital wallet: e-commerce transactions can be made with the mobile phone like with the PayPal-like systems (e.g. Google Wallet).
 \end{itemize}
 
-\subsection{Google Wallet}
-Customers with Google Wallet can:
+\subsection{Google Wallet (now Google Pay)}
+Google Wallet allows users to store gift cards, debit cards and even PayPal credit and use it: 
 \begin{itemize}
-\item shop and save in stores by storing gift cards, or using the Google Waller Card or NFC tap and pay;
-\item buy online apps or from sites that support Google Wallet;
-\item send or request money to anyone in the US	with an email account through Gmail or the Google Wallet app.
+\item to buy in shops, using the Google Wallet Card or NFC tap and pay;
+\item to buy online from sites that support Google Wallet;
+\item to send or request money to anyone in the US with an email account through Gmail or the Google Wallet app.
 \end{itemize}
-Google Wallet also uses PayPal.
+In order to perform the payment, Google passes a single-use virtual credit card number which can only be used for a one-time authorized transaction.
 
 \subsection{NFC payments}
-Near Field Communication is a Radio Frequency (RF) communication technology which enables bidirectional short-range (10 cm or less) wireless communication among electrical devices. This technology can be integrated in the SIM card, so that mobile operators can administrate NFC services on the SIM itself. It supports three method of operation: 
+Near Field Communication is a Radio Frequency (RF) communication technology which enables bidirectional short-range (10 cm or less) wireless communication among electrical devices. This technology can be integrated in the SIM card, so that mobile operators can administrate NFC services on the SIM itself. It supports three methods of operation: 
 \begin{itemize}
 \item \textbf{tag reader/writer}: enables NFC-enabled devices to read information stored in NFC tags embedded in labels or smart posters;
 \item \textbf{peer to peer}: enables two NFC-enabled devices to communicate with each other to exchange information in an adhoc fashion;
 \item \textbf{card emulation}: enables NFC-enabled devices such as smartphones to act like smart cards, allowing users to perform transactions such as payment or ticketing.
 \end{itemize}
 Only the last one will be dealt with. \medskip\\
-In order to pay with NFC the mobile phone needs an NFC chip and a sftware able to emulate card payments. A contactless POS wll offer the same EMV functionalities, the only difference lying in the interaction POS-card, which in this case is purely wireless, without need of any physical contact, altough a physical proximity is obviously required.
+In order to pay with NFC, the mobile phone needs an NFC chip and a sftware able to emulate card payments. A contactless POS wll offer the same EMV functionalities, the only difference lying in the interaction POS-card, which in this case is purely wireless, without need of any physical contact (altough a physical proximity is obviously required).
 
 \subsubsection{The payment}
 The customer holds her smartphone near the POS, in which the NFC function is enabled; usually a PIN is required for high-amount transactions. There are two important problems in NFC payments:
@@ -2133,32 +2140,33 @@ The customer holds her smartphone near the POS, in which the NFC function is ena
 \subsubsection*{Store card data in a secure environment}
 Two solutions:
 \begin{itemize}
-\item \textbf{Secure Element} (SE): a small temper resistant device that facilitates the secure storage and transaction of payment and other sensitive credentials. It can be found as a chip directly in the phone's hardware, in a SIM card or in a SD card
+\item \textbf{Secure Element} (SE): a small temper resistant device that facilitates the secure storage and transaction of payment and other sensitive credentials. It can be found as a chip directly in the phone's hardware, in a SIM card or in a SD card. It provides secure storage and execution environment for the payment applications, i.e. the software emulating a contactless card;
 \item \textbf{Host-based Card Emulation} (HCE): the host operating system and its apps gets involved with a payment transaction. All data from the reader directly go to a memory accessed by the Host CPU on which OS applications run. An application (a mobile wallet) that deals with a particular payment apllication provides for the card emulation requests and responses. The memory accessed by the host CPU is not as secure as the SE, so it does not contain the cardholder data stored inside; for example data can be moved to a hosted cloud environment, where the secure storage and secure processing takes place.
 \end{itemize}
-Alternatively some OS allow SE and HCE to co-exist in the same device and offer tools to work with both.
-
-\subsection{Online purchases}
-Google Wallet can be integrated in merchants' websites or applications, enabling customers to checkout using card data stored in the wallet. In order to perform the payment, Google passes a single-use virtual credit card number which can only be used for a one-time authorized transaction.
+\begin{center}
+\includegraphics[scale=0.3]{img/acnfc.png}
+\end{center}
+Alternatively, some OS allow SE and HCE to co-exist in the same device and offer tools to work with both.
 
 \subsection{Data exchange and authorizations}
 Data exchange is secured, as usual, with SSL. For authotization, OAuth 2.0 is employed: it is an open standard for authorization which provides client applications a \textbf{secure delegated access} to server resources on behalf of a resource owner.
 
-\subsubsection{OAuth}
+\subsubsection*{OAuth}
 OAuth has been developed to work with HTTP: it allows access tokens to be issued to third-party clients by an authorization server, with the approval of the resource owner. The client then uses the access token to access the protected resources hosted by the resource server. OAuth 2.0 does not support signature, encryption, channel binding or client verification: it relies completely on TLS for some degree of confidentiality and server authentication.
 
-\subsection{Sending money}
+\subsection{Sending money with Google}
 Google Wallet permits to send money directly to another individual, provided that he has a Gmail account. In order to send money, the sender should turn on PIN verification. The SHA-256 hash of the PIN is stored in the device. It is also possible to choose the PIN's timeout duration: a data connection is needed to unlock the device.
 
 %chunk 9
 \section{PCI}
-The PCI Security Standards Council was formed by the major payment card brands such as AE, MasterCard and Visa: its mission is to improve payment account security. Two main standards are managed:
+The PCI Security Standards Council was formed by the major payment card brands: its mission is to improve payment account security. Two main standards are managed:
 \begin{itemize}
 \item the \textbf{PCI Data Security Standard} (PCI DSS);
 \item the \textbf{Payment Application Data Security Standard} (PA DSS).
 \end{itemize}
 
 \subsection{PCI DSS}
+\label{section:pci}
 PCI DSS is a set of technical and operational requirements in order to protect the cardholder's account data; it has been developed to improve cardholder data security and encourage a broad option of consistent security measures. PCI DSS applies to all entities:
 \begin{itemize}
 \item which are \textbf{involved in payment card processing}, including merchants, processors, acquirers, issuers and service providers;
@@ -2176,15 +2184,6 @@ Use of a PA DSS compliant application by itself does not make an entity PCI DSS 
 
 \subsection{PCI DSS: 12 rules}
 PCI DSS comprises a minimum set of requirements for protecting account data, composed of 12 general rules. Additionally, legislation or regulatory requirements may require specific protection of personal information or other data elements (for example, cardholder name).
-
-\subsubsection{Cardholder's data environment}
-There is an important difference between sensitive and non-sensitive data.
-\textbf{Cardholder Data} includes Primary Account Number (PAN), cardholder name, expiration date and service code; \textbf{Sensitive Authentication Data} includes full track data (magnetic-stripe data or equivalent on a chip), CAV2/CVC2/CVV2/CID and PINs/PIN blocks. The latter must \textbf{not} be stored after authorization, even if encrypted.
-
-\subsubsection{Network segmentation}
-Network segmentation of the cardholder data environment from the remainder of an entity's network is not a PCI DSS requirement; however, it is strongly recommended.
-
-\subsection{The requirements (the 12 rules)}
 \begin{enumerate}
 \item Install and mantain a firewall configuration to protect cardholder data;
 \item Do not use vendor-supplied defaults for passwords and other security parameters;
@@ -2200,6 +2199,13 @@ Network segmentation of the cardholder data environment from the remainder of an
 \item Maintain a policy that addresses information security for all personnel.
 \end{enumerate}
 The \textbf{personnel} contains all the people having access to cardholder data; the \textbf{security policy} means that all personnel should be aware of the sensitivity of data and their responsibilities for protecting it.
+
+\subsubsection{Cardholder's data environment}
+There is an important difference between sensitive and non-sensitive data.
+\textbf{Cardholder Data} includes Primary Account Number (PAN), cardholder name, expiration date and service code; \textbf{Sensitive Authentication Data} includes full track data (magnetic-stripe data or equivalent on a chip), CAV2/CVC2/CVV2/CID and PINs/PIN blocks. The latter must \textbf{not} be stored after authorization, even if encrypted.
+
+\subsubsection{Network segmentation}
+Network segmentation of the cardholder data environment from the remainder of an entity's network is not a PCI DSS requirement; however, it is strongly recommended.
 
 \section{E-commerce}
 Electronic commerce is the buying and selling of products or services over electronic systems such as Internet. Merchants choosing to sell their goods and services online have a number of options to consider, for example:
@@ -2219,7 +2225,7 @@ Two examples of third-party entities are:
 \end{itemize}
 
 \subsection{Three-tier computing}
-An e-commerce infrastructure typically follows a three-tier computing model, with each layer dedicated to specific function:
+An e-commerce infrastructure typically follows a three-tier computing model, with each layer dedicated to a specific function:
 \begin{enumerate}
 \item a presentation layer (webserver), publically accesible (not used to store confidential information);
 \item a processing layer (application), that performs processing fucntions;
@@ -2269,43 +2275,6 @@ In this last case, what merchants should do? If outsourcing
 \item data storage services: verify whether the service provider can independently manage encrypted backups and database administration.
 \end{itemize}
 
-\newpage
-\section{More crypto}
-PDF file for more info.
-\subsection{DES-3DES}
-Data Encryption Standard (DES) is a block cipher based on Feistel encipherment, developed by IBM. 3DES has been developed to increase the security of DES, since the key space of DES is too small for modern computers, which can explore it fully in a few hours.
-It consists in applying DES three times. The key, called key bundle consists of three keys k1, k2, k3 of 56 bits each.
-
-\subsection{Hash functions}
-An Hash function takes bit strings with arbitrary (finite) length and associates bit strings with a fixed length n. Hash functions are used for integrity, digital signature, authentication.
-
-\subsubsection{Properties}
-\begin{itemize}
-\item Fixed output: the length of input $y = h(x)$ is fixed (n bits), whereas the one of the input x is arbitrary.
-\item Efficiency: it is rather fast to compute the output y given the
-input x.
-\item Weak Collision Resistance: given $x, h(x)$ it is difficult to find $x \neq x'$ such that $h(x') = h(x)$.
-\item Strong Collision Resistance: it is difficult to find a couple of inputs $x, x'$ such that $h(x') = h(x)$.
-\item One-way: given the output $y = h(x)$ it is difficult to find the input x.
-\end{itemize}
-Some of the most important hash functions belong to the SHA family.
-
-\subsection{DSA}
-A digital signature scheme is a 3-tuple (GEN, SIGN, VRFY ) where:
-\begin{itemize}
-\item GEN = algorithm randomly selecting a private key (and the corresponding public key) from a set of private keys.
-\item SIGN = algorithm that, given a message and a private key, produces a signature.
-\item VRFY = algorithm that, given a message, a public key and a signature, checks the authenticity of the message.
-\end{itemize}
-If an attacker can obtain a pair (message, signature) = (m,s) so that its verification is correct, though the message has not been signed by the sender, the attacker has obtained a forgery. There are several types of forgery:
-\begin{itemize}
-\item Complete break: the attacker finds the private key of the sender and then he can sign any message with the sender’s name.
-\item Selective forgery: given a message, the attacker can produce a forgery for it with non-negligible probability.
-\item Existential forgery: the attacker can create a forgery for at least one message.
-\end{itemize}
-In order to avoid these attacks, usually a Digital signature is obtained from a combination of hash functions and public key cryptography algorithms. \\
-The security of the used public key cryptography algorithm depends on the difficulty of the algebraic problem underlying it. The main algorithms are RSA, based on the Integer Factorization Problem, and DSA (Digital Signature Algorithm) based on the Discrete Logarithm Problem.
-
 \newpage %lectures 19-20-21
 \section{Post Quantum Cryptography}
 \begin{itemize}
@@ -2353,9 +2322,9 @@ if $(x,N) = 1$ and $(z,N) = 1$ ($x$ and $z$ coprime with N).
 There are 2 parties:
 \begin{itemize}
 \item Alice, the \textbf{prover}: knows P and Q, declares N (public) and a number z, which she claims is a QR.
-\item Bob, the \textbf{verifier}: does not believe Alice and she challenges her.
+\item Bob, the \textbf{verifier}: does not believe Alice and challenges her.
 \end{itemize}
-Alice could just give Bob P and Q, so that he can compute it by himself, but she doesn't want to give him any knowledge except the fact that z is QR (don't reveal factorization of N). First, Alice has acces to a random entropy source and Bob has access to another random source (private sources); Alice calls this source and gets a number $w$ (in $\mathbb{Z}_N$). For this random value Alice computes the square, to get $u = W^2$, which is QR, and send it to Bob. Bob calls its random source and gets a bit \textit{b}, that is sent to Alice.
+Alice could just give Bob P and Q, so that he can compute it by himself, but she doesn't want to give him any knowledge except the fact that z is QR (don't reveal factorization of N). First, Alice has acces to a random entropy source and Bob has access to another random source (private sources); Alice calls this source and gets a number $w$ (in $\mathbb{Z}_N$). For this random value Alice computes the square, to get $u = w^2$, which is QR, and send it to Bob. Bob calls its random source and gets a bit \textit{b}, that is sent to Alice.
 Depending on the value of b Alice makes 2 operations:
 \begin{itemize}
 \item $b=0$: Alice sends $w$. 
@@ -2366,8 +2335,8 @@ In the other case, Bob can square it, so that
 $$w^2x^2 = uz$$
 Since $w^2$, $x^2$ and $u$ (claimed by Alice) are QRs and since $QR \cdot QR = QR$, $z$ has to be a QR.\\
 So why Bob has to send b, which can have value 0? That's because Alice may be cheating and send a number that is not the square root of $u$: so there is a $50\%$ probability that the b bit is 0 and Alice has to send only $w$. Obviously Alice can still cheat by hoping that b will be 1, so this "game" is repeated until Bob is sure that Alice is not cheating. \\
-Also Bob could be cheating (becoming the \textbf{simulator}). Zero knowledge works so that Bob can't get extra informations other than the one required for the computation. \medskip\\
-This is an istance of an Interactive Protocol. The most specific case of IP is the case of an Interactive Proof System: in this case there are conditions on the probability that Bob accepts or rejects.
+Also Bob could be cheating (becoming the \textbf{simulator}). Zero knowledge works so that Bob can't get extra informations other than the ones required for the computation. \medskip\\
+This is an istance of an \textbf{Interactive Protocol}. The most specific case of IP is the case of an \textbf{Interactive Proof System}: in this case there are conditions on the probability that Bob accepts or rejects.
 \begin{itemize}
 \item \textbf{Rejection.} Bob rejects when he finds that Alice is cheating: this doesn't mean that what Alice originally said was wrong.
 \item \textbf{Acceptance.} Given any small number $\epsilon$, Bob will accept the true claim with a probability of at least $1 - \epsilon$ and the false claim with a probability of at most $\epsilon$. The $\epsilon$ usually depends on the size of the input x, so that $\epsilon \sim \frac{1}{(x)^k}$ (k is a fixed value).
@@ -2396,7 +2365,7 @@ When logging on to a computer you enter
 \end{itemize}
 This type of 'authentication' is called user authentication: the process of verifying a claimed user identity. Authentication by password is widely accepted and not too difficult to implement. \medskip \\
 Passwords should be secrets shared between the user and the system. How do you bootstrap a system so that the password ends up in the
-right places, but nowhere else? In an enterprise, users can collect their password personally. Otherwise, the password could be sent by mail, email, or phone, or entered by the user on a web page. Who might intercept the message and who might actually pick it up?
+right places, but nowhere else?
 
 \subsubsection*{Authenticating a remote user}
 \begin{itemize}
@@ -2409,24 +2378,20 @@ right places, but nowhere else? In an enterprise, users can collect their passwo
 \subsubsection*{Resetting passwords}
 When setting up a new user account some delay in getting the
 password may be tolerated. If you have forgotten your password but are in the middle of an important task you need instant help. Procedures for resetting passwords are the same as listed previously,
-but now reaction should be instant. Global organisations must staff a hot desk round the clock, while, on a website, auxiliary information may authenticate a user: mother’s maiden name, phone number, name of pet, ... Staff at hot desk needs proper security training.
+but now reaction should be instant. Global organisations must staff a hot desk round the clock, while, on a website, auxiliary information may authenticate a user: mother’s maiden name, phone number, name of pet, ...
 
 \subsubsection*{Guessing passwords}
-A basic way is brute force (exhaustive search): try all possible combinations of valid symbols up to a certain length. Otherwise you can be smarter: search through a restricted name space. For example passwords associated with a user like name, names of friends and relatives, car brand, car registration number, phone number,..., or try popular passwords. A typical example is the dictionary attack, i.e. trying all passwords from an on-line dictionary. You cannot prevent an attacker from accidentally guessing a valid password, but you can try to reduce the probability of a password compromise.
+A basic way is brute force: try all possible combinations of valid symbols up to a certain length. Otherwise you can be smarter: search through a restricted name space. For example passwords associated with a user or popular passwords. A typical example is the dictionary attack, i.e. trying all passwords from an on-line dictionary. You cannot prevent an attacker from accidentally guessing a valid password, but you can try to reduce the probability of a password compromise.
 
 \subsubsection*{Mitigations}
-\begin{itemize}
-\item Set a password! If there is no password, the attacker does not even have to guess it.
-\item Change default passwords! Often passwords for system accounts have a default value (e.g., admin)
-\item Avoid guessable passwords: prescribe a minimal password length, mix upper and lower case, include numerical and other non-alphabetical symbols.
-\end{itemize}
-In reality the most important characteristic of a password is the length. The longer the harder to guess, symbols can help but in a less impactful way.
+First of all set a password (if there is no password, the attacker does not even have to guess it) or change the default (e.g., admin). When deciding a password, avoid guessable ones: prescribe a minimal password length, mix upper and lower case, include numerical and other non-alphabetical symbols. \\
+In reality the most important characteristic of a password is the \textbf{length}. The longer the harder to guess, symbols can help but in a less impactful way.
 
 \subsection{Phishing and Spoofing}
 Identification and authentication through username and password provide unilateral authentication. A computer verifies the user’s identity but the user has no guarantees about the identity of the party that has received the password. In phishing and spoofing attacks a party voluntarily sends the password over a channel, but is misled about the end point of the channel.
 
 \subsubsection*{Spoofing}
-Attacker starts a program that presents a fake login screen and leaves the computer. If the next user coming to this machine enters username and password on the fake login screen, these values are captured by the program. Login is then typically aborted with a (fake) error message and the spoofing program terminates. Control returned to operating system, which now prompts the user with a genuine login request. \medskip \\
+Attacker starts a program that presents a fake login screen and leaves the computer. If the next user coming to this machine enters username and password on the fake login screen, these values are captured by the program. Login is then typically aborted with a (fake) error message and the spoofing program terminates. Control returned to operating system, which now prompts the user with a genuine login request. 
 To countermeasure this:
 \begin{itemize}
 \item Display number of failed logins, to indicate to the user that an attack has happened.
@@ -2451,7 +2416,7 @@ A possibility to protect passwords is to use cryptographic hash functions. A 1-w
 Requirements on a hash function $h$:
 \begin{itemize}
 \item \textbf{Ease of computation}: given $x$, it is easy to compute $h(x)$
-\item \textbf{Compression}: $h$ maps inputs $x$ of arbitrary bit-length to outputs $h(x)$ of a fixed bit-length $n$
+\item \textbf{Compression}: $h$ maps inputs $x$ of arbitrary bit-length to outputs $h(x)$ of fixed bit-length $n$
 \item \textbf{One-way}: given a value $y$, it is computationally infeasible to find an input $x$ so that $h(x) = y$
 \item \textbf{Weak collision resistance}: given an input $x$ and $h(x)$, it is computationally infeasible to find another input $x'$, $x \neq x'$, with $h(x) = h(x')$
 \item \textbf{Strong collision resistance}: it is computationally infeasible to find any two inputs $x$ and $x'$, $x \leq x'$, with $h(x) = h(x')$
@@ -2481,25 +2446,28 @@ Common salt implementation errors:
 \end{itemize}
 To use it the right way:
 \begin{itemize}
-\item Generate salt using a Cryptographically Secure Pseudo-Random Number Generator
-\item Avoid the use of weak hash function implementations (e.g., MD5)
-\item Instead use Password-Based Key Derivation Function (PBKDF) 2 with a sliding computational cost, used to reduce vulnerabilities to brute force attacks
-\item Rule of thumb for salt size: make it at least as long as the hash function's output
+\item Generate salt using a Cryptographically Secure Pseudo-Random Number Generator;
+\item Avoid the use of weak hash function implementations (e.g., MD5). Instead use PBKDF 2 (Password-Based Key Derivation Function) with a sliding computational cost, used to reduce vulnerabilities to brute force attacks;
+\item Rule of thumb for salt size: make it at least as long as the hash function's output.
 \end{itemize}
 Does the storage of the salt with the hashed password allow for a brute-force attack? No, because pre-computed rainbow table cannot
 be used and computing ad hoc tables with the known salt would take ages also because the salt furtherly enlarges the search space.
 
 \subsection{Handling passwords in client-server systems}
-In this cases don’t do any security relevant operations client-side but rather server side: Hashing should be done server side, Salting should not leave the server. This does not mean that passwords travels in clear between client and server if the appropriate protocols are used (e.g. TLS).
+In this cases don’t do any security relevant operations client-side but rather server side: Hashing should be done server side, Salting should not leave the server. This does not mean that passwords travels in clear between client and server, if the appropriate protocols are used (e.g. TLS).
 
 \subsection{Some attacks}
-\subsubsection{Look-up table attack}
-A look-up table is a file with pre-computed hashes stored alongside their plain text value.
+\subsubsection*{Look-up table attack}
+A look-up table is a file with pre-computed hashes stored alongside their plain text value. The savings in terms of processing time can be significant, since retrieving a value from memory is often faster than undergoing an "expensive" computation.
 
-\subsubsection{Rainbow table attack}
-A chain in a rainbow table is a list of alternating hash codes and reduction function results starting at a certain plaintext and ending at a certain hash. A rainbow table contains chains that start with an arbitrary plaintext, that is then hashed, the hash code reduced to another plaintext, that is in turn hashed, and so on. The table only stores the starting plaintexts, and the final hash codes one chooses to end with, and so a chain "containing" millions of hashes can be represented with only a single starting plaintext, and a single finishing hash.
+\subsubsection*{Rainbow table attack}
+A rainbow table is a precomputed table for reversing cryptographic hash functions. A rainbow table attack uses less computer processing time and more storage than a brute-force attack but more processing time and less storage than a simple lookup table with one entry per hash. This attack divides the hash into chains: a chain in a rainbow table is a list of alternating hash codes and reduction function results starting at a certain plaintext and ending at a certain hash.
+A rainbow table contains chains that start with an arbitrary plaintext, that is then hashed, the hash code reduced to another plaintext, that is in turn hashed, and so on. The table only stores the \textbf{starting plaintexts}, and the \textbf{final hash codes} (one chooses to end with), and so a chain "containing" millions of hashes can be represented with only a single starting plaintext, and a single finishing hash.
+\begin{center}
+\includegraphics[scale=0.4]{img/acrb.png}
+\end{center}
 
-\subsubsection{Dictionary attack}
+\subsubsection*{Dictionary attack}
 The dictionary attack corresponds to trying a large number of
 \begin{itemize}
 \item commonly used names as possible account names (root, webmaster, admin, mysql, oracle, guest, test, sales, staff, ...)
@@ -2507,16 +2475,17 @@ The dictionary attack corresponds to trying a large number of
 \end{itemize}
 To mitigate it use non-obvious passwords, use allow/deny hosts capabilities of ssh (i.e. white and black lists of IP addresses from which it is / is not possible to connect) and perform log scanning; ssh servers keep a log of attempted (successful or not) connections with the originating IP address, scanning the log it is possible to detect repeated (unsuccessful) attempts that may be the indication of a dictionary attack so that further attempt connections can be disabled from a certain IP address for a given amount of time if a maximum number of tries is reached.
 
-\subsubsection{Credential stuffing}
+\subsubsection*{Credential stuffing}
 Attackers take millions or even billions of email addresses and corresponding cracked passwords from compromised databases and see how many of them work at other online properties. To mitigate thus, companies should extract from leaked credential lists any email addresses that correspond to their current user base, feed passwords according to standard verification process (hashing \& salting) and obtain hash code C and compare stored hash code with C: if they are different, then do nothing, if they are equal, then force password reset procedure for the user.
 
+\newpage
 \subsection{Extensions of password authentication}
 \subsubsection{Multi Factor Authentication (MFA)}
 Authentication method in which a computer user is granted access only after successfully presenting two or more factors to an authentication mechanism:
 \begin{itemize}
-\item knowledge (something the user and only the user knows)
-\item possession (something the user and only the user has)
-\item inherence (something the user and only the user is)
+\item \textbf{knowledge} (something the user and only the user knows);
+\item \textbf{possession} (something the user and only the user has);
+\item \textbf{inherence} (something the user and only the user is).
 \end{itemize}
 Two-factor authentication (2FA) is a type of MFA confirming users' claimed identities by using a combination of two different factors. Example : in the withdrawing of money from an ATM, only the correct combination of a bank card (something the user possesses) and a PIN (something the user knows) allows the transaction to be carried out. Other example: supplement a user-controlled password with a one-time password (OTP) or code generated or received by an authenticator (e.g., a security token or smartphone) that only the user possesses.
 
@@ -2526,10 +2495,10 @@ Parameters
 \item T0: Unix time from which to start counting time steps (default is 0)
 \item Tx: interval which will be used to calculate the value of the counter (default is 30 seconds)
 \end{itemize}
-Authenticator and authenticatee compute the TOTP value (HMAC of the counter), then the authenticator checks if the TOTP value supplied by the authenticated matches the locally-generated TOTP value. Some authenticators allow values that should have been generated before or after the current time in order to account for slight clock skews, network latency and user delays. \\
+Authenticator and authenticatee compute the TOTP value (HMAC of the counter), then the authenticator checks if the TOTP value supplied by the authenticatee matches the locally-generated TOTP value. Some authenticators allow values that should have been generated before or after the current time in order to account for slight clock skews, network latency and user delays. \medskip\\
 Weaknesses:
 \begin{itemize}
-\item OTP values can be phished just as passwords can, though they require attackers to proxy the credentials in real time rather than collect them later on in time.
+\item OTP values can be phished just as passwords can, though they require attackers to proxy the credentials in real time rather than collect them later on.
 \item An attacker who steals the shared secret can generate new, valid TOTP values at will. This can be a particular problem if the attacker breaches a large authentication database.
 \end{itemize}  
 An example of attack on TOTP is the one on Lockheed Marting, which used RSA for storing the secret codes.
@@ -2538,10 +2507,9 @@ An example of attack on TOTP is the one on Lockheed Marting, which used RSA for 
 A challenge is sent in response to access request. A legitimate user can respond to the challenge by performing a task which requires use of information only available to the user (and possibly the host). The user sends the response to the host and access is approved if response is as expected by host. The advantages are that since the challenge will be different each time, the response will be too; also it is possible to use symmetric or asymmetric crypto.
 
 \subsubsection{Revised Payment Service Directive (PSD2)}
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/ac16.png}
-\end{figure}
+\begin{center}
+\includegraphics[scale=0.4]{img/ac16.png}
+\end{center}
 Effect = no tokens needed.
 
 \subsubsection{Use of smartphones as part of MFA}
@@ -2594,7 +2562,7 @@ Authentication, confidentiality, and key management can be implemented at differ
 \item \textbf{Application layer}: S/MIME, PGP (Pretty Good Privacy), OpenPGP. Initially developed for securing emails, now used for securing information at rest (to mitigate malwares). Also known as "\textit{Email level security}"
 \end{itemize}
 \begin{center}
-\includegraphics[scale=0.4]{img/ac17.png}
+\includegraphics[scale=0.45]{img/ac17.png}
 \end{center}
 A Public Key Infrastructure (PKI) is the cryptographic primitive that:
 \begin{itemize}
@@ -2746,7 +2714,8 @@ trust models, that also limit/control trust in a given environment:
 \includegraphics[scale=0.38]{img/ac20.png}
 \end{center}
 It has a tree architecture, with a single root CA and a number of subordinate CA’s (recursively); parent certifies children and leaves are non-CA (end-) entities.
-Typically CA either certifies other CA’s or end-entities, but not both. Everyone has root CA PK.
+Typically CA either certifies other CA’s or end-entities, but not both. Everyone has root CA PK. \medskip\\
+\textbf{Example: }$u_1$, to validate $u_8$, goes to Root CA and uses its public key to validate its certificate. $u_1$ validates the certificate of $CA_6$ using the public key of Root CA, which originally signed it with its private key. $u_1$ extracts $CA_6$ public key from the certificate and validates the certificate of $u_8$, which signed this certificate with its own private key.
 
 \subsubsection*{Cross certificate PKI}
 \begin{center}
@@ -2759,7 +2728,14 @@ There are one or two directions (CA1 certifies CA2 and/or CA2 certifies CA1). Co
 \begin{center}
 \includegraphics[scale=0.38]{img/ac22.png}
 \end{center}
-A set of independent hierarchies that may evolve as independent historically. Provides cross-certification or PKI networking to connect the hierarchies. It is fully-meshed  (all CAs are cross-certified). Hub \& spokes or bridge CA (Not= Hierarchy; no root CA: every end-entity holds its CA PK). %TODO ???
+A hybrid architecture arises as a result of interconnecting independent, pre-existing PKIs from different organizational domains.
+The process of interconnecting the peer root CAs is commonluy know as \textbf{cross-certification}, although the term \textbf{PKI networking} is growing in use. It is fully-meshed  (all CAs are cross-certified). However, all trust models that use cross-certification present the following drawbacks:
+\begin{itemize}
+\item increased complexity of the algorithms for certification path construction;
+\item possible creation of unwanted trust paths through transitive trust;
+\item decrease of the security level when a high-assurance PKI with restrictive operating policies is cross-certified with less restrictive policies.
+\end{itemize}
+Also the hybrid model serves well to link a small number of hierarchies, but does not scale well. Due to this problem, a Hub \& spokes configuration, also known as the \textbf{Bridge CA} model, was developed. The BCA acts as a central point to establish trust paths among different PKIs, rather than act as the root of certification paths. Each CA can operate independently and under different certification policies, holding its CA PK. In this environment, the number of relationships grows only linearly with the number of PKIs.
 
 \subsubsection{Certificate paths}
 Verifier must know public key of the first CA, other public keys are found out one by one. All CAs on the path must be trusted by the verifier.
@@ -2769,11 +2745,12 @@ CA1 certifies CA2; CA2 certifies CA3; CA3 certifies Bob. So Alice "trusts" Bob.
 Alice associates PK in Bob’s certificate with Bob.
 \begin{itemize}
 \item Path construction: aggregation of necessary certificates;
-\item Path validation: checking the certificates and the keys (ncludes all steps of certificate validation).
+\item Path validation: checking the certificates and the keys (includes all steps of certificate validation).
 \end{itemize}
 Path construction is just the shortest path graph algorithm (not so simple because graph is not known and the edges, standing for the certificates, need to be queeried); once Path Construction is done, Path Validation is straight-forward.
 
 \subsection{A critique of PKI - NOT TO STUDY}
+\begin{footnotesize}
 \subsubsection*{Who do we trust and for what?}
 A CA is seen as trusted, but for what? Many CAs disclaim all liability
 %declinano ogni responsabilità
@@ -2822,12 +2799,14 @@ For the ID, the answers to most of the questions can be found in the ICO standar
 \textbf{Customer}: how do we add SSO on top of PKI?\\
 \textbf{PKI vendor}: you don’t! That requires massive changes in the underlying system. \medskip\\
 For ID Cards, when used as a 2nd factor authentication, it can be blended with SSO in a meaningful way.
+\end{footnotesize}
 
+\newpage
 \subsection{ACME and Let's Encrypt}
 \subsubsection{Obtaining a certificate}
 
 \begin{center}
-\includegraphics[scale=0.3]{img/ac23.png}
+\includegraphics[scale=0.5]{img/ac23.png}
 \end{center}
 
 \begin{enumerate}
@@ -2844,7 +2823,7 @@ For ID Cards, when used as a 2nd factor authentication, it can be blended with S
 Who are CAs? For profit companies that get paid for creating certificates after vetting clients. Vetting process may be manual or partially automated. For certain types of certificates (e.g., EV - Extended Validation), vetting is manual and allows for verifying the official identity. This is important for certain services, e.g., financial or government; for other types of certificates (e.g., DV - Domain Validation), vetting can be automated as it is only needed that holders control the domain name. This is the case for the vast majority of certificates currently in use: for instance, certain CAs may require to answer emails sent to contact addresses of holders.
 
 \subsubsection{How to create a certificate}
-First, create a Certificate Signing Request (CSR), then, submit the CSR to the selected CA. After receiving the CSR, the CA must perform several checks with different levels of accuracy. For instance, CA uses whois to obtain the email address of the contact persons, send a message containing a challenge; the client must reply to prove that he/she can access the address and control the domain. At this point, the CA creates a certificate that is sent to the client; the certificate must be then installed in the server (e.g., https). This complex process can be difficult for newcomers: \textbf{ACME} aims to normalize it and make it fully automated.
+First, create a Certificate Signing Request (CSR), then, submit the CSR to the selected CA. After receiving the CSR, the CA must perform several checks with different levels of accuracy. For instance, CA uses \textit{whois} to obtain the email address of the contact persons, send a message containing a challenge; the client must reply to prove that he/she can access the address and control the domain. At this point, the CA creates a certificate that is sent to the client; the certificate must be then installed in the server (e.g., https). This complex process can be difficult for newcomers: \textbf{ACME} aims to normalize it and make it fully automated.
 
 \subsubsection{Automated Certificate Management Environment(ACME)}
 CA runs an ACME server that waits for CSRs. An ACME client:
@@ -2856,24 +2835,17 @@ CA runs an ACME server that waits for CSRs. An ACME client:
 The ACME server generates a challenge for the client which can prove to control the domain name for which the certificate has been asked; there exist several challenges but the most common consists of the ACME server to ask the client to create a file with a given name and given content in a certain position of the web site. If successful, the ACME server concludes that the client controls the domain name and signs the certificate that is sent to the client after submission of the CSR.
 
 \subsubsection{Let's Encrypt}
-It is a free, automated, and open CA, run for the public’s benefit, provided by ISRG - Internet Security Research Group (California based Non-Profit) and sponsored by Mozilla, Akamai, Cisco, EFF, OVH, Facebook, Chrome, etc. Its mission is to reduce technological and financial barriers to secure Internet communication, by encrypting all communications. The ACME protocol is used to generate certificates, which can only be Domain Validation Certificates, not Extended Validation. \medskip\\
-\url{https://letsencrypt.org/how-it-works/}
+It is a free, automated, and open CA, run for the public’s benefit, provided by ISRG - Internet Security Research Group (California based Non-Profit) and sponsored by Mozilla, Akamai, Cisco, EFF, OVH, Facebook, Chrome, etc. Its mission is to reduce technological and financial barriers to secure Internet communication, by encrypting all communications. The ACME protocol is used to generate certificates, which can only be Domain Validation Certificates, not Extended Validation. 
 
-\subsubsection{Certificate Transparency (TS)}
-TS is an Internet security standard and open source framework for monitoring and auditing digital certificates. The standard creates a system of public logs that seek to eventually record all certificates issued by publicly trusted certificate authorities, allowing efficient identification of mistakenly or maliciously issued certificates.
+\subsubsection{Certificate Transparency (CT)}
+CT is an Internet security standard and open source framework for monitoring and auditing digital certificates. The standard creates a system of public logs that seek to eventually record all certificates issued by publicly trusted certificate authorities, allowing efficient identification of mistakenly or maliciously issued certificates.
 CT was developed as a result of a security incident with a CA: in 2011, a reseller of the certificate authority Comodo was attacked and the certificate authority DigiNotar was compromised, calling attention to existing flaws in the certificate authority ecosystem and accelerating work on various mechanisms to prevent or monitor unauthorized certificate issuance. Ben Laurie, Adam Langley and Emilia Kasper began work on an open source framework to combat these issues the same year. 
-One of the problems with digital certificate management is that fraudulent certificates take a long time to be spotted, reported and revoked by the browser vendors. Certificate Transparency would help by making it impossible for a certificate to be issued for a domain without the domain owner knowing. Certificate Transparency does not require side channel communication to validate certificates as do some competing technologies such as Online Certificate Status Protocol (OCSP). CT also operates without the need to trust a third, it depends on verifiable Certificate Transparency logs. A log appends new certificates to an ever-growing Merkle hash tree.
+One of the problems with digital certificate management is that fraudulent certificates take a long time to be spotted, reported and revoked by the browser vendors. CT would help by making it impossible for a certificate to be issued for a domain without the domain owner knowing; it does not require side channel communication to validate certificates as do some competing technologies such as Online Certificate Status Protocol (OCSP). CT also operates without the need to trust a third, it depends on verifiable Certificate Transparency logs. A log appends new certificates to an ever-growing Merkle hash tree.
 
 \subsubsection*{Example of Facebook and Let's Encrypt}
-In 2016, Facebook Certificate Transparency monitoring service allowed to spot that the Let's Encrypt CA issued two TLS certificates for multiple fb.com subdomains. These two certificates raised red flags for Facebook team because they:
-\begin{itemize}
-\item were not issued by their primary CA vendor
-\item were not authorized by their security team
-\item were shared with multiple domains that they did not own or control
-\item 
-\end{itemize}
+In 2016, Facebook CT monitoring service allowed to spot that the Let's Encrypt CA issued two TLS certificates for multiple fb.com subdomains. These two certificates raised red flags for Facebook team because they were not issued by their primary CA vendor, they were not authorized by their security team and they were shared with multiple domains that they did not own or control.\\
 Facebook determined that these certificates were requested by the hosting vendor managing these domains for several of tehir microsites. Vendor had authorization from another Facebook team to use Let's Encrypt, but that detail was not communicated to the security team. The investigation was completed in hours and certificates were revoked. They found no indications that these certificates were ever controlled by unauthorized parties, and were able to respond before they had been deployed on the production hosts.
-Like many large organizations, Facebook uses microsites for things like marketing and special events. These sites are built and hosted separately from the main product platforms. While outsourcing these sites may impact the control over their security posture, it also isolates them from the core systems and information about people on Facebook. Certificate Transparency monitoring allows to track these sites even if the direct management is delegated to another party.
+Like many large organizations, Facebook uses microsites for things like marketing and special events. These sites are built and hosted separately from the main product platforms. While outsourcing these sites may impact the control over their security posture, it also isolates them from the core systems and information about people on Facebook. CT monitoring allows to track these sites even if the direct management is delegated to another party.
 
 \subsection{Applications of PKI}
 \subsubsection{DNSSEC}
@@ -2882,36 +2854,28 @@ It is a security extension to DNS, not X.509 based but hierarchical (uses existi
 \item authentication of domain information and storage
 \item distribution of certificates
 \end{itemize}
-It is a good and practical system.
 \subsubsection{SSL/TLS}
-\label{section:tls1}
-Security layer over TCP/IP, mostly for HTTP connections; enables encrypted and authenticated sessions between web servers and web browsers (clients). It is not a perfect solution, but a convenient one. Certificate based systems:
+\label{section:tls}
+Security layer over TCP/IP, mostly for HTTP connections; enables encrypted and authenticated sessions between web servers and web browsers (clients). It is not a perfect solution, but a convenient one. In TLS web servers \textbf{must have} a certificate, client certificate is optional. CA certificates are embedded in browsers; you trust them (by default), because browser company says so (the worst, but the most practical...).\medskip\\
+By using SSL in HTTP connections, we can:
 \begin{itemize}
-\item web servers must have certificate
-\item client certificate is optional
-\end{itemize}
-CA certificates are embedded in browsers; you trust them (by default), because browser company says so (the worst, but the most practical...).
-\subsubsection{SSL/TLS for HTTP connections}
-\label{section:tls2}
-By using SSL we can:
-\begin{itemize}
-\item make sure about the server’s name (assuming the CA of the server is trusted) = \textbf{authentication}
+\item make sure about the server’s name (assuming server's CA is trusted) = \textbf{authentication}
 \item make sure that nobody can see the traffic between client and server = \textbf{confidentiality}
 \end{itemize}
-By using SSL we can NOT:
+However, we can NOT:
 \begin{itemize}
-\item provide perfect privacy: server sees all information that client provides important in e-payment (merchant sees the the card number and name)
+\item provide perfect privacy: server sees all information that client provides important in e-payment (merchant sees the the card number and name);
 \item provide non-repudiation: both parties knows the session key
-in e-payment (charge-back cost for merchant’s)
+in e-payment (charge-back cost for merchant’s).
 \end{itemize}
 \subsubsection{Verification of a certificate in TLS}
-\label{section:tls3}
+\label{section:tls2}
 Server is authenticated by the client as follows (roughly): 
 \begin{enumerate}
-\item server has the private key corresponding to the public key in the certificate (and thus can sign messages)
-\item Certificate is not expired
-\item Certificate is signed by a CA which is known to the client (this is done by the client knowing the public key of the CA)
-\item The name indicated by the client corresponds to one of the names in the certificate
+\item server has the private key corresponding to the public key in the certificate (and thus can sign messages);
+\item Certificate is not expired;
+\item Certificate is signed by a CA known to the client (client knows the public key of the CA);
+\item The name indicated by the client corresponds to one of the names in the certificate.
 \end{enumerate}
 After this authentication is over, TLS is able to guarantee integrity and confidentiality of communication. Authentication is NOT trust: it only means that server has the name indicated and that malicious third parties cannot hear/modify exchanged messages.
 \subsubsection{S/MIME}
@@ -2933,29 +2897,19 @@ The goals of information security are
 \end{itemize} 
 These require:
 \begin{itemize}
-\item Authentication
-	\begin{itemize}
-	\item when information is received from a source, the source is indeed as alleged in the information
-	\item the information was not altered along the way (integrity)
-	\end{itemize}
-\item Confidentiality
-	\begin{itemize}
-	\item information is safe from being eaves-dropped on during its transit
-	\end{itemize}
-\item Choosing best parameters and key management
-	\begin{itemize}
-	\item two endpoints of a communication link may possess different computational capabilities and may not
-have access to exactly the same set of security algorithms
-	\item key management
-	\end{itemize}
+\item Authentication: when information is received from a source, the source is indeed as alleged in the information and the information was not altered along the way (integrity);
+\item Confidentiality: information is safe from being eaves-dropped on during its transit;
+\item Choosing best parameters: two endpoints of a communication link may possess different computational capabilities and may not
+have access to exactly the same set of security algorithms;
+\item Key management.
 \end{itemize}
 TLS provides Session Layer security in the OSI model of the internet protocols and plays a central role in the security and privacy needed for web commerce to work. Example: before your laptop uploads your credit card information to on-line shopping, it must make certain that the remote host is indeed what it claims to be. \medskip\\
 A connection constitutes a peer-to-peer transient relationship between the two nodes: every connection is associated with a session. A session is an enduring association between a client and a server consisting of multiple connections and it is characterized by a set of security parameters that apply to all the connections in the session.
 
 \subsection{History of SSL/TLS}
-SSL (Secure Sockets Layer) was developed by Netscape in mid 1990s and originally shipped in Netscape Navigator 1.1. SSLv2 is now deprecated; SSLv3 still widely supported. It was developed as a way to secure communications between the client and server on the web. \medskip\\
+SSL (Secure Sockets Layer) was developed by Netscape in mid 1990s and originally shipped in Netscape Navigator 1.1. SSLv2 is now deprecated; SSLv3 still widely supported. It was developed as a way to secure communications between clients (browsers) and web servers. \medskip\\
 TLS (Transport Layer Security) is the IETF-standardised version of SSL and the de facto standard for Internet security.
-It has the same SSL protocol design but different algorithms. "The primary goal of the TLS protocol is to provide privacy and data integrity between two communicating applications". In practice, it is used to protect information transmitted between browsers and Web servers.
+It has the same SSL protocol design but different algorithms. 
 \begin{itemize}
 \item TLS 1.0 = SSLv3 with minor tweaks, RFC 2246 (1999)
 \item TLS 1.1 = TLS 1.0 + tweaks, RFC 4346 (2006)
@@ -2965,34 +2919,32 @@ It has the same SSL protocol design but different algorithms. "The primary goal 
 It is now deployed in every web browser.
 
 \subsubsection{TLS in the browser}
-The lock icon is the SSL indicator. The intended goal is to provide users with identity of page origin and indicate to the user that page contents were not viewed or modified by a network attacker.\\
-HTTPS provides:
+The lock icon is the SSL indicator. The intended goal is to provide users with identity of page origin and indicate to the user that page contents were not viewed or modified by a network attacker.\medskip\\
+HTTPS (HTTP over TLS/SSL or HTTP Secure) provides:
 \begin{itemize}
 \item authentication of the website and associated web server with which one is communicating, to protect against man-in-the-middle attacks;
-\item bidirectional encryption of communications between a client and server, to protect against eavesdropping and tampering (or forging) with the contents of the communication.
+\item bidirectional encryption of communications between a client and server, to protect against eavesdropping and tampering (or forging) with the contents of the communication (protection of privacy and integrity of the exchanged data).
 \end{itemize}
-HTTPS stands for HTTP (HyperText Transfer Protocol) over TLS/SSL or HTTP Secure. Main motivations for HTTPS are the authentication of the visited website and the protection of the privacy and integrity of the exchanged data.
 
 \subsection{TLS in a nutshell}
-As said in \ref{section:tls1} and \ref{section:tls2}, it was designed originally for secure exchange of information between web servers and browsers, but more recently, SSL/TLS has become critically important to several other forms of information exchange including exchange of information between:
+As said in \ref{section:tls}, it was designed originally for secure exchange of information between web servers and browsers, but more recently, SSL/TLS has become critically important to several other forms of information exchange, including exchange of information between:
 \begin{itemize}
 \item Routers
 \item routers and servers
 \item email exchange servers
 \item hosts and internet-accessible printers
 \item IoT devices and message brokers
-\item ...
 \end{itemize}
-When the two endpoints involved in all the forms of information exchange have a need to authenticate each other and to create session keys for content encryption, they are likely to use SSL/TLS.
+When two endpoints involved in all the forms of information exchange have a need to authenticate each other and to create session keys for content encryption, they are likely to use SSL/TLS.
 \subsubsection*{Certificates}
-Fundamental to the security that is established with SSL/TLS are the certificates issued by the Certificate Authorities(CA). Successful attempts at creating forged certificates undermine the security that can be achieved with SSL/TLS. SSL/TLS allows for either asymmetric (server-only) authentication or symmetric (server-client) authentication:
+Fundamental to the security that is established with SSL/TLS are the certificates issued by the Certificate Authorities (CA). Successful attempts at creating forged certificates undermine the security that can be achieved with SSL/TLS. SSL/TLS allows for either asymmetric (server-only) authentication or symmetric (server-client) authentication:
 \begin{itemize}
-\item Server-only authentication: client receives server’s certificate, verifies the server’s certificate and generates a secret key that it then encrypts with the server’s public key. Client sends the encrypted secret key to the server, which decrypts it with its own private key and subsequently uses the client-generated secret key to encrypt the messages meant for the client.
-\item Server-client authentication: in addition to the secret key, client also sends to the server its certificate, that the server uses  to authenticate the client.
+\item \textbf{Server-only authentication}: client receives server’s certificate, verifies the server’s certificate and generates a secret key that it then encrypts with the server’s public key. Client sends the encrypted secret key to the server, which decrypts it with its own private key and subsequently uses the client-generated secret key to encrypt the messages meant for the client.
+\item \textbf{Server-client authentication} (less common): in addition to the secret key, client also sends to the server its certificate, that the server uses  to authenticate the client.
 \end{itemize}
 
 \subsubsection*{Verification of a certificate in TLS}
-As in \ref{section:tls3}.
+As in \ref{section:tls2}.
 
 \subsubsection{Browser and certificate validation}
 Public keys of the root CAs are hard-coded into browsers. If a certificate cannot be validated by a browser in this manner (e.g., because the CA that has signed that certificate is not known to the browser) a warning popup will be generated by the browser. If user tells browser that he/she is willing to accept the certificate nonetheless, the authority that signed the certificate will be entered into the database of legitimate CAs maintained by the browser. Programming the keys of the root CAs into the browser code makes the root verification free of potential man-in-the-middle attacks. It is possible to check what root CAs are known to the browser by descending down the menu made available by the Preferences sub-menu under Editor.
@@ -3003,41 +2955,41 @@ TLS is not just a single protocol, but 4 protocols in 2 layers. The two most imp
 \item \textbf{handshake}: authenticates clients and servers to each other (negotiate cipher suite, authenticate and establish keys used in the Record Protocol)
 \item \textbf{record}: transmits the data confidentially (provides confidentiality and integrity/authenticity of application layer data using keys from the Handshake Protocol)
 \end{itemize}
-The other two protocols (\textbf{Cipher Change} and \textbf{Alert Protocols}) play relatively minor roles.
+The other two protocols (\textbf{Change Cipher Spec} and \textbf{Alert Protocols}) play relatively minor roles.
 
-\subsubsection{Connection state}
+\subsubsection{Connection state parameters}
 \begin{itemize}
-\item Server Write MAC Secret: secret key is used in calculating the Message Authentication Code (MAC) value for the data sent by the server
-\item Client Write MAC Secret: secret key is used in calculating the MAC value for the data sent by the client
-\item Server Write Key: symmetric-key encryption key for data encrypted by the server and decrypted by the client
-\item Client Write Key: symmetric-key encryption for data encrypted by the client and decrypted by the server
-\item Initialization vectors: initialization vector (IV) for each key used by a block cipher operating in the CBC mode is maintained
-\item Sequence Numbers: each party maintains separate sequence numbers for the transmitted and received messages through each connection
+\item Server Write MAC Secret: secret key is used in calculating the Message Authentication Code (MAC) value for the data sent by the server;
+\item Client Write MAC Secret: secret key is used in calculating the MAC value for the data sent by the client;
+\item Server Write Key: symmetric-key encryption key for data encrypted by the server and decrypted by the client;
+\item Client Write Key: symmetric-key encryption for data encrypted by the client and decrypted by the server;
+\item Initialization vectors: initialization vector (IV) for each key used by a block cipher operating in the Cipher Block Chaining mode is maintained;
+\item Sequence Numbers: each party maintains separate sequence numbers for the transmitted and received messages through each connection.
 \end{itemize}
-\subsubsection{Session state}
+\subsubsection{Session state parameters}
 \begin{itemize}
-\item Session Identifier: arbitrary byte sequence chosen by the server to identify an active / resumable session state
-\item Peer Certificate: X509.v3 certificate of the peer
-\item Compression Method: algorithm used to compress the data prior to encryption
-\item Cipher Spec: specifics of the bulk data encryption and hash algorithms used for MAC calculations
-\item Master Secret: 48-byte secret shared between the client and the server
-\item IsResumable: flag indicating whether the session is allowed to initiate new connections
+\item Session Identifier: arbitrary byte sequence chosen by the server to identify an active/resumable session state;
+\item Peer Certificate: X509.v3 certificate of the peer;
+\item Compression Method: algorithm used to compress the data prior to encryption;
+\item Cipher Spec: specifics of the bulk data encryption and hash algorithms used for MAC calculations;
+\item Master Secret: 48-byte secret shared between the client and the server;
+\item IsResumable: flag indicating whether the session is allowed to initiate new connections.
 \end{itemize}
 
 \subsection{Record protocol}
-Provides confidentiality and (message) integrity. How?\\
+Provides confidentiality and (message) integrity. How? \medskip\\
 On the \textbf{send} side:
 \begin{itemize}
-\item fragmenting the data into blocks
-\item applying authentication and encryption primitives to each block
-\item handing the block to TCP for transmission over the network
+\item fragmenting the data into blocks;
+\item applying authentication and encryption primitives to each block;
+\item handing the block to TCP for transmission over the network.
 \end{itemize}
-On the \textbf{receive} side:
+On the \textbf{receive} side, these blocks are:
 \begin{itemize}
-\item blocks are decrypted
-\item verified for message integrity
-\item reassembled
-\item delivered to the higher-level protocol
+\item decrypted;
+\item verified for message integrity;
+\item reassembled;
+\item delivered to the higher-level protocol.
 \end{itemize}
 
 \subsubsection{Operations of the Record protocol}
@@ -3045,15 +2997,15 @@ On the \textbf{receive} side:
 \item \textbf{Fragmentation}: message (either from server to client, or from client to server) is fragmented into blocks whose length does not exceed $2^{14}$ (16384) bytes.
 \item \textbf{Compression} (optional): performs lossless compression and carries the stipulation that the size of the input block will not increase by more than 1024 bytes. Compression, in most cases, reduces the length of a block produced by the fragmentation step; but for very short blocks, the length may increase.
 \item \textbf{Adding MAC}: it computes the Message Authentication Code (like hashes) for the block that is appended to the compressed message block.
-\item \textbf{Encryption}: compressed message and the MAC are encrypted using symmetric-key encryption. A number of choices are available for encryption depending on the level of security needed.
-\item \textbf{Append Record Header}: a header is is prepended to the encrypted block to declare content type, major version used for SSL/TLS, minor version used, and length of the (compressed, if the case) plaintext.	%TODO ???
+\item \textbf{Encryption}: compressed message and MAC are encrypted using symmetric-key encryption.
+\item \textbf{Append Record Header}: a header is prepended to the encrypted block to declare content type, major version used for SSL/TLS, minor version used, and length of the (compressed, if the case) plaintext.
 \end{itemize}
 
 \subsection{Handshake protocol}
-Provides necessary information for Record protocol to work, namely what algorithms to use for compression, authentication, and encryption. It is also responsible for:
+Provides necessary information for Record protocol to work (what algorithms to use for compression, authentication, and encryption). It is also responsible for:
 \begin{itemize}
-\item the server and the client to authenticate each other
-\item to come up with the cryptographic keys to be used for the encryption and the authentication of each SSL/TLS record, i.e. each block produced by the Record protocol
+\item the server and the client to authenticate each other;
+\item to come up with the cryptographic keys to be used for the encryption and the authentication of each SSL/TLS record, i.e. each block produced by the Record protocol.
 \end{itemize}
 Organized in 4 phases:
 \begin{enumerate}
@@ -3062,36 +3014,35 @@ Organized in 4 phases:
 \item Handshaking initiated by the client sending certificate (optional)
 \item Handshaking completion
 \end{enumerate}
+\begin{center}
+\includegraphics[scale=0.4]{img/acssl.png}
+\end{center}
 \subsubsection{Phase 1}
-Handshaking, initiated by the client, establishes the security capabilities present at the two ends of a connection; client sends to the server a client hello message with the following parameters:
+Handshaking, initiated by the client, establishes the security capabilities present at the two ends of a connection; client sends to the server a \textbf{client hello} message with the following parameters:
 \begin{itemize}
-\item Version (the highest SSL/TLS version understood by the client)
-\item Random (a 32-bit timestamp and a 28-byte random field that together serve as nonces during key exchange to prevent replay attacks)
-\item Session ID (a variable length session identifier)
-\item Cipher Suite (a list of cryptographic algorithms supported by the client, in decreasing order of preference)
-\item Compression Method (a list of compression methods the client supports)
+\item Version (the highest SSL/TLS version understood by the client);
+\item Random (a 32-bit timestamp and a 28-byte random field that together serve as nonces during key exchange to prevent replay attacks);
+\item Session ID (a variable length session identifier);
+\item Cipher Suite (a list of cryptographic algorithms supported by the client, in decreasing order of preference);
+\item Compression Method (a list of compression methods the client supports).
 \end{itemize}
-Server responds with its server hello message that has a similar set of parameters. The server’s response includes specific algorithms selected by the server from the client’s lists for compression, authentication, and encryption. The Cipher Suite parameter in the server hello message consists of two elements:
+Server responds with its \textbf{server hello} message that has a similar set of parameters and includes specific algorithms selected by the server from the client’s lists for compression, authentication, and encryption. The Cipher Suite parameter, in particular, consists of two elements:
 \begin{itemize}
-\item One declares the key exchange method selected: choice is between RSA, three different types of Diffie-Hellman, etc
+\item One declares the key exchange method selected: choice is between RSA, three different types of Diffie-Hellman, etc;
 \item The other is called CipherSpec; it has a number of fields that indicate the authentication algorithm selected, the length of MAC, the encryption algorithm, etc.
 \end{itemize}
 \subsubsection{Phase 2}
-Handshaking initiated by the server that sends certificate to the client for the validation of the server public key. From the user's perspective, when user wants browser to upload credit-card information to an on-line shopping website, this is the most critical part of the handshake. The browser must make sure that the server at the other end is the real one and not someone else masquerading as the on-line shopping site; it establishes its trust in the server by validating the certificate downloaded from the on-line shopping server. Afterwards, server sends:
+Handshaking initiated by the server, that sends the \textbf{server certificate} to the client for the validation of its public key. From the user's perspective, when he wants the browser to upload credit-card information to an on-line shopping website, this is the most critical part of the handshake: the browser must make sure that the server at the other end is the real one and not someone else masquerading as the on-line shopping site. It establishes its trust in the server by validating the certificate downloaded from the on-line shopping server. Afterwards, server sends:
 \begin{itemize}
-\item server key exchange message; may, e.g., consist of the global Diffie-Hellman values (a prime number and a primitive root of that number) and the server’s Diffie-Hellman public key
-\item optionally a certificate request message if the server also wants to validate the client
+\item A \textbf{server key exchange message}. May, e.g., consist of the global Diffie-Hellman values (a prime number and a primitive root of that number) and the server’s DH public key;
+\item optionally a certificate request message if the server also wants to validate the client.
 \end{itemize}
-Ends when server sends client a server hello done message.
+Ends when server sends client a \textbf{server hello done} message.
 \subsubsection{Phase 3}
-Handshaking initiated by the client that sends certificate to the server for the validation of the server public key but only if in phase server has asked to do so. In most routine applications, the client will not send a certificate to the server. This is so because:
-\begin{itemize}
-\item client needs to authenticate the server if is willing to share sensitive data (e.g., credit-card info) and therefore needs the server’s certificate
-\item server has no real need to authenticate the client (e.g., it is sufficient for the server to check credit-card number)
-\end{itemize}
-Next, client sends to the server a mandatory client key exchange message that could consist of a secret session key encrypted with the server’s public key. This phase ends when the client sends to the server a certificate verify message to provide a verification of its certificates if they are signed by a certificate authority.
+Handshaking initiated by the client, if server asked to, that sends certificate to the server for the validation of its public key. In most routine applications, the client will not send a certificate to the server. This is so because, while a client needs to authenticate the server if willing to share sensitive data (e.g., credit-card info), server has no real need to authenticate the client (e.g., it is sufficient for the server to check credit-card number). \\
+The client sends to the server a mandatory \textbf{client key exchange} message, that could consist of a secret session key encrypted with the server’s public key. This phase ends when the client sends to the server a \textbf{certificate verify} message to provide verification of its certificate	 (signed by a CA).
 \subsubsection{Phase 4}
-Handshaking completes the setting up of a secure connection between the client and the server. Client sends to the server a change cipher spec message indicating that it is copying the pending CipherSpec into the current CipherSpec. Next, the client sends to the server the finished message. Finally, the server does the same vis-a-vis the client.
+Handshaking completes the setting up of a secure connection between the client and the server. Client sends to the server a \textbf{change cipher spec} message, indicating that he's copying the pending CipherSpec into the current CipherSpec. Next, the client sends to the server the \textbf{finished} message. Finally, the server does the same vis-a-vis the client (\textbf{change cipher spec} + \textbf{finished}).
 
 \subsection{Notes on SSL/TLS state-of-the-art}
 \subsubsection{Version and cipher suites}
@@ -3123,59 +3074,60 @@ There exist more options for key establishment including Diffie-Hellman and ECC.
 \end{itemize}
 Legacy servers do not implement this correctly, simply failing if they do no support version $x$. Typical client behaviour is to try again with lower version in a fresh handshake (no memory of previous handshakes). The security consequence of this is that an active MITM can force client/server to roll back to the lowest SSL/TLS version they are both willing to use! POODLE attack exploits this to roll back to SSL3 and then perform Moeller attack on SSLv3 padding.
 
-\subsubsection{Other SSL/TLS protocols}
+\subsection{Other SSL/TLS protocols}
 \begin{itemize}
-\item Alert protocol:
+\item \textbf{Alert Protocol}:
 \begin{itemize}
 \item Management of SSL/TLS connections and sessions, error messages;
 \item Fatal errors and warnings;
 \item Defined actions to ensure clean session termination by both client and server.
 \end{itemize}
-\item Change cipher spec protocol:
+\item \textbf{Change Cipher Spec Protocol}:
 \begin{itemize}
-\item Technically not part of Handshake Protocol
-\item Used to indicate that entity is changing to recently agreed cipher suite
+\item Technically not part of the Handshake Protocol;
+\item Used to indicate that entity is changing to recently agreed cipher suite.
 \end{itemize}
 \end{itemize}
 Both protocols run over Record Protocol (so are peers of Handshake Protocol).
 
 \subsection{TLS 1.2 Handshake protocol}
 \begin{minipage}{0.4\textwidth}
-\includegraphics[scale=0.43]{img/ac24.png}
+\includegraphics[scale=0.5]{img/ac24.png}
 \end{minipage}
 \hfill
 \begin{minipage}{0.5\textwidth}
 \subsubsection*{Step 1}
-The Client Hello message contains the version of the protocol that the client wants to use and the list of supported cipher suite (set of algorithms that help secure a network connection that uses TLS/SSL).
+The \textbf{Client Hello} message contains the version of the protocol that the client wants to use and the list of supported cipher suite (set of algorithms that help secure a network connection that uses TLS/SSL).
 \subsubsection*{Step 2}
-The server hello message contains the chosen protocol (supported by both parties), the chosen cipher suite (supported by both parties) and the \textbf{session ID}, a freshly-generated value that will identify the new session. A session is a series of interactions between two communication end points that occur during the span of a single connection. Typically, one end point requests a connection with another specified end point and if that end point replies agreeing to the connection, the end points take turns exchanging commands and data ("talking to each other"). 
+The \textbf{Server Hello} message contains the chosen protocol (supported by both parties), the chosen cipher suite (supported by both parties) and the \textbf{session ID}, a freshly-generated value that will identify the new session. A session is a series of interactions between two communication end points that occur during the span of a single connection. Typically, one end point requests a connection with another specified end point and if that end point replies agreeing to the connection, the end points take turns exchanging commands and data ("talking to each other"). 
 %The session begins when the connection is established at both ends and terminates when the connection is ended.
 \end{minipage}
 \subsubsection*{Step 3}
 If the client requested an authenticated connection, the server must
 send a X.509 certificate. 
 During the \textbf{Server Key Exchange}, a message sets the premaster secret that will be later used to generate the Master Secret. 
-The \textbf{Certificate Request} is a message sent by a non-anonymous server in case it requires the client to be authenticated.
+The \textbf{Certificate Request} message is sent by a non-anonymous server in case it requires the client to be authenticated.
 \subsubsection*{Step 4}
 If the client has received a CertificateRequest message, it must send a X.509 certificate. 
 During the \textbf{Client Key Exchange}, a message sets the premaster secret that will be later used to generate the Master Secret.
 The \textbf{Certificate Verify} is a message that provides explicit verification of the client certificate.
-\subsubsection*{Step 5}
+\subsubsection*{Step (4 and) 5}
 \textbf{Change Cipher Spec} is a message (consisting of a single byte of value 1) sent by both parties. Once received, the participant transitions to the agreed cipher suite.
 The \textbf{Finished} is generated by hashing the entire handshake and sent by both parties. It is used to signal the completion of the
 algorithm.
 \subsubsection*{Step 6-7}
 From the reception of the Change Cipher Spec message onward, every message sent (both by server and client) will be encrypted using the shared key.
 
+\newpage
 \subsection{Security issues}
-Simplistic view of TLS: Handshake Protocol followed by Record Protocol. In reality, this is much more complex:
+TLS might just seem like Handshake Protocol followed by Record Protocol. In reality, it is much more complex:
 \begin{itemize}
-\item Initial Handshake Protocol happens over Record Protocol with no keys
-\item Change Cipher Spec. Protocol message, switch on new keys
-\item Completion of Handshake via exchange of Finished messages, now running over keyed Record Protocol
-\item Followed by arbitrary sequences of Session Resumption and Renegotiation runs
+\item The initial Handshake Protocol happens over Record Protocol with no keys;
+\item The Change Cipher Spec Protocol message, switch on new keys;
+\item After the completion of Handshake, marked by the exchange of Finished messages, the connection is running over a keyed Record Protocol;
+\item This is followed by arbitrary sequences of Session Resumption and Renegotiation runs.
 \end{itemize}
-Most of this activity is hidden from applications. This complexity has turned out to have negative security consequences. As a result TLS (up to v1.2) suffers from some security issues for a few reasons:
+Most of this activity is hidden from applications. This complexity has turned out to have negative security consequences. As a result TLS (up to v1.2) suffers security issues for a few reasons:
 \begin{itemize}
 \item \textbf{Backward compatibility}: the protocol still supports weak cipher suites and broken hash functions;
 \item \textbf{Logical flaws}: a set of logical loopholes can be used to "trick" both client and server.
@@ -3198,15 +3150,15 @@ HTTP is a stateless, application-level protocol for distributed, collaborative, 
 \item \textbf{Media independent}: any type of data can be sent by HTTP as long as both the client and the server know how to handle the data content;
 \item \textbf{Stateless}: the server and client are aware of each other only during a current request. Afterwards, both of them forget about each other. Due to this nature of the protocol, neither the client nor the browser can retain information between different requests across the web pages.
 \end{itemize}
-An HTTP \textbf{cookie} (also called web cookie, Internet cookie, browser cookie, or simply cookie) is a small piece of data sent from a website and stored on the user's computer by the user's web browser while the user is browsing. It is designed to be a reliable mechanism for websites to remember stateful information (such as items added in the shopping cart in an online store) or to record the user's browsing activity (including clicking particular buttons, logging in, or recording which pages were visited in the past). Authentication cookies are the most common method used by web servers to know whether the user is logged in or not, and which account they are logged in with; without such a mechanism, the site would not know whether to send a page containing sensitive information, or require the user to authenticate themselves by logging in. The security of an authentication cookie generally depends on the security of the issuing website and the user's web browser, and on whether the cookie data is encrypted. Security vulnerabilities may allow a cookie's data to be read by a hacker, used to gain access to user data, or used to gain access (with the user's credentials) to the website to which the cookie belongs (see cross-site scripting and cross-site request forgery for examples). There are \textbf{privacy} concerns: tracking cookies, and especially third-party tracking cookies, are commonly used as ways to compile long-term records of individuals' browsing histories. The European law requires that all websites targeting EU member states gain "informed consent" from users before storing non-essential cookies on their device. \medskip\\
+An HTTP \textbf{cookie} (also called web cookie, Internet cookie, browser cookie, or simply cookie) is a small piece of data sent from a website and stored on the user's computer by the user's web browser while the user is browsing. It is designed to be a reliable mechanism for websites to remember stateful information (such as items added in the shopping cart in an online store) or to record the user's browsing activity (including clicking particular buttons, logging in, or recording which pages were visited in the past). Authentication cookies are the most common method used by web servers to know whether the user is logged in or not, and which account they are logged in with; without such a mechanism, the site would not know whether to send a page containing sensitive information, or require the user to authenticate themselves by logging in. The security of an authentication cookie generally depends on the security of the issuing website and the user's web browser, and on whether the cookie data is encrypted. Security vulnerabilities may allow a cookie's data to be read by a hacker, used to gain access to user data, or used to gain access (with the user's credentials) to the website to which the cookie belongs (see cross-site scripting and cross-site request forgery for examples). There are \textbf{privacy} concerns: tracking cookies, and especially third-party tracking cookies, are commonly used as ways to compile long-term records of individuals' browsing histories. The European law requires all websites, targeting EU member states, to gain "informed consent" from users before storing non-essential cookies on their device. \medskip\\
 Cookies can be exchanged in clear, or in the httpsOnly version sent by the server only over HTTPS: this allows \textbf{confidentiality} but not \textbf{integrity}, since a network attacker can rewrite cookies over http.
 
 \subsection{Example of attacks}
 \subsubsection*{Firesheep}
-Firesheep was an extension for the Firefox web browser that used a packet sniffer to intercept unencrypted session cookies from popular websites (e.g., Facebook and Twitter). The plugin eavesdropped on Wi-Fi communications, listening for session cookies. When it detected a session cookie, the tool used this cookie to obtain the identity belonging to that session. Collected identities (victims) are displayed in a side bar in Firefox. By clicking on a victim's name, the victim's session is taken over by the attacker. The extension was released October 2010 as a demonstration of the security risk of session hijacking vulnerabilities to users of web sites that only encrypt the login process and not the cookie(s) created during the login process. Session hijacking as a service!
+Firesheep was an extension for the Firefox web browser that used a packet sniffer to intercept unencrypted session cookies from popular websites (e.g., Facebook and Twitter). The plugin eavesdropped on Wi-Fi communications, listening for session cookies, and when it detected one the tool used this cookie to obtain the identity belonging to that session. Collected identities (victims) were displayed in a side bar in Firefox and by clicking on a victim's name, the victim's session was taken over by the attacker. The extension was released October 2010, to demonstrate the security risks of \textbf{session hijacking} vulnerabilities on web sites that only encrypt the login process and not the cookie(s) created.
 
 \subsubsection{SSLStrip}
-An SSLStrip attack is an instance of Men In The Middle (MITM) attack. Instead of the victim connecting directly to a website, the victim would connect to the attacker, and the attacker would initiate the connection back to the website.
+An SSLStrip attack is an instance of \textbf{Men In The Middle} (MITM) attack. Instead of the victim connecting directly to a website, the victim would connect to the attacker, and the attacker would initiate the connection back to the website.
 In 2009 at Blackhat DC, it was shown the SSLStrip tool that would intercept HTTP traffic and whenever it spotted redirects or links to sites using HTTPS, it would transparently strip them away. Recall that there are two ways to follow https links:
 \begin{itemize}
 \item clicking on links with prefix https;
@@ -3215,19 +3167,19 @@ In 2009 at Blackhat DC, it was shown the SSLStrip tool that would intercept HTTP
 Attacker wants to read the traffic between two entities communicating via SSL/TLS. The idea underlying strip attack is to downgrade connection so that encryption is no more used. How is it possible to perform downgrading? Intercept web traffic and strip the 's' from all the links to https. The interceptor would make the encrypted connection back to the web server in HTTPS, and serve the traffic back to the site visitor unencrypted (logging any interesting passwords or credit card information in the process).
 
 \subsubsection*{HSTS}
-To avoid this problem, a protocol called HTTP Strict Transport Security (HSTS) was created in 2012 and specified in RFC 6797. The protocol works by the server responding with a special header called Strict-Transport-Security which contains a response telling the client that whenever they reconnect to the site, they must use HTTPS. While this provided an improvement in preventing interception attacks, it was not perfect and there remain a number of shortcomings.\medskip\\
+To avoid this problem, a protocol called \textbf{HTTP Strict Transport Security} (\textbf{HSTS}) was created in 2012 and specified in RFC 6797. The protocol works by the server responding with a special header called Strict-Transport-Security which contains a response telling the client that whenever they reconnect to the site, they must use HTTPS. While this provided an improvement in preventing interception attacks, it was not perfect and there remain a number of shortcomings.\medskip\\
 For example HSTS requires a previous connection to know to always connect securely to a particular site: when visitors first connect to the website, they will not have received the HSTS rule that tells them to always use HTTPS. Only on subsequent connections will the visitor's browser be aware of the HSTS rule that requires them to connect over HTTPS. \medskip\\
-HSTS Preload Lists are one potential mitigations: they effectively work by hardcoding a list of websites that need to be connected to using HTTPS-only. Sites with HSTS enabled can be submitted to the Chrome HSTS Preload List at \textit{hstspreload.org}, which is also used as the basis of the preload lists used in other browsers. Inside the source code of Google Chrome, there is a file which contains a hardcoded file listing the HSTS properties for all domains in the Preload List.
+\textbf{HSTS Preload Lists} are one potential mitigations: they effectively work by hardcoding a list of websites that need to be connected to using HTTPS-only. Sites with HSTS enabled can be submitted to the Chrome HSTS Preload List at \textit{hstspreload.org}, which is also used as the basis of the preload lists in other browsers. Inside the source code of Google Chrome, there is a file which contains a hardcoded file listing the HSTS properties for all domains in the Preload List.
 
 \subsubsection{Sweet32 - birthday attack}
 Known since long time, only recently (2016) the attack has become
 feasible. This attack allows to recover small portions of plaintext when encrypted with 64-bit block ciphers under some circumstances.  3DES roughly combines 3 times the symmetric block cipher DES (which
 is well known to be weak); by monitoring the victim’s traffic and be able to execute Javascript in the victim’s browser, it is possible to recover HTTP session cookies sent over TLS-encrypted channels in 1 or 2 days time. This is possible because block-ciphers (such as 3DES) can only encrypt a limited number of plaintext blocks before they are likely to produce a collision (on average after 32 GB of data).
 \subsubsection*{Attack scenario}
-HTTP Basic Authentication:
+First, make an HTTP Basic Authentication:
 \begin{itemize}
-\item Enter login and passwords
-\item Repeatedly sent over HTTP with each request by the browser in a user transparent way
+\item Enter login and passwords;
+\item Repeatedly send them over HTTP, with each request by the browser in a user transparent way.
 \end{itemize}
 Install Javascript code in the victim’s browser by inducing him/her to visit a malicious web site or install a malicious plug-in; the javascript code generates request containing fixed text + HTTP Basic Authentication request. After roughly $2^{32}$ requests (recall that a birthday attack may happen on average after $2^{(n/2)}$ for $n=64$ bits in the case of 3DES), a collision is produced from which it is possible to derive the HTTP request. \\
 To mitigate this, disable 3DES in TLS 1.2 (in TLS 1.3 it is no more supported).
@@ -3235,12 +3187,12 @@ To mitigate this, disable 3DES in TLS 1.2 (in TLS 1.3 it is no more supported).
 \subsubsection{3SHAKE}
 TLS Handshake protocol does a good job in establishing a common key but it does not guarantee the key to be unique. The idea underlying 3SHAKE is to exploit this lack of uniqueness by setting up two sessions using very similar artifacts (keys, session parameters, different certificates) and then to exploit the session resumption facilities to force the two similar sessions to share the same common keys.
 \begin{center}
-\includegraphics[scale=0.4]{img/ac28.png}
+\includegraphics[scale=0.6]{img/ac28.png}
 \end{center}
 Mallory mediates two handshakes: she can generate and force both connections to use the same \textbf{MasterSecret}. While the attacker has tricked the client into using a specific MS value, the handshake Finished messages (which the client will attach to the renegotiation handshake) will not be the same in both handshakes, because (among other things) the certificates sent on each connection were very different, hence the handshake hashes are not identical. \\
 However, if the attacker triggers a session resumption (with a “session resumption handshake”, to resume their session with new encryption keys), which uses no public-key cryptography or certificates at all (to make it faster), now the two sessions can be mistaken: both connections now see exactly the same (resumption) handshake messages, hence the hash of these handshakes will be identical, which means that their “Finished” message will be identical.
 \begin{center}
-\includegraphics[scale=0.4]{img/ac29.png}
+\includegraphics[scale=0.5]{img/ac29.png}
 \end{center}
 Within the resumed session, Mallory injects malicious traffic (e.g. "send money from Alice to Mallory"). By exploiting the renegotiation mechanism, Mallory merges the sessions so that the malicious request is executed into Alice’s context. How to mitigate? \\
 One proposed fix is to change the derivation of the Master Secret such that it includes the handshake hash. This should wipe out most of the attacks above. Another fix is to bind the “session resumption” handshake to the original handshake that led to it.
@@ -3266,10 +3218,10 @@ Remote authentication implies some security issues:
 \item \textbf{Eavesdropping}: attacker attempts to learn passwords by observing the user, finding written passwords, keylogging. The countermeasures include diligence to keep passwords, multifactor authentication and the admin revoking compromised passwords;
 \item \textbf{Replay}: attacker repeats a previously captured user response. Countermeasure are the use of challenge-response and 1-time passcodes;
 \begin{center}
-\includegraphics[scale=0.3]{img/ac38.png}
+\includegraphics[scale=0.35]{img/ac38.png}
 \end{center}
-\item Trojan horse: an application or physical device masquerades as an authentic application or device. Countermeasure is the authentication of the client within a trusted security environment;
-\item Denial of service: attacker attempts to disable a user authentication service (via flooding). Countermeasure is a multifactor authentication with a token.
+\item \textbf{Trojan horse}: an application or physical device masquerades as an authentic application or device. Countermeasure is the authentication of the client within a trusted security environment;
+\item \textbf{Denial of service}: attacker attempts to disable a user authentication service (via flooding). Countermeasure is a multifactor authentication with a token.
 \end{itemize}
 
 \subsection{Single Sign On (SSO)}
@@ -3318,7 +3270,7 @@ Consider Alice visits an airline website for making her trip. For booking her fl
 \subsubsection{SAML authentication}
 \begin{enumerate}
 \item A user want to access an SP
-\item The user is redirect to a Discovery Service, that can be an external service or embedded in the SP, and and allows the user to choose the IdP
+\item The user is redirect to a Discovery Service, that can be an external service or embedded in the SP, and allows the user to choose the IdP
 \item The user goes back to the SP with the ID of the own IdP
 \item The user is redirect to the IdP
 \item Authentication is performed
@@ -3381,7 +3333,7 @@ The motivation is due to the fact that existing SAML federation deployments have
 
 \subsection*{NIST LOA Levels}
 \begin{center}
-\includegraphics[scale=0.6]{img/ac31.jpg}
+\includegraphics[scale=0.4]{img/ac31.png}
 \end{center}
 
 \subsubsection*{Identity Assurance Level}
@@ -3513,7 +3465,7 @@ Persistent cookies are used as an inexpensive way to store users’ preferences 
 	\item User Agent (UA): web browser used for message passing (redirections)
 	\item Service Provider (SP): the service users want to get access to
 	\end{itemize}
-\item \textbf{SSO flow}: once authenticated IdP passes a message through browser, which takes the message and passes it to the SP. The SP validates the message and then authenticates you to the service.
+\item \textbf{SSO flow}: once authenticated, IdP passes a message through browser, which takes the message and passes it to the SP. The SP validates the message and then authenticates you to the service.
 \end{itemize}
 
 \subsubsection*{A SAML assertion}
@@ -3560,16 +3512,16 @@ Now, consider the string \lstinline|"<NameID>ranise<!---->@fbk.eu</NameId>"| is 
 \subsubsection{Recap}
 SAML documents:
 \begin{itemize}
-\item Contain information about the authenticating user, within the inner text
-\item Are often passed through a user’s browser from the IdP to the SP
-\item Are signed to prevent tampering
-\item Are canonicalized, in most cases excluding comments, prior to signing
-\item Because of canonicalization, the addition of comments would not affect a document signature
+\item Contain information about the authenticating user, within the inner text;
+\item Are often passed through a user’s browser from the IdP to the SP;
+\item Are signed to prevent tampering;
+\item Are canonicalized, in most cases excluding comments, prior to signing;
+\item Because of canonicalization, the addition of comments would not affect a document signature.
 \end{itemize}
 SAML APIs:
 \begin{itemize}
-\item Have unintuitive and/or inconsistent behavior when extracting inner text
-\item Provide the non-canonical document representation for post-signature processing
+\item Have unintuitive and/or inconsistent behavior when extracting inner text;
+\item Provide the non-canonical document representation for post-signature processing.
 \end{itemize}
 
 \subsubsection{An attack}
@@ -3731,7 +3683,7 @@ The entities involved are:
 \item \textbf{Authorization server}: generates tokens for the client (\textbf{token endpoint}), authenticate resource owners and clients, manages authorizations.
 \end{itemize}
 \begin{center}
-\includegraphics[scale=0.3]{img/ac30.png}
+\includegraphics[scale=0.35]{img/ac30.png}
 \end{center}
 In many cases, authorization server and protected resource "live" on the same server, although this is not always the case.
 
@@ -3748,7 +3700,7 @@ Represent granted delegated authorities from the resource owner to the client fo
 \item There is \textbf{not} a single protocol: OAuth 2.0 is a framework consisting of several flows.
 \end{itemize}
 \begin{center}
-\includegraphics[scale=0.25]{img/ac31.png}
+\includegraphics[scale=0.35]{img/ac31b.png}
 \end{center}
 
 \subsubsection{Key points}
@@ -3771,10 +3723,10 @@ Example of Google OAuth 2.0 playground:
 access) when getting it from the Client. It needs a suitable cryptographic mechanisms to protect integrity and avoid forging!
 \end{enumerate}
 
-\subsubsection{More points: refresh tokens} %TODO ???
+\subsubsection*{Refresh tokens}
 When the user is no more there, access tokens still work. When the access token stops working the client uses expiration and revocation. To get a new token it is necessary to repeat the process of request (interactive grants: send the resource owner to the authorization endpoint). If the user is not available, it is also possible to ask \textbf{refresh tokens}, which are issued alongside the access token and used for getting new access tokens: they are presented along with client credentials, they are not good for calling protected resources directly).
 
-\subsubsection{More points: authentication codes}
+\subsubsection*{Authentication codes}
 Why do clients need to obtain authorization codes before access tokens? Clients cannot be trusted (e.g., Man in the browser), APIs do not know who is calling them (bearer token): anyone presenting the access token will be granted access! To prevent this kind of problems, exchange is done server-to-server and requires both the client\_id and client\_secret, preventing even the (client) resource owner from obtaining the access token.
 
 \subsection{Authorization code flow} 
@@ -3804,7 +3756,7 @@ Mitigation: \textbf{PKCE} (Proof Key Code Exchange)
 \item Client creates a code challenge (type of challenge function is selected by the client, e.g., the hash of some unique secret) and
 sends it in the authorization request;
 \item Authorization server authenticates the resource owner and returns the code;
-\item In order to get the access token client must send the code and prove that it initiated the flow. To do this, it sends the code verifier (e.g., unique secret from the first step) together with the authorization code;
+\item In order to get the access token, client must send the code and prove that it initiated the flow. To do this, it sends the code verifier (e.g., unique secret from the first step) together with the authorization code;
 \item Authorization server verifies whether the (hash of) code verifier matches the code challenge and returns the access token.
 \end{enumerate}
 PKCE allows the legitimate app to create an ephemeral one-time secret
@@ -3937,7 +3889,7 @@ An ID token is a signed JWT given to the client application along side the regul
 Additionally, the ID Token contains information about the token's valid (and usually short) lifetime as well as any information about the authentication context to be conveyed to the client, such as how long ago the user was presented with a primary authentication mechanism. Since the format of the ID Token is known by the client, it is able to parse the content of the token directly and obtain this information without relying on an external service to do so. ID token is signed by the identity provider's private key, adding an additional layer of protection to the claims inside of it in addition to the TLS transport protection that was used to get the token in the first place, preventing a class of impersonation attacks. By applying a few simple checks to this ID token, a client can protect itself from a large number of common attacks.
 
 \subsubsection{User info endpoint}
-Clients are not required to use the access token, since the ID Token contains all the necessary information for processing the authentication event. For compatibility with, OpenID Connect always issues the ID token along side an OAuth access token.
+Clients are not required to use the access token, since the ID Token contains all the necessary information for processing the authentication event. For compatibility reasons, OpenID Connect always issues the ID token along side an OAuth access token.
 In addition to the claims in the ID Token, OpenID Connect defines a standard protected resource that contains claims about the current user. The claims here are not part of the authentication process, as discussed above, but instead provide bundled identity attributes that make the authentication protocol more valuable to application developers. The OpenID Connect scopes can be used along side other non-OpenID-Connect OAuth scopes without conflict, and the access token issued can potentially be targeted at several different protected resources: this allows an OpenID Connect identity system to smoothly coexist with an OAuth authorization system.
 
 \subsubsection{Dynamic server discovery and client registration}
