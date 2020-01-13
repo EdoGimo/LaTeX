@@ -622,6 +622,13 @@ RC4 does not specify how to construct the session key from the seed and the init
 RC4 is widely used in popular protocols, especially in wireless protocols, WEP and WPA (but also TLS). There are dangerous practical attacks to WEP. Nowadays WPA2 is used for wi-fi, which is no longer based on stream ciphers but on block ciphers. To our knowledge, no practical attacks are known if RC4 is used with a careful choice of the key and a suitable warm-up phase.
 
 \newpage
+\section{Ideal block cipher}
+Given a block cipher with keyspace $F^k$, we always assume that any (session) key is a k-bit string. So we have a simple method to attack the cipher: we try all possible keys until we find the correct one. This is called "brute-force". It obviously costs $2^k$ encryptions and so it is impractical for modern ciphers.  This observation allows us to define the following:
+\begin{quote}
+\textit{Definition. A block cipher with k-bit keys is called IDEAL is there is no attack on it that has a computational cost smaller than $2^k$ encryptions.}
+\end{quote}
+We don't know any ideal cipher. However, it is possible that some existing ciphers are ideal and we are just unable to prove it.
+
 \section{DES-3DES}
 Data Encryption Standard (DES) is a block cipher based on Feistel encipherment, developed by IBM. 
 
@@ -643,19 +650,12 @@ It is very similar to encipherment: the input is the ciphertext and the applicat
 \begin{minipage}{0.4\textwidth}
 \includegraphics[scale=0.3]{img/acfe.png}
 \end{minipage} \medskip
-For DES, there are $n = 16$ rounds and the blocks are 64 bits long. The key is 64 bits long: 56 bits are randomly generated and are employed in the algorithm. The last 8 bits are used in the error detection. The plaintext is permuted with a permutation IP, elaborated in the Feistel structure and then $IP^{-1}$ is performed on it. The $n = 16$ rounds depend on a function F , operating in two blocks, one of 32 bits and one of 48 bits, to produce a 32-bits block. The function is composed by:
-\begin{itemize}
-\item an expansion function E which transforms a 32 bits block to a 48 bits block;
-\item the resulting block E (R) is XORed with the round key;
-\item $E(R) \oplus K$ is divided in 8 blocks of 6 bits: $B_1, \dots, B_8$;
-\item $B_1, \dots, B_8$ are processed by 8 S-boxes;
-\item a permutation is applied.
-\end{itemize}
-In order to decrypt the scheme is the same, but the keys are in
+For DES, there are $n = 16$ rounds and the blocks are 64 bits long. The key is 64 bits long: 56 bits are randomly generated and are employed in the algorithm. The last 8 bits are used in the error detection. The plaintext is permuted with a permutation IP, elaborated in the Feistel structure and then $IP^{-1}$ is performed on it. The $n = 16$ rounds depend on a function F , operating in two blocks, one of 32 bits and one of 48 bits, to produce a 32-bits block. The function is composed by an expansion function E which transforms a 32 bits block to a 48 bits block; the resulting block $E(R)$ is XORed with the round key; $E(R) \oplus K$ is divided in 8 blocks of 6 bits: $B_1, \dots, B_8$.\\
+$B_1, \dots, B_8$ are processed by 8 S-boxes and a permutation is applied. \\
+In order to decrypt, the scheme is the same but the keys are in
 inverse order. \medskip\\
 3DES has been developed to increase the security of DES, since the key space of DES is too small for modern computers, which can explore it fully in a few hours. It consists in applying DES three times. The key, called key bundle consists of three keys k1, k2, k3 of 56 bits each.
 
-\newpage
 \section{Advanced Encryption Standard (AES)}
 The plaintext of AES is of length 128 bits, $\mathcal{P}= (\mathbb{F}_ 2)^{128}$ . There are three variants of AES: \medskip \\
 \begin{tabular}{|c|c|c|}
@@ -742,15 +742,14 @@ s_{10} \\
 s_{11} 
 \end{matrix} \right)$
 \end{footnotesize}:
-\begin{figure}[h]
-\centering
+\begin{center}
 \includegraphics[scale=0.35]{img/ac9b.png}
-\end{figure}
+\end{center}
+
 \subsection*{Three rounds}
-\begin{figure}[h]
-\centering
+\begin{center}
 \includegraphics[scale=0.35]{img/ac10.png}
-\end{figure}
+\end{center}
 
 \subsection{AES: AddRoundKey}
 Each byte of the state is combined with a block of the round key using bitwise XOR.
@@ -916,8 +915,53 @@ Rounds & Key size &Attack & Complexity \\ \hline
 The previous table shows that the number of rounds of PRESENT should not be dramatically reduced, in order to conserve a reasonable level of security.
 
 \newpage
+\section{Block cipher mode of operation}
+In cryptography, a block cipher mode of operation is an algorithm that uses a block cipher to provide information security such as confidentiality or authenticity. A block cipher by itself is only suitable for the secure cryptographic transformation (encryption or decryption) of one fixed-length group of bits called a block. A mode of operation describes how to repeatedly apply a cipher's single-block operation to securely transform amounts of data larger than a block.
+Most modes require a unique binary sequence, often called an initialization vector (IV), for each encryption operation. The IV has to be non-repeating and, for some modes, random as well. The initialization vector is used to ensure distinct ciphertexts are produced even when the same plaintext is encrypted multiple times independently with the same key.
+Block ciphers may be capable of operating on more than one block size, but during transformation the block size is always fixed. Block cipher modes operate on whole blocks and require that the last part of the data be padded to a full block if it is smaller than the current block size. There are, however, modes that do not require padding because they effectively use a block cipher as a stream cipher.
+
+\subsubsection*{Initialization vector (IV)}
+An initialization vector (IV) or starting variable (SV) is a block of bits that is used by several modes to randomize the encryption and hence to produce distinct ciphertexts even if the same plaintext is encrypted multiple times, without the need for a slower re-keying process.
+An initialization vector has different security requirements than a key, so the IV usually does not need to be secret. However, in most cases, it is important that an initialization vector is never reused under the same key. For CBC and CFB, reusing an IV leaks some information about the first block of plaintext, and about any common prefix shared by the two messages. For OFB and CTR, reusing an IV completely destroys security.
+\subsubsection*{Padding}
+A block cipher works on units of a fixed size (known as a block size), but messages come in a variety of lengths. So some modes (namely ECB and CBC) require that the final block be padded before encryption. Several padding schemes exist. The simplest is to add null bytes to the plaintext to bring its length up to a multiple of the block size, but care must be taken that the original length of the plaintext can be recovered; this is trivial, for example, if the plaintext is a C style string which contains no null bytes except at the end. Slightly more complex is the original DES method, which is to add a single one bit, followed by enough zero bits to fill out the block; if the message ends on a block boundary, a whole padding block will be added. Most sophisticated are CBC-specific schemes such as ciphertext stealing or residual block termination, which do not cause any extra ciphertext, at the expense of some additional complexity.
+
+\subsection*{Common modes}
+\begin{tabular}{|l|c|c|}\hline
+Mode & Formulas & Ciphertext \\ \hline
+\makecell{Electronic Codebook \\(ECB)} & $Y_i = F(\text{PlainText}_i,\text{Key})$ & $Y_i$ \\ \hline
+\makecell{Cipher Block Chaining \\(CBC)} & $Y_i = \text{PlainText}_i \; XOR \; \text{Ciphertext}_{i-1}$ & \makecell{$F(Y,Key)$;\\$\text{Ciphertext}_0 = IV$} \\ \hline
+\makecell{Propagating CBC \\(PCBC)} & \makecell{$Y_i = \text{PlainText}_i \; XOR$ \\ $(\text{Ciphertext}_{i-1} XOR \text{PlainText}_{i-1} )$} & \makecell{$F(Y,\text{Key})$;\\$\text{Ciphertext}_0 =IV$} \\ \hline
+\makecell{Cipher Feedback \\(CFB)} & $Y_i = \text{Ciphertext}_{i-1}$  &
+\makecell{$\text{Plaintext} XOR F(Y,Key)$;\\$\text{Ciphertext}_0 =IV$} \\ \hline
+\makecell{Output Feedback \\(OFB)} & $Y_i =F(Y_{i-1},\text{Key}); Y_0 = IV$ & Plaintext XOR $Y_i$ \\\hline
+\makecell{Counter \\(CTR)} & \makecell{$Y_i =F(IV + g(i),Key)$;\\$IV=token();$} & Plaintext XOR $Y_i$ \\ \hline
+\end{tabular}
+
+\subsubsection*{Electronic Codebook (ECB)}
+The simplest of the encryption modes is the Electronic Codebook (ECB) mode (named after conventional physical codebooks). The message is divided into blocks, and each block is encrypted separately.
+%image
+The disadvantage of this method is a lack of diffusion. Because ECB encrypts identical plaintext blocks into identical ciphertext blocks, it does not hide data patterns well. In some senses, it doesn't provide serious message confidentiality, and it is not recommended for use in cryptographic protocols at all. ECB mode can also make protocols without integrity protection even more susceptible to replay attacks, since each block gets decrypted in exactly the same way.
+
+\subsubsection*{Cipher Block Chaining (CBC)}
+Ehrsam, Meyer, Smith and Tuchman invented the Cipher Block Chaining (CBC) mode of operation in 1976.  In CBC mode, each block of plaintext is XORed with the previous ciphertext block before being encrypted. This way, each ciphertext block depends on all plaintext blocks processed up to that point. To make each message unique, an initialization vector must be used in the first block.
+%image
+CBC has been the most commonly used mode of operation. Its main drawbacks are that encryption is sequential (i.e., it cannot be parallelized), and that the message must be padded to a multiple of the cipher block size. One way to handle this last issue is through the method known as ciphertext stealing. Note that a one-bit change in a plaintext or initialization vector (IV) affects all following ciphertext blocks. Decrypting with the incorrect IV causes the first block of plaintext to be corrupt but subsequent plaintext blocks will be correct. This is because each block is XORed with the ciphertext of the previous block, not the plaintext, so one does not need to decrypt the previous block before using it as the IV for the decryption of the current one. This means that a plaintext block can be recovered from two adjacent blocks of ciphertext. As a consequence, decryption can be parallelized. Note that a one-bit change to the ciphertext causes complete corruption of the corresponding block of plaintext, and inverts the corresponding bit in the following block of plaintext, but the rest of the blocks remain intact. This peculiarity is exploited in different padding oracle attacks, such as POODLE.
+\subsubsection*{Propagating Cipher Block Chaining (PCBC)}
+The Propagating Cipher Block Chaining or plaintext cipher-block chaining mode was designed to cause small changes in the ciphertext to propagate indefinitely when decrypting, as well as when encrypting. In PCBC mode, each block of plaintext is XORed with both the previous plaintext block and the previous ciphertext block before being encrypted. As with CBC mode, an initialization vector is used in the first block.
+%image
+PCBC is used in Kerberos v4 and WASTE, most notably, but otherwise is not common. On a message encrypted in PCBC mode, if two adjacent ciphertext blocks are exchanged, this does not affect the decryption of subsequent blocks. For this reason, PCBC is not used in Kerberos v5.
+
+\subsubsection*{Cipher Feedback (CFB)}
+The Cipher Feedback (CFB) mode, a close relative of CBC, makes a block cipher into a self-synchronizing stream cipher. Operation is very similar; in particular, CFB decryption is almost identical to CBC encryption performed in reverse.
+%image
+%...
+\subsubsection*{Output Feedback (OFB)}
+\subsubsection*{Counter (CTR)}
+
+\newpage
 \section{HASH functions}
-A hash function, $h : \mathcal{X} \rightarrow \mathcal{Y}$ is a computationally efficient function mapping a string of arbitrary length (the message) to string of \textbf{fixed} length, called hash value, message fingerprint or message digest. Usually $X = (\mathbb{F}_2)^m$ and $Y = (\mathbb{F}_2)^n$, with $m >> n$. \\
+A hash function, $h : \mathcal{X} \rightarrow \mathcal{Y}$ is a computationally efficient function mapping a string of arbitrary length (the message) to a string of \textbf{fixed} length, called hash value, message fingerprint or message digest. Usually $X = (\mathbb{F}_2)^m$ and $Y = (\mathbb{F}_2)^n$, with $m >> n$. \\
 Common choices in cryptography are $m \geq 2n$ and $n \geq 160$. 
 \subsubsection*{Applications}
 Hash functions are widely used in many applications, like:
@@ -1175,7 +1219,7 @@ To recover a and b, Eve tries to compute all possible powers $3^t$, with $1 \leq
 $$3^1 = 3 \quad \quad 3^3 = 6 \quad \quad 3^5 = 5$$
 $$3^2 = 2 \quad \quad 3^4 = 4 \quad \quad 3^6 = 1$$\\
 concluding that $a = 2$ and $b = 3$.
-In this case Eve is able to recover a and b because p is very small and hence a brute force attack is feasible. To avoid a brute force attack we need the size of the group hg i to be huge.
+In this case Eve is able to recover a and b because p is very small and hence a brute force attack is feasible. To avoid a brute force attack we need the size of the group $\langle g \rangle$ (order of $g$) to be huge.
 
 \subsubsection*{The Diffie-Hellman algorithm: comments}
 The previous example shows that if p is too small, Eve might be able to break the system. Nevertheless, if p is large enough, it is infeasible for Eve to compute all distinct powers of g, unless g or p are wrongly chosen. Indeed, we have to choose g such that the powers $g^t$, with $1 \leq t \leq p - 1$, give a lot of distinct values, so that Eve would have to compute a lot of powers to recover a secret exponent. The best choice is to take as g the primitive element of $\mathbb{Z}_p$, so that all the powers $g^t$, $1 \leq t \leq p - 1$, are distinct.\\
@@ -2281,6 +2325,11 @@ In this last case, what merchants should do? If outsourcing
 \item \textbf{Quantum computing}: computers based on phenomena of quantum mechanics to execute calculations;
 \item \textbf{Quantum cryptography}: scientific discipline that exploits properties of quantum mechanics for cryptographic goals, such as the quantum key distribution;
 \item \textbf{Quantum communication}: scientific discipline that exploits properties of quantum mechanics for transmitting information.
+\end{itemize}
+The quantum computer was theorized by Richard Feynman and Yuri Manin at the beginning of the 80s.
+\begin{itemize}
+\item Shor algorithm (1994): given an integer $N$, it is able to  factorize it in a polinomial time in $log N$
+\item Grover algorithm (1996): given a long unsorted list N, it is able to find an element in a time proportional to $\sqrt{N}$
 \end{itemize}
 In October 2011 was opened the First academic centre devoted to quantum computing (Univ. South. California, Lockheed Martin e D-Wave Systems) and in January 2012 D-Wave claims the production of 84-qubit
 quantum computer. In 2013 Quantum computer D-Wave TwoTM is installed at the NASA centre. Advanced Supercomputing (NAS). In 2017 D-Wave 2000Q is designed with 2000 qubit. Unfortunately, these D-Wave computers are based on quantum annealing, rather than quantum superposition, so their purpose is not general.
