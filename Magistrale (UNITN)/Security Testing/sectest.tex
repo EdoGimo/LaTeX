@@ -335,7 +335,7 @@ written in \textbf{C/C++})
 \end{itemize}
 \newpage
 \subsection{Format string}
-String arguments for Format Functions like printf contain Format String parameters like \%d, \%s.
+A \textbf{format function}, like \lstinline|printf|, may include as arguments the so-called \textbf{string arguments}, which contain both text and format parameters. \textbf{Format String parameters}, like \lstinline|%d| (integers) and \lstinline|%s| (string), define the type of conversion to be performed in relation to the variable present in the string format:
 \begin{lstlisting}
 	printf("Hello %s, your age is %d", name, age);
 \end{lstlisting}
@@ -369,25 +369,18 @@ The system POP two values from the call stack and prints them (in hex format).
 \item "\%p \%p" pops two pointers in hexadecimal format
 \item "\%10\$d" pops the $10^{th}$ integer
 \end{itemize}
-Moreover, with:
+Moreover, with the string parameter \lstinline|%n| it is even possible to write the previously stated value inside the location of the selected variable:
 \begin{verbatim}
 > a.out "%d%n\n"
 %1234d%n
 \end{verbatim}
-1234 is written into the memory location 4011e5a1. \medskip\\
+The integer '1234' is written into the memory location 4011e5a1 (the second argument). \medskip\\
 \textbf{Problem}: a tainted string may be used as a format string, hence the attacker can insert formatting instructions that pop (e.g., \%s, \%x) values from the stack or write (e.g., \%n) values onto the call stack/heap. This is possible if the formatting function has an undeclared number of parameters. 
 
 \subsubsection*{Fix}
 \begin{itemize}
 \item Use constant strings as string formats whenever possible
 \item Sanitize user input before using it as a format string
-\begin{lstlisting}	
-	int main(int argc, char* argv[]) {
-		if (argc > 1)
-			printf("%s", argv[1]);
-		return 0;
-	}
-\end{lstlisting}
 \item Avoid formatting functions of the printf family (e.g., use stream operator << in C++)
 \end{itemize}
 If user input can appear in the error message, the attack can be
@@ -1008,15 +1001,16 @@ To fix it:
 
 \newpage
 \section{Flow Analysis}
-\textbf{Flow analysis} is a general static analysis framework that can be instantiated in several specific code analyses, among which taint analysis. In turn, flow analysis instantiates an even more general static analysis framework, \textbf{abstract interpretation}. 
+\textbf{Flow analysis} is a general static analysis framework that can be instantiated in several specific code analyses, among which taint analysis; taken a program, informations propagate (flow) through it and, by capturing them in certain representation, it is possible to make statements about some properties, like security.
+In turn, flow analysis instantiates an even more general static analysis framework, \textbf{abstract interpretation}. 
 
 \subsection{Control flow graph}
 $$CFG = (N, E, n_e, n_x)$$
 \begin{itemize}
-\item Node set $N$: statements of the program P.
-\item Edge set $E \subseteq N \times N:(n, m) \in E$ if statement $m$ is one of the statements that can be executed immediately after $n$ according to the execution semantics of P (i.e., $m$ is an execution successor of $n$).
-\item Node $n_e \in N$: entry node of P.
-\item Node $n_x \in N$: exit node of P.
+\item Node set $N$: statements of the program P (one node for each statement).
+\item Edge set $E \subseteq N \times N:(n, m) \in E$ if statement $m$ is one of the statements that can be executed immediately after $n$ according to the execution semantics of P (i.e., $m$ is an execution successor of $n$). Edges connect two nodes.
+\item Node $n_e \in N$: entry node of P (unique).
+\item Node $n_x \in N$: exit node of P (unique).
 \end{itemize}
 \begin{minipage}{0.6\textwidth}
 \begin{lstlisting}
@@ -1039,24 +1033,23 @@ $$CFG = (N, E, n_e, n_x)$$
 \subsection{Flow Analysis Framework}
 Flow Analysis Framework is a general procedure that can be used to determine properties that hold for a program by propagating proper flow information inside the control flow graph of the program. Flow information is altered during propagation according to the computation performed by each program statement. 
 \begin{enumerate}
-\item \textbf{Flow information} set V: Flow information that is propagated in the CFG, assigned to $IN[n]$ and $OUT[n]$ of CFG node n.
-\item \textbf{Transfer functions} $f_n(x): V \rightarrow V$: Computation performed by node n on the flow information. $$OUT[n]=f_n(IN[n])$$
-\item \textbf{Confluence (meet) operator} $\wedge$: To join flow values coming from the OUT of the predecessors (or successors) of current node n:
+\item \textbf{Flow information} set $V$: Flow information that is propagated in the CFG (the elements, e.g. $V$ could contain boolean values), assigned to $IN[n]$ and $OUT[n]$ of CFG node n.
+\item \textbf{Transfer functions} $f_n(x): V \rightarrow V$: Computation performed by node n on the flow information (given IN returns OUT). $$OUT[n]=f_n(IN[n])$$
+\item \textbf{Confluence (meet) operator} $\wedge$: To join flow values coming from the OUT of the predecessors (or successors) of current node n (merge their informations):
 $$IN[n]=\wedge_{p \in pred(n)} OUT[p]$$
 \item \textbf{Direction of propagation}: Forward (meet takes output from predecessors) or backward (meet uses successors)
 \end{enumerate}
-\begin{figure}[h]
-\centering
+\begin{center}
 \includegraphics[scale=0.3]{img/graph2.png}
-\end{figure}
+\end{center}
+
 
 \subsubsection{Assumptions}
 \begin{itemize}
-\item Identity is a valid transfer function: $OUT[n] = f(IN[n]) = IN[n]$.
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/graph3.png}
-\end{figure}
+\item \textbf{Identity} is a valid transfer function (plain propagation): $OUT[n] = f(IN[n]) = IN[n]$.
+\begin{center}
+\includegraphics[scale=0.35]{img/graph3.png}
+\end{center}
 
 \item Transfer functions can be obtained by composition:
 \begin{align*}
@@ -1065,35 +1058,35 @@ OUT[n2] &= g(IN[n2]) \\
 \text{if }n &= seq(n1, n2), OUT[n] = g(f(IN[n]))\text{, where } IN[n] = IN[n1]
 \end{align*}
 \vspace*{-5mm}
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/graph4.png}
-\end{figure}
+\begin{center}
+\includegraphics[scale=0.35]{img/graph4.png}
+\end{center}
+
 \item $\wedge$ is associative, commutative and idempotent:
 \begin{align*}
 x \wedge (y \wedge z) &= (x \wedge y) \wedge z \\
 x \wedge y &= y \wedge x \\
-x \wedge x &= x1
+x \wedge x &= x
 \end{align*}
 \vspace*{-5mm}
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/graph5.png}
-\end{figure}
-\item There exists a top element $T \in V$:
+\begin{center}
+\includegraphics[scale=0.35]{img/graph5.png}
+\end{center}
+
+\item There exists a \textbf{top} element $T \in V$:
 $$T \wedge x = x$$
 \vspace*{-5mm}
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/graph6.png}
-\end{figure}
+\begin{center}
+\includegraphics[scale=0.35]{img/graph6.png}
+\end{center}
+
 \item Transfer functions are monotonic:
 $$x \leq y \Rightarrow f_n(x) \leq f_n(y)$$
 where $x \leq y$ means $x \wedge y = x$, with $x \leq T \forall x \in V$ by definition.
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/graph7.png}
-\end{figure}
+\begin{center}
+\includegraphics[scale=0.35]{img/graph7.png}
+\end{center}
+
 \end{itemize}
 
 \subsubsection{Flow analysis algorithm}
@@ -1104,7 +1097,7 @@ where $x \leq y$ means $x \wedge y = x$, with $x \leq T \forall x \in V$ by defi
 	4. end for
 	5. while any IN[n] or OUT[n] changes across iterations
 	6.     for each node n
-	7.		   *$IN[n]= \wedge{p \in pred(n)} OUT[p]$*
+	7.		   *$IN[n]= \wedge_{p \in pred(n)} OUT[p]$*
 	8.         *$OUT[n]= f_n (IN[n])$*
 	9.	   end for
 	10. end while
@@ -1114,62 +1107,346 @@ where $x \leq y$ means $x \wedge y = x$, with $x \leq T \forall x \in V$ by defi
 If a bottom element $\bot$ exists such that $\bot \leq x \forall x$, convergence
 descends from monotonicity; otherwise it must be proved case
 by case. When V is finite, $\bot$ is ensured to exist.
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/graph8.png}
-\end{figure}
+\begin{center}
+\includegraphics[scale=0.35]{img/graph8.png}
+\end{center}
 
 \subsubsection{Meet over path solution}
 Meet over path (MOP) solution:
 $$MOP[n] = \wedge_{p \in P_n} f_p(T)$$
-\begin{figure}[h]
-\centering
-\includegraphics[scale=0.3]{img/graph9.png}
-\end{figure}
-EXACT solution (meet over feasible paths):
-$$EX[n]=\wedge_{p \in feas(P)} f_p(T)$$
+\begin{center}
+\includegraphics[scale=0.35]{img/graph9.png}
+\end{center}
+EXACT solution (meet over feasible/doable paths):
+$$EX[n]=\wedge_{p \in feas(P_n)} f_p(T)$$
 
-\subsubsection{Conservativity}
+\subsubsection{Conservativity}	%TODO what???
 Any solution lower than or equal to the exact solution is conservative. Based on $x \wedge y \leq x$, we can get
 $$FA[n] \leq MOP[n] \leq EX[n]$$
-A conservative (aka safe, sound) solution provides properties that hold for any feasible execution of the program; it may include properties obtained from infeasible execution paths (over- conservative properties), but the properties it includes are ensured to hold (i.e., they cannot be violated by any execution). When transfer functions are distributive, flow analysis produces the MOP solution:
+A conservative (aka safe, sound) solution provides properties that hold for any feasible execution of the program; it may include properties obtained from infeasible execution paths (over-conservative properties), but the properties it includes are ensured to hold (i.e., they cannot be violated by any execution). When transfer functions are distributive, flow analysis produces the MOP solution:
 $$MOP[n] = FA[n] \;\text{ if }\; f_n(x \wedge y) = f_n(x) \wedge f_n(y)$$
 
+\subsection{Exercise}
+\begin{minipage}{0.6\textwidth}
+\begin{lstlisting}
+	<?php
+	1 $xx = explode(";", $_POST["x"]);
+	2 $s = $_POST["y"];
+	3 foreach ($xx as $x) {
+	4	$s = " " . $s;
+	5	if (htmlentities($x) == $x)
+	6		$s .= $x;
+ 	 }
+	7 echo $s;
+	?>
+\end{lstlisting}
+\end{minipage}
+\begin{minipage}{0.35\textwidth}
+\includegraphics[scale=0.4]{img/graph.png}
+\end{minipage}\\
+Informations and transfer functions:\medskip\\
+\begin{minipage}{0.2\textwidth}
+$ V = \{0,1\}$\\
+$ \wedge = | $\\
+Dir $=$ fwd 
+\end{minipage}
+\begin{minipage}{0.15\textwidth}
+$f_1(x) = 1$\\
+$f_2(x) = 1$\\
+$f_3(x) = x$\\
+$f_4(x) = 0$
+\end{minipage}
+\begin{minipage}{0.15\textwidth}
+$f_5(x) = x$\\
+$f_6(x) = x$\\
+$f_7(x) = x$
+\end{minipage} \bigskip\\
+\textbf{IN and OUT}: IN initialized with top element (= 0, because $\wedge$=OR), OUT following the functions.
+\begin{lstlisting}[escapeinside={*}{*}]
+ IN[1] = 0
+OUT[1] = 1		(*$f_1(x) = 1$*)
+ IN[2] = 0
+OUT[2] = 1		(*$f_2(x) = 1$*)
+ IN[3] = 0
+OUT[3] = 0		(*$f_3(x) = x$, so output is defined by input*)
+ IN[4] = 0
+OUT[4] = 0		(*$f_4(x) = 0$*)
+ IN[5] = 0
+OUT[5] = 0		(*$f_5(x) = x$*)
+ IN[6] = 0
+OUT[6] = 0		(*$f_6(x) = x$*)
+ IN[7] = 0
+OUT[7] = 0		(*$f_7(x) = x$*)
+\end{lstlisting}
+Repeat it to calculate the inputs:
+\begin{lstlisting}[escapeinside={*}{*}]
+ IN[1] = 0		(*no input*)
+OUT[1] = 1
+ IN[2] = 1		(*1 as previous output (node 1)*)
+OUT[2] = 1
+ IN[3] = 1		(*1 as previous output (node 2)*)
+OUT[3] = 1		(*$f_3(x) = x$*)
+ IN[4] = 1		(*1 as previous output (node 3)*)
+OUT[4] = 0
+ IN[5] = 0
+OUT[5] = 0
+ IN[6] = 0
+OUT[6] = 0
+ IN[7] = 1		(*1 as previous output (node 3)*)
+OUT[7] = 1		(*$f_7(x) = x$*)
+\end{lstlisting}
+Further iterations do not change the outcome (meet operator is OR, so output of nodes 5 and 6 does not change the input of node 3): the analysis is completed.
+
+\newpage
 \section{Call string}
 \subsection{Interprocedural flow analysis}
-An interprocedural path p is realizable (valid) if, once only call and return nodes are kept:
+An interprocedural path $p$ is realizable (valid) if, once only call and return nodes are kept:
 \begin{enumerate}
-\item p is empty; or,
+\item $p$ is empty; or,
 \item The first return node is immediately preceded by a matching call node and the path obtained after removing these two nodes is in turn realizable
 \end{enumerate}
-\begin{figure}[h]
-\centering
+\begin{center}
 \includegraphics[scale=0.3]{img/graph10.png}
-\end{figure}
+\end{center}
+Node 2 is split in two, the caller C2 and the returner R2; same for node 4. With the path $p$ of the first example, we remove all the nodes, leaving only call and return nodes:
+$$C2, R2, C4, R4$$
+The remaining path is not empty but the second condition is valid: $p$ is realizable.
 
 \subsection{Call string method}
 \begin{itemize}
-\item Flow information x is propagated together with the associated call string: (x, CS). The call string is k-bounded in the presence of recursion.
-\begin{figure}[h]
-\centering
+\item Flow information x is propagated together with the \textbf{associated call string}: (x, CS). The call string is k-bounded in the presence of recursion. It is crucial to ensure propagation of information to the right calling context (e.g., $x_1$ called by C2, $x_3$ called by C4). 
+\begin{center}
 \includegraphics[scale=0.3]{img/graph11.png}
-\end{figure}
+\end{center}
 \item The meet operator is applied only when call strings are identical:
 $$(x, CS_1) \wedge (y, CS_2) = (x \wedge y, CS_1) \;\text{ if }\; CS_1 = CS_2$$
-\begin{figure}[h]
-\centering
+\begin{center}
 \includegraphics[scale=0.3]{img/graph12.png}
-\end{figure}
-\item At return nodes, flow information is propagated only to call nodes matching the last element of the call string, which is removed.\\
-\begin{figure}[h]
-\centering
+\end{center}
+\item At return nodes, flow information is propagated only to call nodes matching the last element of the call string, which is removed.
+\begin{center}
 \includegraphics[scale=0.3]{img/graph13.png}
-\end{figure}
+\end{center}
 \end{itemize}
-+ examples in videos 'Lecture\_5\_Flow\_analysis' (at the end) and 'Lecture\_6\_Call\_String'.
+
+\subsection{Exercise}
+\begin{minipage}{0.56\textwidth}
+\begin{lstlisting}
+<?php
+1	$x = $_POST["u1"];
+2 	addUsername($x);
+3	echo $x;
+4 	$x = htmlentities($_POST["u2"]);
+5	addUsername($x);
+6 	echo $x;
+
+ function addUsername(&$x){
+7	if($u != ''){
+8		$x .= " " . $u;
+9	}
+ }
+?>
+\end{lstlisting}
+\end{minipage} \vline \hfill
+\begin{minipage}{0.14\textwidth}
+$ V = \{0,1\}$\\
+$ \wedge = | $\\
+Dir $=$ fwd \medskip\\
+$f_1(x) = 1$\\
+$f_3(x) = x$\\
+$f_4(x) = 0$\\
+$f_6(x) = x$\\
+$f_7(x) = x$\\
+$f_8(x) = 1$\\
+$f_9(x) = x$
+\end{minipage}
+\begin{minipage}{0.2\textwidth}
+\includegraphics[scale=0.35]{img/graph16.png}
+\end{minipage} \bigskip\\
+\textbf{IN and OUT}: IN initialized with top element (= 0, because $\wedge$=OR), OUT following the functions. Plus apply call string, so add a label to each flow set together with the CS.
+\begin{lstlisting}[escapeinside={*}{*}]
+ IN[1] = (0, "")
+OUT[1] = (1, "")		(*$f_1(x) = 1$*)
+ IN[2] =
+OUT[2] = 
+ IN[3] = (0, "")
+OUT[3] = (0, "")		(*$f_3(x) = x$*)
+ IN[4] = (0, "")
+OUT[4] = (0, "")		(*$f_4(x) = 0$*)
+ IN[5] =
+OUT[5] = 
+ IN[6] = (0, "")
+OUT[6] = (0, "")		(*$f_6(x) = x$*)
+
+ IN[7] = (0, "")
+OUT[7] = 
+ IN[8] = (0, "")
+OUT[8] = 
+ IN[9] = (0, "")
+OUT[9] = 
+\end{lstlisting}
+Now apply updated flow analysis algorithm, following to the flow graph. First get IN of node 2 and 5, then focus on node 7, which has 2 and 5 as output, and calculate the input:
+\begin{verbatim}
+IN[7] = (1, "C2"),(0, "C5")
+\end{verbatim}
+It is now possible to propagate information in the call function (9 has 2 inputs = meet of 7 and 8):
+\begin{lstlisting}[escapeinside={*}{*}]
+ IN[7] = (1, "C2"),(0, "C5")
+OUT[7] = (1, "C2"),(0, "C5")		(*$f_7(x) = x$*)
+ IN[8] = (1, "C2"),(0, "C5")		(*copy previous output*)
+OUT[8] = (1, "C2"),(1, "C5")		(*$f_8(x) = 1$*)
+ IN[9] = (1, "C2"),(1, "C5")		(distinct meet for C2 and C5)
+OUT[9] = (1, "C2"),(1, "C5")		(*$f_9(x) = x$*)
+\end{lstlisting}
+It is now possible to compute OUT of 2 and of 5, and continue the analysis:
+\begin{lstlisting}[escapeinside={*}{*}]
+ IN[1] = (0, "")
+OUT[1] = (1, "")
+ IN[2] = (1, "")
+OUT[2] = (1, "")		(*return only matching element + drop C2*)
+ IN[3] = (1, "")		(*copy predecessor output*)
+OUT[3] = (1, "")		(*identity function*)
+ IN[4] = (1, "")		(*copy predecessor output*)
+OUT[4] = (0, "")
+ IN[5] = (0, "")
+OUT[5] = (1, "")		(*return only matching element + drop C5*)
+ IN[6] = (1, "")		(*copy predecessor output*)
+OUT[6] = (1, "")		(*identity function*)
+\end{lstlisting}
+
+
+\subsection{Functional method}
+It is another method to solve the interprocedural case that overcomes the limitation of exponential computation time in the call string method (but only applies in subset of cases).\medskip\\
+A \textbf{summary transfer function} $\phi_P$ is computed for each procedure $P$ and is used at each node where $P$ is called.
+The summary transfer functions $\phi_P$ are known in closed form when $\wedge = \cup$ and \textbf{transfer functions} $f_n$ have the following structure:
+$$f_n(x) = GEN[n] \cup (x \; \backslash \; KILL[n])$$
+\begin{itemize}
+\item $GEN[n]$: represents new information generated at the current node;
+\item $KILL[n]$: represents the information blocked at the current node;
+\end{itemize}
+When there is information generated in the current node, some that is killed in the current node and the transfer function can be applied in this form, then it is possible to apply the functional method. \medskip\\
+The functional method computes a summary of the net result of calling the function in the path:
+$$\varphi_{n_{e}}(x) =  GEN[n_e] \cup (x \; \backslash \; KILL[n_e])$$
+For a generic node inside a procedure, the summary transfer function of node $n$ is computed as:
+$$\varphi_{n}(x) =  GEN[\varphi_{n}] \cup (x \; \backslash \; KILL[\varphi_{n}])$$
+It has the same form of the general transfer function, but a brand new value has to be computed for the GEN set and KILL set. The \textbf{summary GEN} and \textbf{summary KILL} are obtained with:
+$$GEN[\varphi_{n}] = ( \cup_{p \in pred(n)} GEN[\varphi_{p}] \; \backslash \; KILL[n]) \cup GEN[n]$$
+$$KILL[\varphi_{n}] = \cap_{p \in pred(n)} KILL[\varphi_{p}] \cup KILL[n]$$ 
+Summary transfer function for any node in a procedure:
+$$\varphi_{n}(x) =  \varphi_{Q}	 ( \cup_{p \in pred(n)} \varphi_{p}(x))$$
+if $n$ is a call node and $Q$ is the called procedure.
+
+\subsubsection{Example}
+\begin{minipage}{0.35\textwidth}
+\includegraphics[scale=0.35]{img/graph17.png}
+\end{minipage}
+\begin{minipage}{0.4\textwidth}
+$GEN[6] = KILL[6] = \{\}$\\
+$GEN[7] = \{v_7\}, \; KILL[7] = \{\}$\\
+$GEN[8] = KILL[8] = \{\}$
+\end{minipage}
+\begin{minipage}{0.2\textwidth}
+$\rightarrow f_6(x) = x$\\
+$\rightarrow f_7(x) = \{v_7\} \cup x$\\
+$\rightarrow f_8(x) = x$
+\end{minipage}\\
+We are going to compute the functional method for 2 and for 4, so that we can drop the right side of this CFG and only model main. First, with the given GEN and KILL sets we can obtain the transfer function for each node using $f_n(x) = GEN[n] \cup (x \; \backslash \; KILL[n])$. \medskip\\
+It is now necessary to apply the two formulas to compute the summary GEN and KILL sets. Since node 6 is the entry node to the function, the summary transfer function is the same of the normal transfer function: 
+$$\varphi_6 (x) = GEN[6] \cup (x \backslash KILL[6]) = x$$
+The summary GEN and KILL sets are empty.
+$$GEN[\varphi_6] = KILL[\varphi_6] =\{\}$$
+\medskip\\ Then we have to compute the summary GEN and KILL sets of node 7, which has just one predecessor, 6:
+$$GEN[\varphi_7] = (GEN[\varphi_6] \backslash KILL[7]) \cup GEN[7] = \{v_7\}$$
+$$KILL[\varphi_7] = KILL[\varphi_6] \cup KILL[7] = \{\}$$
+The summary transfer function of 7 is:
+$$\varphi_7(x) = GEN[\varphi_7] \cup (x \backslash KILL[\varphi_7]) = \{v_7\} \cup x$$
+\medskip\\ Finally, repeat the same procedure for node 8, which has two predecessors, 6 and 7. In the summary GEN we have to compute the union of the predecessors' GENs, in the summary KILL the intersection of the predecessors' KILLs:
+$$GEN[\varphi_8] = (GEN[\varphi_6] \cup GEN[\varphi_7] \backslash KILL[8]) \cup GEN[8] = \{v_7\}$$
+$$KILL[\varphi_8] = (KILL[\varphi_6] \cap KILL[\varphi_7]) \cup KILL[8] = \{\}$$
+The summary transfer function of 8 is:
+$$\varphi_8(x) = GEN[\varphi_8] \cup (x \backslash KILL[\varphi_8]) = \{v_7\} \cup x$$ 
+\medskip\\ The summary transfer function for the procedure $f$, which corresponds to the summary transfer function of the exit node:
+$$\varphi_f (x) = \varphi_8(x) = \{v_7\} \cup x$$
+Thanks to this, when there is a call node it is not needed to include the whole procedure in the computation. In this example, at node 2 and 4 just use this summary transfer function and propagate information just inside the main procedure. The OUT in 2 and 4 will be:
+$$OUT[2] = \{v_7\} \cup IN[2]$$
+$$OUT[4] = \{v_7\} \cup IN[4]$$
+
+\subsection{Exercise}
+\begin{minipage}{0.52\textwidth}
+\begin{small}
+\begin{lstlisting}
+<?php
+1	$a = $_POST["u1"];
+2	$b = $_POST["u2"];
+3 	addUsername($a);
+4 	$b = htmlentities($_POST["u2"]);
+5	addUsername($b);
+6 	echo $b;
+
+ function addUsername(&$s){
+7	if($u != ''){
+8		$s .= " " . $u;
+9	}
+ }
+?>
+\end{lstlisting}
+\end{small}
+\end{minipage}\vline \hfill
+\begin{minipage}{0.2\textwidth}
+$ V = P(\{a,b\})$\\
+$ \wedge = \cup $\\
+Dir $=$ fwd \medskip\\
+$f_1(x) = \{a\} \cup x$\\
+$f_2(x) = \{b\} \cup x$\\
+$f_4(x) = x - \{b\}$\\
+$f_6(x) = x$\\
+$f_7(x) = x$\\
+$f_8(x) = \{s\} \cup x$\\
+$f_9(x) = x$
+\end{minipage}
+\begin{minipage}{0.2\textwidth}
+\includegraphics[scale=0.35]{img/graph16b.png}
+\end{minipage} \bigskip\\
+There are not the transfer functions for nodes 3 and 5 because the objective of the exercise is to compute them. \\Starting from node 7, we have to generate the GEN and KILL sets. The transfer function for 7 is the idenitity function, so they are both empty (nothing is created or destroyed), like the corresponding summary GEN and KILL (it is the entry node):
+$$GEN[7] = KILL[7] = \{\}$$
+$$GEN[\varphi_7] = KILL[\varphi_7] = \{\}$$
+The summary transfer function of 7 is equal to the normal transfer function (entry node):
+$$\varphi_7(x) = x$$
+For node 8:
+$$GEN[8] = \{s\}, \quad KILL[8] = \{\}$$
+$$GEN[\varphi_8] = \{\} \backslash \{\} \cup \{s\} = \{s\} $$ 
+$$KILL[\varphi_8] = \{\} \cup \{\} = \{\}$$
+The summary transfer function is:
+$$\varphi_8(x) = \{s\} \cup (x \backslash \{\}) = \{s\} \cup x$$
+For node 9:
+$$GEN[9] = \{\}, \quad KILL[9] = \{\}$$
+$$GEN[\varphi_9] = (\{\} \cup \{s\} \backslash \{\}) \cup \{\} = \{s\} $$ 
+$$KILL[\varphi_9] = (\{\} \cap \{\}) \cup \{\} = \{\}$$
+The summary transfer function is:
+$$\varphi_9(x) = \{s\} \cup (x \backslash \{\}) = \{s\} \cup x$$
+The summary transfer function of \textit{addUsername} is equal to this last result. For nodes 3 and 5 we have to make a binding between the actual parameter and the formal parameter used to call the function:
+$$\varphi_3(x) = \{s\} \cup x = \{a\} \cup x$$
+$$\varphi_5(x) = \{s\} \cup x = \{b\} \cup x$$
+\medskip\\It is now possible to compute flow analysis:
+
+\begin{lstlisting}[escapeinside={*}{*}]
+ IN[1] = {}
+OUT[1] = {a}					(*$f_1(x) = \{a\} \cup x$*)
+ IN[2] = {a}
+OUT[2] = {b}U{a} = {a,b}		(*$f_2(x) = \{b\} \cup x$*)
+ IN[3] = {a,b}					(only look input from node 2)
+OUT[3] = {a}U{a,b} = {a,b}		(*$\varphi_3(x) = \{a\} \cup x$*)
+ IN[4] = {a,b}
+OUT[4] = {a,b}-{b} = {a}		(*$f_4(x) = x - \{b\}$*)
+ IN[5] = {a}					(only look input from node 4)
+OUT[5] = {b}U{a} = {a,b}		(*$\varphi_5(x) = \{b\} \cup x$*)
+ IN[6] = {a,b}
+OUT[6] = {a,b}					(*$f_6(x) = x$*)
+\end{lstlisting}
+The flow analysis procedure is now faster (converging in linear time). It can however be applied only when the transfer function can be represented in the GEN and KILL form.
 
 \newpage
-\section{Taint Analysis}
+\section{Taint Analysis}%an istance of flow analysis
 Variables containing unsanitized user input should never be used in security-critical statements, such as output statements, database queries, jumps to variable targets, virtual function invocations. \medskip \\
 \textbf{Taint analysis} aims at keeping track of tainted variables (i.e., variables containing unsanitized user input) along the execution paths: 
 \begin{itemize}
