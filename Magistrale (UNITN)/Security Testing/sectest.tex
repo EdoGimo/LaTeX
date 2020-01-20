@@ -1082,7 +1082,7 @@ $$T \wedge x = x$$
 
 \item Transfer functions are monotonic:
 $$x \leq y \Rightarrow f_n(x) \leq f_n(y)$$
-where $x \leq y$ means $x \wedge y = x$, with $x \leq T \forall x \in V$ by definition.
+where $x \leq y$ means $x \wedge y = x$, with $x \leq T \quad \forall x \in V$ by definition.
 \begin{center}
 \includegraphics[scale=0.35]{img/graph7.png}
 \end{center}
@@ -1104,7 +1104,7 @@ where $x \leq y$ means $x \wedge y = x$, with $x \leq T \forall x \in V$ by defi
 \end{lstlisting}
 
 \subsubsection{Convergence}
-If a bottom element $\bot$ exists such that $\bot \leq x \forall x$, convergence
+If a bottom element $\bot$ exists such that $\bot \leq x \quad \forall x$, convergence
 descends from monotonicity; otherwise it must be proved case
 by case. When V is finite, $\bot$ is ensured to exist.
 \begin{center}
@@ -1198,8 +1198,7 @@ OUT[7] = 1		(*$f_7(x) = x$*)
 Further iterations do not change the outcome (meet operator is OR, so output of nodes 5 and 6 does not change the input of node 3): the analysis is completed.
 
 \newpage
-\section{Call string}
-\subsection{Interprocedural flow analysis}
+\section{Interprocedural flow}
 An interprocedural path $p$ is realizable (valid) if, once only call and return nodes are kept:
 \begin{enumerate}
 \item $p$ is empty; or,
@@ -1210,7 +1209,8 @@ An interprocedural path $p$ is realizable (valid) if, once only call and return 
 \end{center}
 Node 2 is split in two, the caller C2 and the returner R2; same for node 4. With the path $p$ of the first example, we remove all the nodes, leaving only call and return nodes:
 $$C2, R2, C4, R4$$
-The remaining path is not empty but the second condition is valid: $p$ is realizable.
+The remaining path is not empty but the second condition is valid: $p$ is realizable. \medskip\\
+There are 2 main methods for interprocedural flow analysis: \textbf{call string} and \textbf{functional} method.
 
 \subsection{Call string method}
 \begin{itemize}
@@ -1445,8 +1445,18 @@ OUT[6] = {a,b}					(*$f_6(x) = x$*)
 \end{lstlisting}
 The flow analysis procedure is now faster (converging in linear time). It can however be applied only when the transfer function can be represented in the GEN and KILL form.
 
+\section*{Examples of flow analysis}
+All the following are quite general, implemented by most compilers because they can be performed at static/compile time using the general framework of flow analysis.
+\begin{itemize}
+\item \textbf{Reaching definitions and reachable uses}, by propagating in the control flow information about which variable are defined and which variables are being used.
+\item \textbf{Dominators and postdominators} CFG, in order to understand the relationships among the execution order of statements, in particular which branch (which control flow statement) is controlling the execution of one part of the program. What you propagate is the decision point where the control flow is split across different executions.
+\item \textbf{Constant propagation} to compute constant values in the program, done by compilers in order to simplify those arithmetic expressions that can be simpilified. Constants are pushed in the control flow so that whenever they are used, instead of making the computation, the actual value is propagated and when possible the arithmetic expressions are computed at compile time.
+\item \textbf{Pointer analysis} by the compilers in order to solve the pointer arithmetics and to check the program, for example to spot potential null pointer problems and warn the developer in that case.
+\item \textbf{Taint analysis}: istance of the static analysis technique, used to identify a large set of vulnerabilities.
+\end{itemize}
+
 \newpage
-\section{Taint Analysis}%an istance of flow analysis
+\section{Taint Analysis}
 Variables containing unsanitized user input should never be used in security-critical statements, such as output statements, database queries, jumps to variable targets, virtual function invocations. \medskip \\
 \textbf{Taint analysis} aims at keeping track of tainted variables (i.e., variables containing unsanitized user input) along the execution paths: 
 \begin{itemize}
@@ -1494,6 +1504,7 @@ x6 = {s, x}, x7 = X
 
 V = P(X) = {x0, x1, x2, 
 	x3, x4,	x5, x6, x7}
+(all possible permutations)
 \end{lstlisting}
 \end{small}
 \end{minipage}
@@ -1505,7 +1516,7 @@ Since the meet operator is union,
 \begin{itemize}
 \item \textbf{Top} is the empty set $(T \wedge x = x \quad \forall x)$
 \item \textbf{Monotonically decreasing} flow values correspond to increasingly larger taint sets $(x \leq y$ means $x \wedge y = x,$ i.e., $x \cup y = x$ or $y \subseteq x$
-\item \textbf{Bottom} is $X$, the set of all variables $(x \wedge \bot = \bot \forall x)$
+\item \textbf{Bottom} is $X$, the set of all variables $(x \wedge \bot = \bot \quad \forall x)$
 \item Since bottom exists, \textbf{convergence} is ensured if transfer functions are monotonic.
 \end{itemize}
 
@@ -1540,9 +1551,9 @@ The transfer function for taint analysis has the form:
 $$f_n(x) = GEN[n] \cup (x \; \backslash \; KILL[n])$$
 with:
 \begin{itemize}
-\item $GEN[n] = \{x | x \text{ is assigned an input value at statement n} \} \cup \\\{x | \exists y: x \text{ is assigned a value obtained from } y \wedge y \rightarrow T\}$
-\item $KILL[n] = \{x | x \text{ is sanitized by statement n} \} \cup \\\{x | \forall y: x \text{ is assigned a value obtained from } y \wedge y \rightarrow F\}$
-\end{itemize} 
+\item $GEN[n] = \{x | x \text{ is assigned an input value at statement n} \} \cup \\\{x | \exists y: x \text{ is assigned a value obtained from } y \wedge y \rightarrow T\}\quad\quad\quad$ ($x=y+z$ with $y$ tainted)
+\item $KILL[n] = \{x | x \text{ is sanitized by statement n} \} \cup \\\{x | \forall y: x \text{ is assigned a value obtained from } y \wedge y \rightarrow F\}\quad\quad$ ($x=y+z$ with $y$ and $z$ untainted)
+\end{itemize}
 Since transfer functions are monotonic, convergence is ensured.
 
 \subsection{Sanity checks}
@@ -1556,7 +1567,8 @@ Sanity checks ensure that values are safe if the PASS branch of the sanity check
 3  foreach ($xx as $x) { 
 4    $s = " " . $s; 
 5    if (htmlentities($x) == $x) 
-6       $s .= $x;    } 
+6       $s .= $x;    
+   } 
 7  echo $s; 
 ?>
 \end{lstlisting}
@@ -1568,7 +1580,7 @@ Sanity checks ensure that values are safe if the PASS branch of the sanity check
 \includegraphics[scale=0.25]{img/graph15.png}
 \end{center}
 \begin{lstlisting}
-5T $x = sanitize($x);
+	5T $x = sanitize($x);
 \end{lstlisting}
 \end{minipage}
 
@@ -1613,6 +1625,7 @@ Using the IN and OUT functions: \medskip\\
 \begin{center}
 \includegraphics[scale=0.3]{img/st3.png}
 \end{center}
+The procedure has to be \textbf{repeated}, and the \lstinline|IN| of node 3 changes to \lstinline|{xx,s,x}|. The subsequent iteration will not produce changes: that is the result of taint analysis. \medskip\\
 The tainted var \$\textbf{s} is echoed in line 7, which could result in a vulnerability. To fix it, change line 2 to:
 \begin{lstlisting}
 	2 $s = htmlentities($_POST["y"]);
@@ -1647,7 +1660,7 @@ The IN and OUT functions become: \medskip\\
 \begin{center}
 \includegraphics[scale=0.3]{img/st4.png}
 \end{center}
-The tainted var \$query is used in a db query in line 5. Also the tainted var \$result is echoed in line 7. To fix it, add a preg\_match function to check \$id before using it:
+The tainted var \lstinline|$query| is used in a db query in line 5. Also the tainted var \lstinline|$result| is echoed in line 7. To fix it, add a \lstinline|preg_match| function to check \lstinline|$id| before using it:
 \begin{lstlisting}
 <?php
 1 	$db = mysql_connect("localhost", "root", "asd");
@@ -1668,18 +1681,19 @@ Variables \$query and \$result are now untainted and can be used safely.
 
 \newpage
 \section{Dynamic Taint Analysis}
-Code instrumentation is used to store and update the taint status of variables and to interrupt execution if a tainted variable containing malicious payload is used at a security-critical statement (a so-called taint sink).
+Dynamic Taint Analysis, unlike the Static one, is executed online while the program is running. To apply this objective, it applies code instrumentation: some brand new instructions are added to the code so as a side effect of code execution, this analysis is also performed. \medskip\\
+\textbf{Code instrumentation} is used to store and update the taint status of variables and to interrupt execution if a tainted variable containing malicious payload is used at a security-critical statement (a so-called taint sink).
 Instrumentation can be done on:
 \begin{itemize}
-\item Source code
-\item Byte code
-\item Binary code
+\item Source code;
+\item Byte code;
+\item Binary code.
 \end{itemize}
 Instrumentation is based on a dynamic taint policy, specifying:
 \begin{itemize}
-\item Taint introduction: when variables become tainted (e.g., input).
-\item Taint propagation: how tainted variables used to compute the value assigned to another variable determine its taint status.
-\item Taint checking: to detect attacks based on the values of tainted variables and to halt the execution when these occur.
+\item \textbf{Taint introduction}: when variables become tainted (e.g., input).
+\item \textbf{Taint propagation}: how tainted variables used to compute the value assigned to another variable determine its taint status.
+\item \textbf{Taint checking}: to detect attacks based on the values of tainted variables and to halt the execution when these occur.
 \end{itemize}
 The previous example
 \begin{lstlisting}
@@ -1698,9 +1712,9 @@ becomes:
 \begin{lstlisting}
 <?php
   $xx = explode(";", $_POST["x"]);
-  makeTainted("xx"); // $Tainted["xx"] = true;
+  makeTainted("xx"); 	// $Tainted["xx"] = true;
   $s = $_POST["y"];
-  makeTainted("s");
+  makeTainted("s");		// $Tainted["s"] = true;
   foreach ($xx as $x) {
     makeCondTainted("x", array("xx"));
     $s = " " . $s;
@@ -1717,6 +1731,11 @@ becomes:
 ?>
 \end{lstlisting}
 \end{small}
+\begin{itemize}
+\item \lstinline|makeTainted("xx")|: makes input unconditionally tainted;
+\item \lstinline|makeCondTainted("x", array("xx")|: makes 'x' tainted based on current state of 'xx';
+\item \lstinline|makeUntainted("x")|: makes input unconditionally untainted.
+\end{itemize}
 \subsection{Taint sinks}
 \begin{tabular}{|l|p{10cm}|} \hline
 Attack & Taint sink \\ \hline
@@ -1761,8 +1780,8 @@ A taint policy may be too permissive or too strict:
 \subsubsection*{Example}
 In binary taint analysis, the taint policy might be:
 \begin{itemize}
-\item Memory offsets derived from user input are untainted: Attackers can use memory data to redirect the control flow, by controlling the offset, without being noticed (false negative).
-\item Memory offsets derived from user input are tainted: Legal access to data according to a user defined input are regarded as attacks (false positive).
+\item \textbf{Memory offsets derived from user input are untainted}: Attackers can use memory data to redirect the control flow, by controlling the offset, without being noticed (false negative).
+\item \textbf{Memory offsets derived from user input are tainted}: Legal access to data according to a user defined input are regarded as attacks (false positive).
 \end{itemize}
 \begin{lstlisting}
 	// false negative
@@ -1791,14 +1810,31 @@ Dynamic taint analysis:
 \item \textbf{Performance}: Major penalties
 \end{itemize}
 
-\subsection{Example}
-Watch the video.
+\newpage
+\subsection*{Exercise}
+Perform static taint analysis on the following example, decide if the code is vulnerable to XSS based on its result. Discuss if the vulnerability is a true positive or a false positive. In case it is a true positive, provide an attack vector and describe a possible fix.
+\begin{small}
+\begin{lstlisting}
+<?php 
+ 1  $n = $_GET["n"]); 
+ 2  $q = $_POST["query"]; 
+ 3  $q = htmlentities($q);
+ 4  if (is_numeric($n)){
+ 5    echo "Your query #: " . $n; 
+ 6  }
+ 7  echo "Query: " . $q;
+ 8  if ($n <= 100){
+ 9    echo "You have used " . $n . " queries out of 100"; 
+10 }
+?>
+\end{lstlisting}
+\end{small}
 
 \newpage
 \section{Security of Smart Contracts}
 \begin{itemize}
-\item Blockchain: decentralised data structure used by cryptocurrencies (e.g., Bitcoin, Ethereum) to record transactions, such as payments (consensus protocol, no need for trusted party).
-\item Smart contract: full-fledged program that is run on a blockchain and implements a contract between users. It is used for saving wallets, investments, insurances, games, etc. In 2016 more than 15k smart contracts were deposited in the Ethereum platform.
+\item \textbf{Blockchain}: decentralised data structure used by cryptocurrencies (e.g., Bitcoin, Ethereum) to record transactions, such as payments (consensus protocol, no need for trusted party).
+\item \textbf{Smart contract}: full-fledged program that is run on a blockchain and implements a contract between users. It is used for saving wallets, investments, insurances, games, etc. In 2016 more than 15k smart contracts were deposited in the Ethereum platform.
 \end{itemize}
 \textbf{Problem}: programs have bugs, but bugs in smart contracts might generate illegal gains and losses; moreover, bugs in smart contracts cannot be patched (smart contracts are irreversible).
 
@@ -1985,9 +2021,24 @@ Bugs in smart contracts may be subtle and difficult to detect; yet they may have
 \item deficiencies in current contract execution model can be fixed only if all clients upgrade to a new version of the protocol
 \end{itemize}
 
-
-
-
+\subsection*{Exercise}
+Perform static taint analysis on the following example, decide if the code is vulnerable to XSS based on its result. Discuss if the vulnerability is a true positive or a false positive. In case it is a true positive, provide an attack vector and describe a possible fix.
+\begin{small}
+\begin{lstlisting}
+<?php 
+ 1  $n = $_GET["n"]); 
+ 2  $q = $_POST["query"]; 
+ 3  $q = htmlentities($q);
+ 4  if (is_numeric($n)){
+ 5    echo "Your query #: " . $n; 
+ 6  }
+ 7  echo "Query: " . $q;
+ 8  echo "Your next query #: " . ($n + 1); 
+?>
+\end{lstlisting}
+\end{small}
+... \medskip\\
+It is not printed '\lstinline|$n|', but '\lstinline|$n + 1|': PHP converts automatically '\lstinline|$n|' to a number to execute the numeric operation, hence this is a false positive.
 	
 \newpage	
 \part{LABORATORY}
