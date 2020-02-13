@@ -32,11 +32,6 @@
 }
 \usepackage{fancyvrb}
 \pagestyle{fancy}
-\usepackage{epigraph}
-\setlength\epigraphwidth{.8\textwidth}
-\setlength\epigraphrule{0pt}
-\lhead{\nouppercase{\leftmark}}
-\rhead{\nouppercase{\rightmark}}
 
 %TABLE OF CONTENTS
 \setcounter{tocdepth}{1}
@@ -931,10 +926,10 @@ A block cipher works on units of a fixed size (known as a block size), but messa
 Mode & Formulas & Ciphertext \\ \hline
 \makecell{Electronic Codebook \\(ECB)} & $Y_i = F(\text{PlainText}_i,\text{Key})$ & $Y_i$ \\ \hline
 \makecell{Cipher Block Chaining \\(CBC)} & $Y_i = \text{PlainText}_i \; XOR \; \text{Ciphertext}_{i-1}$ & \makecell{$F(Y,Key)$;\\$\text{Ciphertext}_0 = IV$} \\ \hline
-\makecell{Propagating CBC \\(PCBC)} & \makecell{$Y_i = \text{PlainText}_i \; XOR$ \\ $(\text{Ciphertext}_{i-1} XOR \text{PlainText}_{i-1} )$} & \makecell{$F(Y,\text{Key})$;\\$\text{Ciphertext}_0 =IV$} \\ \hline
+\makecell{Propagating CBC \\(PCBC)} & \makecell{$Y_i = \text{PlainText}_i \; XOR$ \\ $(\text{Ciphertext}_{i-1} \; XOR \; \text{PlainText}_{i-1} )$} & \makecell{$F(Y,\text{Key})$;\\$\text{Ciphertext}_0 =IV$} \\ \hline
 \makecell{Cipher Feedback \\(CFB)} & $Y_i = \text{Ciphertext}_{i-1}$  &
-\makecell{$\text{Plaintext} XOR F(Y,Key)$;\\$\text{Ciphertext}_0 =IV$} \\ \hline
-\makecell{Output Feedback \\(OFB)} & $Y_i =F(Y_{i-1},\text{Key}); Y_0 = IV$ & Plaintext XOR $Y_i$ \\\hline
+\makecell{$\text{Plaintext} \; XOR \; F(Y,Key)$;\\$\text{Ciphertext}_0 =IV$} \\ \hline
+\makecell{Output Feedback \\(OFB)} & $Y_i =F(Y_{i-1},\text{Key}); \; Y_0 = IV$ & Plaintext XOR $Y_i$ \\\hline
 \makecell{Counter \\(CTR)} & \makecell{$Y_i =F(IV + g(i),Key)$;\\$IV=token();$} & Plaintext XOR $Y_i$ \\ \hline
 \end{tabular}
 
@@ -2322,7 +2317,11 @@ In this last case, what merchants should do? If outsourcing
 \newpage %lectures 19-20-21
 \section{Post Quantum Cryptography}
 \begin{itemize}
-\item \textbf{Quantum computing}: computers based on phenomena of quantum mechanics to execute calculations;
+\item \textbf{Quantum computing}: computers based on phenomena of quantum mechanics to execute calculations. Right now there are:
+	\begin{itemize}
+	\item general purpose computers (Google, IBM, ...);
+	\item specific (adiabatic) computers (D-Wave, can't do all operations but are optimized);
+	\end{itemize}
 \item \textbf{Quantum cryptography}: scientific discipline that exploits properties of quantum mechanics for cryptographic goals, such as the quantum key distribution;
 \item \textbf{Quantum communication}: scientific discipline that exploits properties of quantum mechanics for transmitting information.
 \end{itemize}
@@ -3140,8 +3139,8 @@ Legacy servers do not implement this correctly, simply failing if they do no sup
 Both protocols run over Record Protocol (so are peers of Handshake Protocol).
 
 \subsection{TLS 1.2 Handshake protocol}
-\begin{minipage}{0.4\textwidth}
-\includegraphics[scale=0.5]{img/ac24.png}
+\begin{minipage}{0.45\textwidth}
+\includegraphics[scale=0.48]{img/ac24.png}
 \end{minipage}
 \hfill
 \begin{minipage}{0.5\textwidth}
@@ -3185,11 +3184,11 @@ The set of viable attacks can be structured as a tree:
 \begin{center}
 \includegraphics[scale=0.35]{img/ac25}
 \end{center}
-\begin{minipage}{0.7\textwidth}
+\begin{minipage}{0.72\textwidth}
 \includegraphics[scale=0.45]{img/ac26}
 \end{minipage}
-\begin{minipage}{0.25\textwidth}
-\includegraphics[scale=0.3]{img/ac27}
+\begin{minipage}{0.27\textwidth}
+\includegraphics[scale=0.28]{img/ac27}
 \end{minipage}
 
 \subsection{Digression on cookies}
@@ -3555,7 +3554,7 @@ SAML defines a "language" to convey data. What to do with the data is up to impl
 	else:
 		# user is not authenticated
 \end{lstlisting}
-Consider the string \lstinline|"<NameID>ranise@fbk.eu</NameId>"| is in \lstinline|saml_response|, what is the content of \lstinline|user_id| after the execution of \lstinline|get_nameid|? It is the string \textit{"ranise@fbk.eu"}. \medskip\\
+Consider the string "\lstinline|<NameID>ranise@fbk.eu</NameId>|" is in \lstinline|saml_response|, what is the content of \lstinline|user_id| after the execution of \lstinline|get_nameid|? It is the string \textit{"ranise@fbk.eu"}. \medskip\\
 Now, consider the string \lstinline|"<NameID>ranise<!---->@fbk.eu</NameId>"| is in \lstinline|saml_response|, what is the content of \lstinline|user_id| after the execution of \lstinline|get_nameid|? With some APIs, it is again the string\textit{"ranise@fbk.eu"}! \medskip
 
 \subsubsection{Recap}
