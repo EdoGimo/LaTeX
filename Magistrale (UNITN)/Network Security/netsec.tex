@@ -2578,7 +2578,162 @@ An important aspect for honeypots is where they should be placed.\\
 	\item[3.] \textbf{Inside the network}: it is possible to catch internal attacks (the most dangerous), detect misconfigured firewalls that forward unpermitted traffic. However, as seen previously, a path to reach the honeypot has to be left open for the attacker, which if it compromises and subverts the machines without someone realising it, really gets in the heart of the system.
 \end{enumerate}
 
+\newpage
+\section{Privacy issues}
+\subsubsection*{Recall: Outright malicious attacker}
+Typically the malicious attacker aims at reading or modifying the communication (in part or fully). In this contest, this attacker is typically called “man in the middle” (or “man in the browser”). The attacker can intercept and act upon a communication between client and server, using channel redirection, blocking communication entirely, using spoofing, etc. An example is the injection of malicious content, causing manipulation of server response (client’s answer can also be modified by the attacker) or connection hijack (attacker injects him/herself in the communication and spoofs the victim’s identity).
 
+\subsubsection*{Recall: Honest-but-curious attacker}
+The goal of this attacker is to use the client’s information after correctly handling the service. It typically resides at the service level (e.g. ISP, router) and typically implies confidentiality and possibly integrity loss. For example the DB Server is the attacker, providing agreed service correctly (e.g. answers queries with correct data): after the query is delivered to the client however, the server uses the query’s information to perform user profiling.
+
+\subsection{Browser cookies and tracking}
+Cookies are set by the server during an HTTP answer, on SOP (Same Origin Policy) basis, and are used to set variable’s values that are useful at the service level. For example, server sets cookie “ThemePreference”, defining a value; at the next interaction, client will send “ThemePreference” to server with the obtained value. Attributes that can be defined at cookie level are:
+\begin{itemize}
+	\item Name (of cookie) (User);
+	\item Content (value of cookie) (mario);
+	\item Host (name of the server that set the cookie) (mario.net) $\rightarrow$ remember the SOP, browser sends cookies only to the domain who created them;
+	\item Path (server path onto which the cookie is valid) (/);
+	\item Send for (all connections/ only encrypted);
+	\item Expires (expiry date) (19 Giu 2020).
+\end{itemize}
+Different cookie types exists, based on the \textbf{attribute}:
+\begin{itemize}
+	\item Temporary (session cookie): typically deleted at end of session (expires: NULL);
+	\item Persistent: remain until expiry date (expires: \lstinline|Tue, 19-Jun-2020|);
+	\item Secure: set by a domain communicating over an HTTPS channel over SSL/TLS (secure transmission, harder to intercept).
+\end{itemize}
+Becuase of the SOP, the domain can be any domain-suffix of URL-hostname, except TLD. For example with as host \lstinline|"login.unitn.it"|, allowed domains are \lstinline|login.unitn.it| and \lstinline|.unitn.com|, while disallowed domains are 	\lstinline|user.unitn.it|, \lstinline|unifi.it| and \lstinline|.it|. \\
+\lstinline|login.unitn.it| can set cookies for all of \lstinline|.unitn.it| but not for another site or TLD. The protocol (and port) must be also the same (in IE is slightly different), http is not https. The path can be set to anything. \medskip\\
+There are also different cookie types based on the \textbf{setting}:
+\begin{itemize}
+	\item Third parties: set by domains other than the one requested by the user, can be used to track them;
+	\item Supercookies: like cookies, but associated to first-level domain names (e.g. \lstinline|.com| or \lstinline|.it|). \lstinline|Malicious.it| can read supercookies set by \lstinline|anotherdomain.it| (“same origin” policy).
+\end{itemize}
+
+\subsubsection*{Third party cookies}
+Cookies can be set by domains called by the browser, which not necessarily correspond to the domain displayed in the address bar. E.g. Requests from \lstinline|www.ilpost.it|:
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec53.png}
+\end{center}
+Other domains can be contacted by the server on behalf of the client (e.g. third party services like facebook, or advertisers). These services can be requested by multiple, unrelated domains, which are managed by different organizations, collecting diverse data about the same user, and complying to different policies may use/embed the same third party service. This way third party services can track users over different domains.
+
+\subsubsection{Attacks: honest-but-curious attacker - tracking}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec53b.png}
+\end{center}
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec53c.png}
+\end{center}
+
+\subsubsection*{Tracking: a persistent case}
+Almost anybody as a Facebook account. When you visit \lstinline|www.facebook.com|, FB sets cookies on the browser. That’s however now persistent behavior among majority of domains. In a web page with "share on FB" tools, even without owning a FB account, 3rd party cookies are set anyway when loading those page elements that are not on the requested domain, making tracking still possible.
+
+\subsubsection*{Supercookies}
+Supercookies are not limited to a single domain, but rather to a first level domain; they can be stored in the cache. They are usually set by proprietary plugins (e.g. Flash, Silverlight), so the browser cookie deletion procedure does not affect them. Because of this, they are permanent (no expiration date), contain more info (<100KB vs <4KB of standard cookies) and are saved also when using “private browsing mode”. Now Flash API permits deletion of supercookies from the browser interface.
+
+\subsubsection*{Zombie cookies}
+Zombie cookies were generated by the Flash plugin, which was also recording them on a browser: if one expired and was deleted, the plugin would recreate them, allowing the tracking beyond the life of the cookie. 
+
+\subsubsection*{HSTS (HTTP as Strict as Transport Security)}
+It is a protocol that enforces the use of HTTPS, by storing a single bit. A researcher explained how to use it to breach the privacy and do tracking: by inserting in a single webpage 32 different links to 32 different websites, a string of 32 bit would be created, useful to identify the users.
+
+\subsubsection*{Private browsing}
+Private browsing does not prevent user tracking or identification, it only disassociate past browsing history from future. Past browsing history and browser cookies can not be accessed by websites visited using private browsing. It is supported by all major browser now. Some type of supercookies can be passed by in between private sessions (not with Firefox). 
+
+\subsubsection*{Browser extensions}
+Browser extensions are basically third-party code that is executed by the browser. Trust issue is relevant: the browser will trust the code, but should you? Some extensions can help the user in preserving (or limiting violations to) his privacy online, like AdBlock (blocks ads and other tracking content), Ghostery (like AdBlock, but specialised in tracking, however it is closed source and it may be re-selling anonimized browsing data to advertisers), uBlock (open source, more memory efficient) and noScript (guerrilla version of the above, blocks all JS/scripts). Browser extensions allow the user to add new functionalities to the browser. They are typically written in JS and can access browser environment using APIs (i.e. software interfaces). Some APIs may allow the extension to access information outside of the private browsing env. Some extensions are clearly a security threat, e.g. Firefox’ commandrun extension which can access all open browser windows: if private browsing does not close current session (e.g. till Firefox 20), the extension can reach over and link private and non-private sessions. 
+
+\subsubsection*{Plugins}
+Plugins pose a similar problem. They do not directly depend on the browser, they are third party applications that may or may not comply to the browser’s (security) policies and do not follow the SOP. They can set cookies and supercookies, communicate system’s IP address and have direct access to system functionalities (because of this, Chrome executes Flash in a sandbox).
+
+\subsubsection*{Browser fingerprinting}
+Tracking typically happens using cookies. It is however possible to achieve reasonable tracking precision even for users with a “clean” browsing history. Browser Fingerprinting is a technique that can uniquely identify a browser over a set of rather stable metrics: User agent, header HTTP, screen resolution, plugin/fonts, codecs and supercookie settings (\url{https://panopticlick.eff.org}).
+Fingerprint’s precision increases with the uniqueness of the user’s configuration: the more you “personalize” your browser, the least common its configuration will be (e.g., disable 3rd party cookies, install Ghostery, install uBlock, kill plugins, install new system fonts, etc). However, being unique is not the same as being trackable. Fingerprint must be stable in time, or at least change in a somewhat predictable manner. Some implementations can predict a browser’s fingerprint with good precision (65\% detection, 99.1\% true positives).
+
+\subsection{Attacks out of the browser: email}
+We already know that email is an attack vector for social engineering attacks such as phishing. There are however other, more technical attacks that allow the attacker to obtain private information from within the email client. Emails are basically webpages that can include a number of objects (video, picture, sound files, Javascript, VB script, CSS, iFrames). This can be exploited by the attacker to access to information about the user and/or deliver remote attacks to the email client. An example of type of information: this email address is valid, therefore I can send spam to it; the user appears to be Italian, and works/studies at the University of Trento; the user read this email on day X at time Y from the IP address Z.
+
+\subsubsection*{Example}
+\url{https://emailprivacytester.com} (Mike Cardwell)\\
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec54a.png}
+	\end{center}
+The tool collects some information obtained by the email, as shown in the image on the right.
+\end{minipage}\hfill
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.4]{img/netsec54b.png}
+	\end{center}
+\end{minipage} \medskip\\
+After a second email sent:\\
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec54c.png}
+	\end{center}
+The tool is now able to use all the collected information to understand behaviour and make the client unique.
+\end{minipage}\hfill
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.4]{img/netsec54d.png}
+	\end{center}
+\end{minipage}
+
+\subsection{Source Confidentiality}
+The source of a connection is a type of identification, which one may want to hide. Different tools exist to do so.
+
+\subsubsection*{VPN services / Secure proxies}
+With a VPN service, users can decide to trust a proxy for his/her connection and send all traffic to it, since the ISP or the destination server may not be fully trusted. This way, the ISP sees only traffic toward VPN and does not know the final destination. Moreover the final destination does not know the real origin of a request.
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec55.png}
+\end{center}
+In this case you have to trust the proxy, which may collect informations of all the sites you visit.
+
+\subsubsection*{Onion routing}
+What to do if you can’t trust a VPN server (or if it is blocked by the ISP)? Onion Routing is a protocol that puts multiple layers of encryption (as in an onion) around the protocol, and these layers are removed at subsequent hops. It wants to prevent a single party (a hop) to know who sent the message, to whom the message has been sent and what is the message.
+\begin{center}
+	\includegraphics[scale=0.17]{img/netsec55b.png}
+\end{center}
+
+\subsection*{TOR}
+Tor is a virtual distributed network that allows the user to achieve high privacy levels thanks to Onion routing. It allows the user to connect to a certain service with intermediary infrastructural nodes knowing (e.g. ISP, proxy). Even the final destination never knows who really sent the request. It creates a virtual network with known nodes:
+\begin{itemize}
+	\item Onion Routers (OR): route the traffic
+	\item Onion Proxy (OP): creates the virtual circuit ($OR_1 \rightarrow OR_5 \rightarrow OR_2 \rightarrow OR_{\text{EXIT}}$) to route the traffic	
+\end{itemize}
+Traffic is sent through TLS.
+
+\subsubsection*{TOR: structure}
+\begin{center}
+	\includegraphics[scale=0.3]{img/netsec55c.png}
+\end{center}
+
+\subsubsection*{TOR: in action}
+\begin{minipage}{0.48\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.16]{img/netsec55d.png}
+	\end{center}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.16]{img/netsec55e.png}
+	\end{center}
+\end{minipage}
+\begin{center}
+	\includegraphics[scale=0.16]{img/netsec55f.png}
+\end{center}
+
+\subsubsection*{TOR: in detail}
+A closer look: Alice (OP) negotiate a key with every OR. Every OR only knows who is before and after it. OR3 for example knows that the message is for Bob but does not know Alice sent it.
+\begin{center}
+	\includegraphics[scale=0.25]{img/netsec55g.png}
+\end{center}
+\begin{center}
+	\includegraphics[scale=0.35]{img/netsec55h.png}
+\end{center}
+
+\subsubsection*{TOR: attacks}
+\textbf{Exit node} sees the original traffic: so if username and password are in the clear, we start all over again. \textbf{Timing-channel attacks} exist: it is possible to infer who’s Alice by measuring how much time it passes between subsequent requests toward Bob.\\ Not all the traffic generated from the system necessarily passes through TOR: DNS requests (e.g. made by browser plugins) may reveal IP address or Javascript/browser extensions may reveal the IP too (apparently the FBI was able to find the owner of Silk Road, the infamous “darkweb” market, using this attack).
 
 
 \end{document}
