@@ -192,12 +192,12 @@ Internet is made of several logically separated networks: the \textbf{Autonomous
 \end{itemize}
 Each AS can communicate to other AS: the Exterior Gateways Protocols are the route between ASs (Border Gateway Protocol).
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec4.png}
+	\includegraphics[scale=0.35]{img/netsec4.png}
 \end{center}
 
 \subsection*{OSI model}
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec5.png}
+	\includegraphics[scale=0.35]{img/netsec5.png}
 \end{center}
 
 \subsection{Data link layer}
@@ -295,11 +295,11 @@ with that ID.
  
 \subsubsection{Denial of service with IP fragments}
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec8.png}
+	\includegraphics[scale=0.4]{img/netsec8.png}
 \end{center}
 
 \subsubsection*{Internet Control Message Protocol}
-It was defined in RFC 792 and relies on IP. However, it is an integral part of the Internet Protocol. All IP modules must have ICMP support.
+It was defined in RFC 792 and relies on IP. However, it is an integral part of the Internet Protocol. It is used by network devices to send error messages and information. All IP modules must have ICMP support.
 
 \subsubsection{Denial of Service}
 Denial of service (DoS) is a type of attack that aims at congesting or overpowering a system’s capacity by generating requests the system will have to answer. It can affect the performance of the attacked system or its channels and lead to a system crash due to resource consumption. DoS can be operated locally or over the network.
@@ -307,7 +307,7 @@ Denial of service (DoS) is a type of attack that aims at congesting or overpower
 \subsubsection*{A simple DoS (Ping Flood)}
 Network DoS attacks usually exploit protocol features.
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec9.png}
+	\includegraphics[scale=0.4]{img/netsec9.png}
 \end{center}
 A can exploit its wider bandwidth to flood B with ICMP echo requests. B’s bandwidth gets (quickly, relatively to A’s) exhausted with A’s requests and B’s replies; B can no longer operate on its network channel.
 
@@ -513,7 +513,7 @@ On top of IP, TCP, UDP, etc. there are a plethora of application-level protocols
 Pointless exercise to go through them all. Rather, we focus on some most important threats.
 
 \subsubsection{Domain Name Service}
-DNS is a hierarchical system for domain name resolving. It translates human-readable addressed (google.com) to (a set of) IP addresses the domain is reachable at. UDP is used for fast answers (port 53). Each transaction identified by an ID (16 bits), the Query ID (“QID”). In the original DNS implementation there was an incremental QID. There are Several types of records. Of interest here:
+DNS is a hierarchical system for domain name resolving. It translates human-readable addressed (google.com) to (a set of) IP addresses the domain is reachable at. UDP is used for fast answers (port 53). Each transaction is identified by an ID (16 bits), the Query ID (“QID”). In the original DNS implementation there was an incremental QID. There are Several types of records. Of interest here:
 \begin{itemize}
 	\item A (AAAA) $\rightarrow$ IPv4 (IPv6) of the requested domain (e.g. a.website.com A 65.61.198.201)
 	\item NS $\rightarrow$ IP of the DNS server to ask (e.g. a.website.com NS ns.website.com), followed by an A answer for the DNS (ns.website.com A 2.2.2.2)
@@ -650,7 +650,7 @@ Most of the network attacks seen so far have at least one of two issues common a
 The typical attacks to IPv4 are:
 \begin{itemize}
 	\item Lack of confidentiality (stealing credentials)
-	\item Lack of source authentication (spoofing, DOS)
+	\item Lack of source authentication (spoofing, DoS)
 	\item Source routing (spoofing and redirection)
 \end{itemize}
 
@@ -1030,7 +1030,7 @@ Let us assume that some information is sent in this UID parameter (say username)
 \end{itemize}
 Errors from case 2 and 3 were different, making possible to understand if decryption failed or if padding failed; so a first fix applied in TLS 1.0 was to make the Alert protocol send the same error in both cases. However that does not solve the problem: it was still possible to differentiate between the 2 studying the timing of the response (padding error answer in 21 milliseconds circa, encryption error in 23). 
 \begin{center}
-	\includegraphics[scale=0.25]{img/netsec36.png}
+	\includegraphics[scale=0.35]{img/netsec36.png}
 \end{center}
 %TODO descrizione difficile
 
@@ -1057,17 +1057,22 @@ The attacker tries to send data from the client in the TLS context and see how t
 \end{center}
 CRIME exploits the way in which compression algorithms work, so with the TLS algorithm which is DEFLATE.
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec37b.png}
+	\includegraphics[scale=0.4]{img/netsec37b.png}
 \end{center}
 The idea behind the attack is simple: an input, controlled by the attacker, is inserted and then a secret, and the total message is compressed. If there is no overlapping sequence between the input and the secret, the result will have a certain length; but if some pattern of the input is also present in the secret, after the compression the length will be different (usually smaller). By changing the input and measure the length it will be possible to guess the secret, because SSL/TLS doesn't hide request/response length.
 \begin{lstlisting}
 	len(compress(input + secret))
 \end{lstlisting}
 \begin{center}
-	\includegraphics[scale=0.45]{img/netsec37c.png}
+	\includegraphics[scale=0.5]{img/netsec37c.png}
 \end{center}
+
 \begin{center}
-	\includegraphics[scale=0.45]{img/netsec37d.png}
+	\noindent\rule{8cm}{0.4pt}
+\end{center}
+
+\begin{center}
+	\includegraphics[scale=0.5]{img/netsec37d.png}
 \end{center}
 %TODO altre immagini, da mettere???
 
@@ -1301,7 +1306,7 @@ This metric captures the requirement for a user, other than the attacker, to par
 \subsubsection*{Scope}
 Scope refers to the collection of privileges defined by a security authority (e.g. an application, an operating system, or a sandbox environment) when granting access to computing resources (e.g. files, CPU, memory, etc). These privileges are assigned based on some method of identification and authorization. When the vulnerability of a software component governed by one security authority is able to affect resources governed by another security authority, a \textbf{Scope change} has occurred.
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec38f.png}
+	\includegraphics[scale=0.35]{img/netsec38f.png}
 \end{center}
 Possible values:
 \begin{itemize}
@@ -1718,7 +1723,7 @@ There are $K>1$ attackers that compete to infect $N>>1$ systems, collectively wo
 \end{itemize}
 
 \subsubsection*{Self-replication vs controlled deployment}
-It is very hard to predict outcomes of fully-automated propagation mechanism (e.g. Morris worm was programmed to “contain” its propagation, replicating 1 time out of 7, but spread uncontrollably). That is way modern (post 2010) internet malware does not employ self-propagation mechanisms. Rather, malware distribution operates over standard request-reply network mechanisms (like botnets), since they have long lifetimes. They are usually distributed over the so-called Malware distribution networks, that control infections using different methods (it is like a market):
+It is very hard to predict outcomes of fully-automated propagation mechanism (e.g. Morris worm was programmed to “contain” its propagation, replicating 1 time out of 7, but spread uncontrollably). That is why modern (post 2010) internet malware does not employ self-propagation mechanisms. Rather, malware distribution operates over standard request-reply network mechanisms (like botnets), since they have long lifetimes. They are usually distributed over the so-called Malware distribution networks, that control infections using different methods (it is like a market):
 \begin{itemize}
 	\item Automated malware installs via software exploits (typically through the browser/third party plugins);
 	\item Malware services that install malware (Mebroot);
@@ -1848,7 +1853,7 @@ Exploit kits only work if they receive victim traffic (direct links, ads, iframe
 There are 2 types of traffic:
 \begin{itemize}
 	\item Blind skymmed: when a visitor makes a click to open a video/photo/cam show but your landing page is opened instead. As a rule your page is opened in a new window and your page is the only page opened after a click.
-	\item Popounder traffic: when a visitor makes a click anywhere on a page and your page is opened in a new window underneath current browser window. When a visitor closes the current window he will see your page opened underneath.
+	\item Popunder traffic: when a visitor makes a click anywhere on a page and your page is opened in a new window underneath current browser window. When a visitor closes the current window he will see your page opened underneath.
 \end{itemize}
 You can buy traffic from “traffic brokers”. The user does not have to click on anything, it is an automatic redirect. High-quality traffic derives from selection of connection based on requested criteria like geographic source or installed software.
 
@@ -2053,8 +2058,7 @@ Possible states (iptables with conntrack):
 	\item NEW: packet trying to open a not-yet existent connection;
 	\item ESTABLISHED: incoming packet is relative to a connection already initiated;
 	\item RELATED: packets that are stating a NEW connection but related existing one (needed by some applications – e.g. FTP);
-	\item INVALID: none of the above à e.g. incoming packet with ACK but not belonging to ESTABLISHED connection (can you filter this
-	with static filtering?).
+	\item INVALID: none of the above, e.g. incoming packet with ACK but not belonging to ESTABLISHED connection (can you filter this with static filtering?).
 \end{itemize}
 Say you want to prevent ACK scans:
 \begin{itemize}
