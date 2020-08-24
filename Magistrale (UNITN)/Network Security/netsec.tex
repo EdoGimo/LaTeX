@@ -63,7 +63,7 @@ Computer security is about \textbf{preserving} security: you can only preserve s
 There are 2 main concepts to understand:
 \begin{itemize}
 	\item What is it there to be preserved
-	\item What is the “built-in” security that need be preserved
+	\item What is the “built-in” security that needs to be preserved
 \end{itemize}
 Everything that operates and is operated by a computer is information: all a computer system is about is information.
 At the bare minimum, any “piece of information” is only useful if:
@@ -188,42 +188,43 @@ Example: DB Server is the attacker. Provides agreed service correctly (e.g. answ
 Internet is made of several logically separated networks: the \textbf{Autonomous Systems} (\textbf{AS}). Each AS autonomously manages communications within itself:
 \begin{itemize}
 \item Interior Gateway Protocols (IGP): route within each AS. 
-\item E.g. two commonly used IGPs are them Routing Information Protocol (RIP) and the Open Shortest Path)First (OSPF) protocol.
+\item E.g. two commonly used IGPs are the Routing Information Protocol (RIP) and the Open Shortest Path First (OSPF) protocol.
 \end{itemize}
-Each AS can communicate to other AS: the Exterior Gateways Protocols are the route between ASs (Border Gateway Protocol).
+Each AS can communicate to other ASs: the Exterior Gateways Protocols (EGP) are the route between them (Border Gateway Protocol).
 \begin{center}
 	\includegraphics[scale=0.35]{img/netsec4.png}
 \end{center}
 
 \subsection*{OSI model}
+Communication can be divided into \textbf{layers}:
 \begin{center}
 	\includegraphics[scale=0.35]{img/netsec5.png}
 \end{center}
 
-\subsection{Data link layer}
+\subsection{OSI Data link layer}
 It is the lowest “logical” level, where data link interconnects physical interfaces. Each physical interface is identified by a MAC address:
 \begin{itemize}
 \item “Ethernet address”
 \item 48-bit Network interface identifiers
 \item Closest representation of final destination of a frame
-\item HEX notation: HH-HH-HH-HH-HH-HH
+\item HEX notation: HH-HH-HH-HH-HH-HH (H = 16 = $2^4$, so 4 bits for each H)
 \item Used to route packets in local networks
 \end{itemize}
 MAC addresses uniquely identify a network interface and are assigned by the producer according to the system command to list net interfaces standard IEEE 802. The first 24 bit are set by IEEE standard and identify the network interface producer.
 
-\subsection{Network layer}
-Provides information on how to reach other systems (addressing functionalities). The IP operates at this layer: it is an high-level representation of a host’s addresses and conveys information to route the datagram. IPv4 was defined in RFC 791. Most IP addresses are dynamically assigned by an authority (e.g. ISP’s DHCP server), as opposed to MAC addresses that are fixed by the vendor. It is a “connectionless” protocol (stateless): there is no notion of “established connection” at this stage, it only provides the means necessary for a packet to reach its destination.
+\subsection{OSI Network layer}
+Provides information on how to reach other systems (addressing functionalities). The IP operates at this layer: it is an high-level representation of a host’s address and conveys information to route the datagram. IPv4 was defined in RFC 791. Most IP addresses are dynamically assigned by an authority (e.g. ISP’s DHCP server), as opposed to MAC addresses that are fixed by the vendor. It is a “connectionless” protocol (stateless): there is no notion of “established connection” at this stage, it only provides the means necessary for a packet to reach its destination.
 
 \subsubsection*{Stateless vs Stateful}
-A communication is made of a number of messagges. Communications start, develop, and ends. Stateful protocols provide means to establish and close a connection (e.g. TCP). Stateless protocols do not have this notion (IP messages are stand-alone packets).
+A communication is made of a number of messagges. Communications start, develop, and end. Stateful protocols provide means to establish and close a connection (e.g. TCP). Stateless protocols do not have this notion (IP messages are stand-alone packets).
 
 \subsubsection*{IP addresses}
-IP provides a structured way to abstract host addresses away from their physical properties. There exists two versions:
+IP provides a structured way to abstract host addresses away from their physical properties. There exist two versions currently:
 \begin{itemize}
 \item IPv4: most common, currently used (32 bits)
 \item IPv6: early adoption, will be seen commonly in the future (128 bits)
 \end{itemize}
-Makes it possible to efficiently talk between systems in different AS.
+Makes it possible to efficiently talk between systems in different ASs.
 
 \subsubsection*{ARP protocol}
 The ARP (Address Resolution Protocol) allows systems to associate an IP address to a MAC address. It allows discovery through broadcast. ARP tables contain information to translate IP addresses into MAC addresses.
@@ -256,7 +257,7 @@ All addresses in an ARP table are added by one of two mechanisms.
 \item 192.168.0.16 is at 00-10-BC-2c-11-56
 \end{itemize}
 \end{itemize}
-The discovery process happens through queries to neighbor devices: broadcast message to the desired IP (e.g. L2 ethernet address FF-FF-FF-FF-FF-FF). The system with the requested IP replies back with its correct mac address. \medskip\\
+The discovery process happens through queries to neighbor devices: broadcast message to the desired IP (e.g. L2 ethernet address FF-FF-FF-FF-FF-FF). The system with the requested IP replies back with its mac address. \medskip\\
 ARP tables A $\rightarrow$ D:
 \begin{center}
 	\includegraphics[scale=0.3]{img/netsec6e.png}
@@ -274,7 +275,7 @@ It works only on local networks, where MAC addresses are actually meaningful. Wh
 \end{center}
 
 \subsubsection*{Subnets and CIDR}
-Subnets are logical divisions of IP addresses that make possible to split a network in multiple sub-networks. IP bits are divided in x network bits, y subnet bits and z host bits. Subnet mask indicates sections of IP addresses meant for network+subnet. 255.255.255.0 allocates 24 bits to network+subnet, 8 bits to hosts. \\
+Subnets are logical divisions of IP addresses that make possible to split a network in multiple sub-networks. IP bits are divided in x \textbf{network bits}, y \textbf{subnet bits} and z \textbf{host bits}. Subnet mask indicates sections of IP addresses meant for network+subnet. 255.255.255.0 allocates 24 bits to network+subnet, 8 bits to hosts. \\
 CIDR is a synthetic way to represent subnet masks, using classless Inter-Domain Routing. It indicates the number of bits covered by the mask:
  $$192.168.10.1/24 = 192.168.10.1/255.255.255.0$$
  
@@ -318,11 +319,11 @@ directives, so not handling exceptions properly. The idea behind the Ping of Dea
 	\includegraphics[scale=0.3]{img/netsec10.png}
 \end{center}
 
-\subsection{OSI TRANSPORT LAYER}
+\subsection{OSI Transport Layer}
 There are 2 protocols: TCP and UDP.
 \subsubsection{Transmission Control Protocol (TCP)}
 IP can only be used to send datagrams, ”chunks” or “streams” of information, from sender IP to destination IP. TCP builds on top of IP the notion of “state”: systems that communicate using the TCP protocol engage in a stateful communication.
-So, while IP delivers the data, TCP manages the data segments using checksums, re-delivery of unreceived packets and re-delivery of corrupt packets.
+So, while IP delivers the data, TCP manages the data segments using checksums, re-delivery of unreceived or corrupt packets and more.
 
 \subsubsection*{TCP/IP header}
 \begin{center}
@@ -360,15 +361,19 @@ Other fields:
 \item Acknowledgement number (32 bits) ACKN = “expecting x+1”
 \end{itemize}
 
-\subsubsection*{TCP 3-way handshake (SYN)}
-\begin{center}
-	\includegraphics[scale=0.25]{img/netsec12.png}
-\end{center}
-
-\subsubsection*{TCP 4-way handshake (FIN)}
-\begin{center}
-	\includegraphics[scale=0.25]{img/netsec12b.png}
-\end{center}
+\subsubsection*{TCP 3-way handshake (SYN) and TCP 4-way handshake (FIN)}
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec12.png}
+	\end{center}
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+	\begin{center}
+		\includegraphics[scale=0.25]{img/netsec12b.png}
+	\end{center}
+\end{minipage} \medskip\\
+The first requires SYN only by one side, the second requires FIN by both.
 
 \subsubsection*{Keeping track of TCP connections}
 The server receives a SYN request (\lstinline|SYN_RCVD|), so it must keep track of this in order to establish a connection. Once it is ESTABLISHED, both ends set up a “Transmission Control Block” (TCB) to keep track of connection, which is a special data structure that stores information about connection (sockets, seq. numbers, pointers to buffer in memory). Then they allocate memory buffer to store data that will arrive. The TCB structure is freed from memory when connection reaches status CLOSED.\medskip \\
@@ -381,7 +386,7 @@ session. Answer is SYN+ACK. A packet with only ACK receives a RST. Drop with no 
 An unsolicited SYN+ACK gets a RST regardless of listening state.
 
 \subsubsection{SYN Denial of service attack}
-When the server receives SYN J, it answers back with SYN K, ACK J+1. The server opens new session in a separate thread, so it allocates resources (Transmission Control Block allocation). Server then waits for ACK K+1 from client. The RST will be sent back after the amount of time set by the Maximum Segment Lifetime (MSL), which is set by default to 2 minutes. The same mechanism is used sender side: the attacker controls the system, so it may bypass it.
+When the server receives a SYN J, it answers back with a SYN K and a ACK J+1. The server, at this moment, opens a new session in a separate thread, allocating resources (Transmission Control Block allocation). The server then waits for the ACK K+1 from client. A RST will be sent back after the amount of time set by the Maximum Segment Lifetime (MSL) is exceeded, which is set by default to 2 minutes. The same mechanism is used sender side: if the attacker controls the system, he may bypass it.
 
 \subsubsection*{SYN Flood DoS, naïve solution}
 Server typically has more bandwidth available than single client. Client can drop all SYN ACKs (e.g. with a firewall) to not exhaust its own memory, but throughput necessarily slows down by O(2N): for each SYN, you get a SYN ACK, so the bandwidth quickly decays. Server’s memory must be exhausted before the throughput becomes insufficient.
@@ -397,7 +402,7 @@ In theory this attack should not work. Why? B should receive a RST by each zombi
 SYN packets must arrive at very high rates. Other more sophisticated techniques exist:
 \begin{itemize}
 \item Distributed Denial of Service (nowadays more common)
-\item Coremelt DoS
+\item Coremelt DoS (attacking network links)
 \end{itemize}
 
 \subsubsection*{DoS Mitigation (pointers)}
@@ -420,7 +425,7 @@ Attacker forges TCP packets (SYN=1). It is useful to measure whether remote syst
 \end{itemize}
 In a \textbf{half-open SYN scan}, after server’s SYN ACK reply, the attacker sends RST and the 3-way handshake is never finished (example in the image).
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec15.png}
+	\includegraphics[scale=0.35]{img/netsec15.png}
 \end{center}
 
 \subsubsection*{Host fingerprinting}
@@ -439,7 +444,7 @@ From RFC:
 \end{itemize}
 For example, Windows XP and HP/UX always reply with RST. Different hosts, different answers.
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec16.png}
+	\includegraphics[scale=0.35]{img/netsec16.png}
 \end{center}
 
 \subsubsection{TCP Session Hijacking}
@@ -456,7 +461,7 @@ The goal is to to send commands to a server the attacker does not have access to
 		\includegraphics[scale=0.3]{img/netsec17b.png}
 	\end{center}
 \end{minipage} \medskip\\
-How can the circumvent this? By pretending he is the client! A TCP segment between a client and a server is identified and validated by:
+How can he circumvent this? By pretending he is the client! A TCP segment between a client and a server is identified and validated by:
 \begin{itemize}
 	\item Client IP: known (public)
 	\item Destination IP: known (public)
@@ -476,7 +481,7 @@ The problem:
 \begin{center}
 	\includegraphics[scale=0.2]{img/netsec17c.png}
 \end{center}
-The solution:
+The solution (attacker anticipates Client's RST):
 \begin{center}
 	\includegraphics[scale=0.3]{img/netsec17d.png}
 \end{center}
@@ -499,7 +504,7 @@ These scans are however prone to errors: ICMP packet can be filtered or dropped 
 
 %TLS non trattato, salta diretto a APPL. LAYER perchè tanto TLS lo abbiamo già fatto altrove
 
-\subsection{OSI SESSION / PRESENTATION / APPLICATION LAYER}
+\subsection{OSI Session/Presentation/Application Layer}
 On top of IP, TCP, UDP, etc. there are a plethora of application-level protocols:
 \begin{itemize}
 	\item FTP: file transfer
@@ -592,7 +597,7 @@ The Kaminsky vulnerability can lead to a cache poisoning attack. The attacker ra
 \end{center}
 
 \subsubsection*{Mitigation}
-Source of attack is low entropy with a 16 bit ID, the randomness is not enough to represent a significant margin. Moving ID size to 32 bits is not feasible, and it is not possible to change the protocol. The solution is to randomize the source port (16 bits) to increase entropy (in reality it is not possible to use all 16 bits for the source port because of reserved values). Any answer that does not match both source port and transaction ID will be dropped.
+Source of attack is low entropy with a 16 bit ID, the randomness is not enough to represent a significant margin. Moving ID size to 32 bits is not feasible, and it is not possible to change the protocol. The solution is to \textbf{randomize the source port} (16 bits) to increase entropy (in reality it is not possible to use all 16 bits for the source port because of reserved values). Any answer that does not match both source port and transaction ID will be dropped.
 
 \subsubsection{DNS amplification attack}
 It is a type of DoS attack which exploits certain type of DNS answers that are much bigger in size than the requests. The  attack’s throughput is much bigger than attacker’s input. DNS works over UDP, so the source IP is easy to spoof.
@@ -662,7 +667,7 @@ Having an ID number to open the car is not safe because the message can just be 
 With the nonces solution the Replay attack is avoided, however there still exists the possibility of doing a MITM attack.
 
 \subsubsection*{“Secure Channels”}
-Protections is achieved by building a “secure channel” between two end points on an insecure network, typically offering:
+Protection is achieved by building a “secure channel” between two end points on an insecure network, typically offering:
 \begin{itemize}
 	\item \textbf{Data origin authentication};
 	\item \textbf{Data integrity};
@@ -739,14 +744,14 @@ Protection for upper-layer protocols.
 		\includegraphics[scale=0.3]{img/netsec27b.png}
 	\end{center}
 
-Protection for the entire IP datagram.	
+Protection for the entire IP datagram (Header + Payload).	
 \begin{itemize}
 	\item The Entire datagram, plus the security fields, is treated as new payload of ‘outer’ IP datagram. The original ‘inner’ IP datagram encapsulated within ‘outer’ IP datagram. 
 	\item IPsec processing performed at security gateways on behalf of endpoint hosts.
 	\begin{itemize}
 		\item Gateway could be perimeter firewall or router.
 		\item Gateway-to-gateway rather than end-to-end security.
-		\item Hosts need not be IPsec-aware.
+		\item Hosts do not need to be IPsec-aware.
 	\end{itemize}
 \item Inner IP datagram not visible to intermediate routers: even original source and destination addresses are encapsulated, and so ‘hidden’.
 \end{itemize}
@@ -835,17 +840,18 @@ Trailer fields include:
 \begin{center}
 	\includegraphics[scale=0.3]{img/netsec31.png}
 \end{center}
+IPSec uses 2 different protocols for encryption and MAC, so 2 different keys. Option 1 and 3 are secure but not in all configurations.
 
 \subsubsection*{IPSec Key Management}
 IPSec is a heavy consumer of symmetric keys: one key for each SA is needed. Potentially, different SAs for every combination from:
-$${ESP,AH} x {tunnel,transport} x {sender, receiver} x {protocol} x {port}$$
+$$\text{\{ESP,AH\} x \{tunnel,transport\} x \{sender, receiver\} x \{protocol\} x \{port\}}$$
 Where do these SAs and keys come from? Two sources:
 \begin{itemize}
 	\item Manual keying: fine for small number of nodes and testing purposes, hopeless for reasonably sized networks of IPSec-aware hosts.
 	\item IKE: \textbf{Internet Key Exchange}, RFC 2409: algorithms and parameters negotiation, protocols have many options and parameters (=complexity).
 \end{itemize}
 IKEv2 is the latest release, which addresses problems and complexities of IKE (i.e. DoS). \\
-To exchange the keys over the network, IKE uses DH (Diffie-Hellman), applying over it signature and proof of knowledge to offer an authenticated DH.
+To exchange the keys over the network, IKE uses DH (Diffie-Hellman), applying over it signature and proof of knowledge to offer an authenticated DH (passing values with a signature).
 
 \subsubsection*{SPD and SADB Example}
 Given two hosts, A and B, and two gateways, C and D: an end-to-end encrypted communication is on place. The communication between A and B (Transport Mode) is tunneled in Tunnel Mode. This way of operating generates and requires lots of keys, so A has two important databases: the \textbf{Security Associations DB} (\textbf{SADB}) and the \textbf{Security Policies DB} (\textbf{SPD}). These two are in every node that speaks IPSec.
@@ -950,7 +956,7 @@ Initializes the connection, and uses the other two protocols: Change Cipher Spec
 	\includegraphics[scale=0.25]{img/netsec34d.png}
 \end{center}
 TLS does not implement padding (adding data to the beginning, middle, or end of a message prior to encryption): this means that informations may be leaked from the size of the data. \medskip\\
-A common requirement for an attack is that the attacker can sniff victim’s network traffic. Some require to visit "evil.com", the victim clicks on a link or she surfs a non-HTTPS site.
+A common requirement for an attack is that the attacker can sniff victim’s network traffic. Listening on every possible switch is unfeasible, better at endpoints (browsers). Some attacks require to visit "evil.com", the victim clicks on a link or she surfs a non-HTTPS site (can be HTTPS if the attacker owns it).
 
 \subsubsection{Heartbleed (CVE-2014-0160)}
 Heartbleed is a security bug disclosed in April 2014 in the OpenSSL cryptographic library, which is a widely used for the implementation of the Transport Layer Security (TLS) protocol.
@@ -996,7 +1002,7 @@ This may leak valuable information to attackers, such as session IDs, tokens, ke
 Padding adds those extra few bits which are necessary before encryption to make a meaningful block. Here we are interested to know the padding scheme PKCS\#5 as it is used in the CBC (Cipher Block Chaining) Mode.
 In PKCS\#5, the final block of plaintext is padded with N
 bytes of value N. \\
-In Cryptography, an “oracle” is a system that performs cryptographic actions by taking in certain input. Hence a “padding oracle” is a type of system that takes in encrypted data from the user, decrypts it and verifies whether the padding is correct or not. Let us now try to understand that how this attack is performed.
+In Cryptography, an “oracle” is a system that performs cryptographic actions by taking in certain input. Hence a “padding oracle” is a type of system that takes in encrypted data from the user, decrypts it and verifies whether the padding is correct or not. Let us now try to understand how this attack is performed.
 
 \subsubsection*{Example}
 Consider the below URL:
@@ -1032,8 +1038,9 @@ Errors from case 2 and 3 were different, making possible to understand if decryp
 \begin{center}
 	\includegraphics[scale=0.35]{img/netsec36.png}
 \end{center}
-%TODO descrizione difficile
 
+\subsubsection*{Padding Oracle}
+TODO
 
 \subsubsection*{“Protocol Downgrading” Attack}
 Why do people release new versions of security protocols? Because the old version got broken! However new version must be backward-compatible, because not everybody upgrades right away. An attacker can fool someone into using the old, broken version and exploit known vulnerabilities or, similarly, fool victim into using weak crypto algorithms. Defense is hard: must authenticate version early. Many protocols had “version rollback” attacks (SSL, SSH, GSM).\medskip\\
@@ -1075,6 +1082,13 @@ The idea behind the attack is simple: an input, controlled by the attacker, is i
 	\includegraphics[scale=0.5]{img/netsec37d.png}
 \end{center}
 %TODO altre immagini, da mettere???
+Algorithm:
+\begin{enumerate}
+	\item Make a guess
+	\item Observe length of sent request
+	\item Correct guess is when length is different than usual
+\end{enumerate}
+All of this has to happen on the clear, or on encrypted communication if webpage is owned by the attacker.
 
 \subsubsection{BREACH (CVE-2013-3587)}
 It is a variant of CRIME; it exploits the HTTP compression algorithm.
@@ -1194,7 +1208,7 @@ The image shows how the \textbf{finder}, which is the individual that finds the 
 \begin{center}
 	\includegraphics[scale=0.4]{img/netsec38b.png}
 \end{center}
-Basically the finder have to inform the vendor (directly or through a coordinator), which has to inform other vendors and its users. \\
+Basically the finder has to inform the vendor (directly or through a coordinator), which has to inform other vendors and its users. \\
 There are also 2 standards for when vulnerabilities are exchanged, STIX and TAXII.
 
 \subsection*{Confidentiality of vulnerability information}
@@ -1207,7 +1221,7 @@ Security researcher that finds vulnerability may expect economic return and cred
 There has to be an agreement between sec researchers and vendors:
 \begin{itemize}
 	\item Third party mediates (e.g. ZDI);
-	\item Bug bounty programs (e.g. Microsoft, Google) Zerodium to know the quotation;
+	\item Bug bounty programs (e.g. Microsoft, Google), Zerodium to know the quotation;
 	\item Credit assured (e.g. Apple?)
 \end{itemize}
 Often involves development of Proof-of-Concept exploit that shows the vulnerability is exploitable.
@@ -1337,7 +1351,7 @@ Each metric measures the losses suffered by the impacted component. Possible val
 %Impact
 %– Confidentiality, Integrity à Data
 %– Availability à Service
-When more than one assessment is possible, go with the more severe one (e.g. exploitation can happen both though local I/O and on network stack, in that case go with network).
+When more than one assessment is possible, go with the more severe one (e.g. exploitation can happen through both local I/O and network stack, in that case go with network).
 
 \subsubsection*{Scoring Exercise}
 MS Word Denial-of-Service attack (CVE-2013-6801): Microsoft Word 2003 SP2 and SP3 on Windows XP SP3 allows remote attackers to cause a denial of service (CPU consumption) via a malformed .doc file containing an embedded image, as demonstrated by word2003forkbomb.doc, related to a "fork bomb" issue.
@@ -1411,7 +1425,7 @@ Malwares (or \textbf{malicious software}) are programs acting without the consci
 	\item Worm = self-replicates;
 	\item Trojan horse = allows taking control of a machine performing an action that looks legit;
 	\item Keyloggers = sends typed info to attacker;
-	\item Ransomware = attack data availability, asking for a ransom (a sum of money) to unlock the data;
+	\item Ransomware = attack data availability, asking for a ransom (a sum of money) to unlock the data. Has to be executed with root privileges;
 	\item Rootkit = hook to libraries or system files;
 	\item Bot-net = remote coordinated control of multiple machines.
 \end{itemize}
@@ -1424,8 +1438,25 @@ They are the most overlooked type of malware, because they are very effective an
 \end{center}
 The SetWindowsHook API has as parameters where to attach the hooking procedure (in this case the keyboard, could also be the mouse), the pointer to the hooking procedure function (f), the location of the function (NULL means that it is in the same program) and the thread associated to the keyboard (which can use it): in this last parameter, if the value is set to 0 it extends to all the threads, opening for the attack.
 
+
+\subsection{Social Engineering}
+Through Phishing or Spearphishing (more accurate/selective). An attack has to enforce a \textbf{problem recognition}, an \textbf{active involment} and a \textbf{constraint recognition}.\medskip\\
+The ELM (Elaboration Likelihood Model) studies how humans change attitudes or make decisions they would not do without external stimuli. \medskip\\
+There are 2 routes to persuasion:
+\begin{itemize}
+	\item central route = force victim overthink
+	\item peripheral route = force victim not to think
+\end{itemize}
+The principles of persuasion are:
+\begin{itemize}
+	\item Reciprocity: expect to give something back in return to service
+	\item Commitment: keep doing what you have been doing
+	\item Social proof: do what the others do
+	\item Similarity: trust people
+	\item Scarcity: fear of losing something
+	\item Authority: respect the law (rules)
+\end{itemize}
 %TODO social engineering (18.03)
- 
 
 \subsection{Viruses}
 A virus is software that replicate and install itself without user consent. Copies can be installed into programs (modifying them to include a copy of the virus, so it executes secretly when host program is run), data files or boot sectors.
@@ -1449,7 +1480,7 @@ What happens during the boot (old scheme, now it starts with UEFI)?
 \end{center}
 At boot time, the firmware checks for system components and tests them. The operating system is then copied from the hard drive to the RAM. The Master Boot Record (MBR) contains code that ultimately leads to loading OS in memory. The MBR, typically small in size, points to boot loader (in Volume Boot Record, VBR), forming a "chain loading” system. The boot loader actually loads the OS. The goal of the virus is to include itself in this chain, before the kernel so it can hide effectively.
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec39c.png}
+	\includegraphics[scale=0.25]{img/netsec39c.png}
 \end{center}
 In the second image is depicted an example in a windows version where it was possible to rewrite the MBR from the user space: the virus, placed in the MBR, was able to insert himself in the boot sequence, and the bootstrap loader was moved in a different location in the memory, executing the system initialization as usual: in this way it was undetectable. \medskip\\
 Now UEFI and secure boot avoid these exploitations, with the Trusted Platform Module (TPM), that checks the integrity of all steps of the boot.
@@ -1463,7 +1494,7 @@ Rootkits can take control of the MBR,  injecting into the kernel to defeat disk 
 \end{itemize}
 
 \subsection*{Virus countermeasures}
-Prevention is an ideal solution but difficult. It realistically need: detection, identification and removal. If detect but impossible to identify or remove, the whole infected program must be discarded and replaced.
+Prevention is an ideal solution but difficult. It realistically needs: detection, identification and removal. If detect but impossible to identify or remove, the whole infected program must be discarded and replaced.
 
 \subsubsection*{AV defenses}
 Virus and antivirus tech have both evolved: early viruses were just simple code, which were easily removed, and as they have become more complex, so have the countermeasures. There are 4 generations of AV technologies:
@@ -1471,7 +1502,7 @@ Virus and antivirus tech have both evolved: early viruses were just simple code,
 	\item \textbf{signature scanners}: look for known traces of virus in memory;
 	\item \textbf{heuristics}: look for features common in malware 	traces/strands;
 	\item \textbf{identify actions}: behavioral fingerprint of the malware execution;
-	\item \textbf{machine learning}: classifiers trained to decide whether a file or program is acting maliciously.
+	\item \textbf{machine learning}: classifiers trained to decide whether a file/program is acting maliciously.
 \end{enumerate}
 
 \subsubsection*{Defense 1 - Signature scanners}
@@ -1504,11 +1535,11 @@ It is the natural extension of the previous approach. Machine learning is used t
  
  
  \subsection{Worms}
-Worms are replicating program that propagates over net using email, remote exec, remote login. They exploit the remote payloads, typically using arbitrary code execution that causes buffer overflows.
+Worms are replicating program that propagate over net using email, remote exec, remote login. They exploit the remote payloads, typically using arbitrary code execution that causes buffer overflows.
 A worm has phases like a virus: dormant, propagation, triggering, execution. During the propagation phase, it searches for other systems, connects to one, copies self to it and runs; then it repeats this. It may disguise itself as a system process. It was implemented by Xerox Parc in Palo Alto in the 1980s.\medskip\\
 The propagation model is a logistic model in finite systems. It starts off exponentially, then levels out (mainly because it becomes more difficult to find other machines not already infected).
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec39d.png}
+	\includegraphics[scale=0.4]{img/netsec39d.png}
 \end{center}
 
 \subsubsection{Morris worm}
@@ -1545,10 +1576,10 @@ It killed several critical points of internet infrastructure (5 DNS root servers
 
 \subsubsection*{More recent malware}
 At first the use of malware was not a profitable activity: the attacks developed were mostly a type of "vandalism" also because the investment to create them was not important. Things have changed completely in the last years. Cyber crime has become an activity regulated by the rules of economy: there are investments in the production of malware aimed to gain money. This is reflected in the types of malware: the techniques seen in the previous malwares are still used but have been developed and are now much more sophisticated. Recent malware are \textbf{target attacks}, against generalized attacks typical of the previous decades.
-The targets are progressively more and more small business (from 18\% in 2011 to 43\% in 2015). The type of attacks seen later on is called Advanced Persistent Threat (ATP):
+The targets are progressively more and more small businesses (from 18\% in 2011 to 43\% in 2015). The type of attacks seen later on is called Advanced Persistent Threat (ATP):
 \begin{itemize}
-	\item Advanced: these attacks are move advanced because they mostly exploit not already known vulnerabilities (patching is now more efficient) but Zero-day vulnerabilities (not known yet);
-	\item Persisent: while the previous malwares left the machine after doing the damage, these tend to remain hidden in the machine logging informations for months or even years, to get as much as possible. 
+	\item Advanced: these attacks are more advanced because they mostly exploit not already known vulnerabilities (patching is now more efficient) but Zero-day vulnerabilities (not known yet);
+	\item Persisent: while the previous malwares left the machine after doing the damage, these tend to remain hidden in the machine \textbf{logging information} for months or even years, to get as much as possible. 
 \end{itemize}
 Most of APTs are also multi-threat and multi-stage: they are a bundle of exploits that include all the previously seen malwares and attack over different stages, like a chain.
 \begin{center}
@@ -1559,12 +1590,13 @@ In the end it may be possible to execute a chained exploit:
 \begin{center}
 	\includegraphics[scale=0.35]{img/netsec40b.png}
 \end{center}
+Each vulnerability used is also rated without taking into consideration the following ones, so a vulnerability may end up underrated.
 
 \subsubsection{Stuxnet}
 Probably the prototype of sophisticated malware. It was a complex attack targeting not information systems but a cyberphisical system, a nuclear plant. An attack on a phisical system is a threat not only to security but also to safety, as it could be one on the recent IoT systems. It is divided in 3 phases: phase 1 attacks the pure network information system (IT), phase 2 and 3 target the industrial control (OT).
 \begin{itemize}
 	\item \textbf{PHASE 1}: an almost normal worm, amazingly smart, spreads, hides, updates itself (C\&C, command and control, communication) and looks around to duplicate itself (only in an environment with equipment that makes possible to enter phase 2).
-	\item \textbf{PHASE 2}: attacking the Siemens + PLC (Programming Logic Controller) systems. It infects the SIEMENS System and it modifies the PLC programming.
+	\item \textbf{PHASE 2}: attacking the Siemens + PLC (Programming Logic Controller, which monitor the state of input devices) systems. It infects the SIEMENS System and it modifies the PLC programming.
 	\item \textbf{PHASE 3}: sabotage. It checks for a specific factory environment (Iran): if it does not find it, it does nothing, but if it finds it, it changes the speed of the centrifuges.
 \end{itemize}
 
@@ -1600,7 +1632,7 @@ It hooked into specific Step 7 dll to communicate with the PLC, replacing the PL
 Hit frequency converters controlling speed of motors, making them go faster than planned to burn the centrigue. It was designed to hit a specific plant.
 
 \subsection{Botnets}
-Virtual Network of infected machines under the control of a “bot herder”. These machines can perform any kind of action for the bot herder and are managed through a C\&C server under the control of an attacker, which pushes configuration files and functionality updates. Bots must be able to communicate with the C\&C server in order to do something. There are 2 types of design of botnets: centralised and peer-to-peer. \medskip\\
+Virtual Network of infected machines under the control of a “bot herder”. These machines can perform any kind of action for the bot herder and are managed through a C\&C server under the control of an attacker, which pushes configuration files and functionality updates. Bots must be able to communicate with the C\&C (Command \& Control) server in order to do something. There are 2 types of design of botnets: centralised and peer-to-peer. \medskip\\
 Main usage of botnets:
 \begin{itemize}
 	\item Performing distributed denial of service attacks (DDoS): same techniques as normal DoS attacks, but amplified by a factor equal to size of botnet;
@@ -1612,18 +1644,18 @@ Main usage of botnets:
 
 \subsubsection*{Botnets – centralised architecture}
 \begin{center}
-	\includegraphics[scale=0.4]{img/netsec41.png}
+	\includegraphics[scale=0.35]{img/netsec41.png}
 \end{center}
 Bots communicate with the bot herder via
 \begin{itemize}
-	\item IRC (Internet relay chat) server: first definition of “bot”, served “human users” by providing automatised services. Essentially a program accepting commands in inputs and retrieving answers;
-	\item HTTP: Connects to a remote HTTP server. A bot may contact the herder fixed (set of) IP(s) or resolve the domain dynamically. Fast-flux vs domain-flux (explained later).
+	\item IRC (Internet Relay Chat) server: first definition of “bot”, served “human users” by providing automatised services. Essentially a program accepting commands in inputs and retrieving answers;
+	\item HTTP (connects to a remote HTTP server): a bot may contact the herder fixed (set of) IP(s) or resolve the domain dynamically (using \textbf{fast-flux} or \textbf{domain-flux}).
 \end{itemize}
 C\&C server is a single-point-of-failure: who controls the C\&C controls the botnet.
 
 \subsubsection*{Botnet – p2p architecture}
 \begin{center}
-	\includegraphics[scale=0.4]{img/netsec41b.png}
+	\includegraphics[scale=0.35]{img/netsec41b.png}
 \end{center}
 More robust than centralised architecture. Commands are spread through the network and bots can act as both slaves and masters dynamically. When a new machine is infected, the bot joins the network with different approaches:
 \begin{itemize}
@@ -1639,7 +1671,7 @@ More robust than centralised architecture. Commands are spread through the netwo
 	\item Bot-only: builds its own network in which all members are bots.
 \end{itemize}
 
-\subsubsection*{Centralised botnets - details}
+\subsubsection*{Centralised botnets - protecting C\&C}
 Bots can not operate if they can not contact the C\&C server. Centralised Botnet take downs happen by "sinkholing". Security researcher/firm takes control of C\&C, and the C\&C server needs to be protected:
 \begin{itemize}
 	\item Change IP address frequently = \textbf{fast-flux}. Makes it hard for an attacker to take it down. One domain is mapped to several IP addresses.
@@ -1647,33 +1679,29 @@ Bots can not operate if they can not contact the C\&C server. Centralised Botnet
 \end{itemize}
 
 \subsubsection*{Domain flux}
-Each bot uses a \textbf{Domain Generation Algorithm} (\textbf{DGA}) to generate a list of possible domains at a certain time (“rendezvous” domains). The list is generated independently by each bot. If bot gets no answer from a generated domain, it simply switches over to the next in the list.
+Each bot uses a \textbf{Domain Generation Algorithm} (\textbf{DGA}) to generate a list of possible domains at a certain time (“rendezvous” domains). The list is generated independently by each bot. If a bot gets no answer from a generated domain, it simply switches over to the next in the list.
 Conficker A (a very famous botnet), for example was using \textit{txkjngucnth.org} (\url{https://msrc-blog.microsoft.com/2009/02/12/conficker-domain-
 	information/}). 
 Sometimes botnets perform accidental DoS attacks against “colliding” domain names: DGA generates a domain that already exists and all bots try to contact that domain (it happened, e.g., jogli.com, praat.org).
 
 \subsubsection{Torpig [Stone-Gross 2009] (case study putting all together)}
-Torpig was a botnet active in 2009. It used Mebroot as a rootkit, which substitutes the Master Boot Record of the machine (used to perform actions at boot time). It is harder to detect malware, executed in the context of \textit{explorer.exe}, operates directly on disk blocks (through disk drivers) and, upon reboot, downloads and activates malware. Torpig in this case encrypted the communcation with Mebroot server (the malware was stored locally, encrypted, so it was difficult to identify its behaviour). Mebroot provides functionalities to embed (malicious) modules to normal system boot. \medskip\\
+Torpig was a botnet active in 2009. It used Mebroot as a rootkit, which substitutes the Master Boot Record of the machine (used to perform actions at boot time). Mebroot is a hard to detect malware, executed in the context of \textit{explorer.exe}, which operates directly on disk blocks (through disk drivers) and, upon reboot, downloads and activates malware. Torpig in this case encrypted the communcation with Mebroot server (the malware was stored locally, encrypted, so it was difficult to identify its behaviour). Mebroot provides functionalities to embed (malicious) modules to normal system boot. \medskip\\
 The functionalities of Torpig were credential stealing, generation of phishing attacks for a set of pre-defined websites and injecting phishing content to webpages presented to user (typically a login page). 
 
 \subsubsection*{Sinkholing Torpig}
-A team at University of California reverse engineered the DGA: they noticed that a set of domains that would be generated between 25th Jan and 15th Feb were not registered yet, so they registered the domains and replicated a “fake” C\&C server. All it needed to do was to confirm itself as a valid server: Torpig uses HTTPS but accepts any certificate as valid. They started passively listening to whatever the bots were sending. On the 4th Feb the bot herder realised what was going on and a Mebroot update was pushed for Torpig, after only 10 days.
-
-\subsubsection*{Torpig size}
-IPs changed very frequently (fast-flux) so the counting of unique IPs is not a good proxy for botnet size. Each bot has unique id +  additional features. About 180.000 hosts (1.2M IP addresses).
-
-\subsubsection*{Torpig collected data}
+A team at University of California reverse engineered the DGA: they noticed that a set of domains that would be generated between 25th Jan and 15th Feb were not registered yet, so they registered the domains and replicated a “fake” C\&C server. All it needed to do was to confirm itself as a valid server: Torpig uses HTTPS but accepts any certificate as valid. They started passively listening to whatever the bots were sending. On the 4th Feb the bot herder realised what was going on and a Mebroot update was pushed for Torpig, after only 10 days. \medskip\\
+IPs changed very frequently (fast-flux) so the counting of unique IPs is not a good proxy for botnet size. Each bot has unique id +  additional features. About 180.000 hosts (1.2M IP addresses).\medskip\\
 Torpig collected mailbox accounts, emails, form data, HTTP account, FTP account, POP account, SMTP account and Windows passwords.
 
 \subsubsection{Mirai botnet}
 They are botnet targeting IoT devices (cameras, DVR, routers, etc.). There is an high number of variants, some still active. It was first discovered Aug 2016. The source code has been published, resulting in a lot of people implementing it. Mirai was used to mount huge DDoS against several websites.
 \begin{center}
-	\includegraphics[scale=0.4]{img/netsec42.png}
+	\includegraphics[scale=0.3]{img/netsec42.png}
 \end{center}
-With Mirai it is possible to compromise IoT, like cameras, by trying bruteforce on Telnet, service still allowed by many devices that enables to login and execute remote commands; Telnet does not implement an encrypted channel and it is protected by password, which is usually really weak. The malware tries a list of passwords and it has been very succesful, obtaining control of devices which report their IPs to a server. The C\&C server can use these devices to mount a DDoS attack.  \medskip\\
+With Mirai it is possible to compromise IoT, like cameras, by trying bruteforce on Telnet, service still allowed by many devices that enables to login and execute remote commands; Telnet does not implement an encrypted channel and it is protected by a password, which is usually really weak. The malware tries a list of passwords and it has been very succesful, obtaining control of devices which report their IPs to a server. The C\&C server can use these devices to mount a DDoS attack.\\
 An example of DDoS: after revealing the identity of two guys behind a DDoS service, the site Krebs on Security was subject to the most massive DDoS attack ever witnessed to that moment. Clocked at a staggering 620 gigabit per second, it was carried out by botnets consisting mainly of IoT devices, mostly security cameras and DVRs used in home or office settings.
 \begin{center}
-	\includegraphics[scale=0.4]{img/netsec42b.png}
+	\includegraphics[scale=0.3]{img/netsec42b.png}
 \end{center}
 After the release of the source code, variants appeared using other protocols (like HTTP).
 
@@ -1719,7 +1747,7 @@ These conditions hold for all attackers. In the economic theory there is an ”e
 There are $K>1$ attackers that compete to infect $N>>1$ systems, collectively worth $M$. The average is $M/N$. Assume that all N systems have an antivirus: the survival time of malware $K$ ($L_k$) is inversely proportional to the number $N_K$ of systems infected by $K$ (say $L_k$ = $1/N_K$).
 \begin{itemize}
 	\item Strategy 1 = all attackers infect all systems. The average return for each attacker is $M/K$; $L_k$ is $1/N_k =1/N$ = lowest possible.
-	\item Strategy 2 = all attackers infect $N/K$ systems.The return for each attacker is $N/K*M/N=M/K$ which is the same as before; $L_k$ is $1/N_k = 1/(N/K) > 1/N$: the mean lifetime of the $K^{th}$ malware with S2 is higher than with S1. It is true for all values of $K$.
+	\item Strategy 2 = all attackers infect $N/K$ systems. The return for each attacker is $N/K*M/N=M/K$ which is the same as before; $L_k$ is $1/N_k = 1/(N/K) > 1/N$: the mean lifetime of the $K^{th}$ malware with S2 is higher than with S1. It is true for all values of $K$.
 \end{itemize}
 
 \subsubsection*{Self-replication vs controlled deployment}
@@ -1823,27 +1851,25 @@ An example of content compromisation is the one found by Provos in 2006, on a we
 \begin{center}
 	\includegraphics[scale=0.3]{img/netsec43d.png}
 \end{center}
-Ad networks are a typical infection drive (“Malavertising”). 
+Ad networks are a typical infection drive (“Malvertising”). 
 Advert can deliver malicious javascript, social engineering attacks, exploit plugin vulnerabilities, etc. As an additional problem, it is hard to track evolution of third-party providers (advertisement, widgets, ...): they can be trustworthy at start of contract, may change behaviour later on, it is hard to know.
 \begin{center}
 	\includegraphics[scale=0.3]{img/netsec43f.png}
 \end{center}
-%TODO spiegazione immagine
+The delivery of Ads can be direct, but it is usually mediated by a Syndicator, an aggregator which chooses the right Ad to be displayed for every situation. As it can be seen in the real case scenario (second image), syndicators are also usually chained.
 
 \subsubsection*{Drive-by downloads} %TODO video aggiuntivo 01/04
-It is a common infection mechanism employed by attackers: when contacted, the remote server delivers content that tries to exploit local vulnerabilities on the machine, typically buffer overflows against common browsers or browser plugins. If successful, shellcode calls home, downloads malware and executes it.
+It is a common infection mechanism employed by attackers: when contacted, the remote server delivers content that tries to exploit local vulnerabilities on the machine, typically buffer overflows against common browsers or browser plugins. If successful, shellcode calls home, downloads malware and executes it. Different redirections are made before reaching the Malware Distribution site to hide it and confuse forensics.
 \begin{center}
 	\includegraphics[scale=0.3]{img/netsec43e.png}
 \end{center}
 
 \subsection{Exploit kits}
-Exploit kits are websites that serve vulnerability exploits and ultimately lead to malware. They can be reached through any of the mechanisms discussed so far: domain/content compromisation or third-party content. They typically feature $<10$ exploits, but the trend is decreasing in time and now many exploit kits feature 3-4 exploits (why so few?). Kits are traded in the black markets.
+Exploit kits are websites that serve vulnerability exploits and ultimately lead to malware. They can be reached through any of the mechanisms discussed so far: domain/content compromisation or third-party content. They typically feature $<10$ exploits, but the trend is decreasing in time and now many exploit kits feature 3-4 exploits (why so few? Because they are valuable, there is no need to reveal more than the one necessary). Only the exploit for the detected configuration is employed. Kits are traded in the black markets.
 \begin{center}
-	\includegraphics[scale=0.35]{img/netsec44.png}
+	\includegraphics[scale=0.3]{img/netsec44.png}
 \end{center}
-
-\subsubsection*{Third party traffic}
-Exploit kits only work if they receive victim traffic (direct links, ads, iframes, redirections, ...). Underground has services that trade connections (“Maladvertising”, spam, iframes on legit websites). An attacker “buys” connections from specific users, with specific configurations: Javascript checks local configuration, sends to remote server which redirects to the exploit kit and when the user loads the webpage the attacker compromised, and if the characteristics match, the traffic is redirected.
+Exploit kits only work if they receive victim traffic (direct links, ads, iframes, redirections, ...). Underground has services that trade connections (“Maladvertising”, spam, iframes on legit websites). An attacker “buys” connections from specific users, with specific configurations: Javascript checks local configuration, sends to remote server which redirects to the exploit kit and when the user loads the webpage compromised, and if the characteristics match, traffic is redirected.
 
 \subsubsection*{Traffic redirection}
 %TODO explain image?
@@ -1858,7 +1884,7 @@ There are 2 types of traffic:
 You can buy traffic from “traffic brokers”. The user does not have to click on anything, it is an automatic redirect. High-quality traffic derives from selection of connection based on requested criteria like geographic source or installed software.
 
 \subsection{Advanced Denial of Service attacks}
-Basically every DDoS attack makes use of botnets. With standard DDoS attacks the attacker sends out orders to a big number of slaves which will then directly attack victim. However most websites are able to support a good amount of connections.\medskip\\
+Basically every DDoS attack makes use of botnets. With standard DDoS attacks the attacker sends out orders to a big number of slaves which will then directly attack victim (traffic disguised as high quality). However most websites are able to support a good amount of connections.\medskip\\
 \begin{minipage}{0.48\textwidth} 
 \begin{center}
 	\includegraphics[scale=0.35]{img/netsec44c.png}
@@ -1894,7 +1920,7 @@ It is really difficult to mitigate this attack.
 	\item \textbf{Capabilities}: rather than immediately granting resources to the initiator of a TCP communication, initiator has to ask, and the receiver grants a right to connect, or “capability”. This capability is made of marks (unique hash values), set by routers on the path from sender to receiver, which have an expiration time. Routers check validity of marks upon response and, if valid, forward datagram: the receiver can deny capability if sender misbehaves. Otherwise, routers drop if capability is invalid (e.g. check will fail for answers to a spoofed IP). The limitations is that a Denial of Capability attack can still be performed: 5\% of downstream bandwidth is dedicated to capability requests (e.g. 0.05 x 100Mbps), and can easily be saturated by a DDoS attack. New legitimate users that need a capability are cut out while there is no problem for clients that already obtained a capability before the start of DoS. It is hard to discern legitimate capability request traffic from non-legitimate: a sufficient low rate from each bot can flood the bandwidth.
 \end{itemize}
 
-\subsubsection*{Coremelt attack}
+\subsubsection*{Coremelt attack (theoretical)}
 It is a DDoS attack that overcomes obstacle posed by capabilities. Rather than attacking a victim system, it attacks a network link causing bandwidth saturation. The idea is that in a $N$ bots botnet, there are $N^2$ possible connections. An attacker orders pairs of bots to send each other packets, which are wanted by both ends (valid capability). Bot pairs are defined so that communication passes through the target link (can be done with a traceroute).
 Effectiveness depends on bandwidth distribution between Systems and bot distribution in the network ASs.
 \begin{center}
@@ -1964,7 +1990,7 @@ Firewalls have at least two network interfaces: one facing the external network 
 \end{minipage}
 
 \subsection*{Firewall Characteristics}
-The design goals of a firewall are that all traffic from inside or outside must pass through it (physically blocking all access to the local network except via the firewall): only authorized traffic (defined by the local security policy) will be allowed to pass. The firewall itself is immune to penetration (use of a trusted system with a secure operating system). There are 2 default policies:
+The design goals of a firewall are that all traffic from inside or outside must pass through it (physically blocking all access to the local network except via the firewall): only authorized traffic (defined by the local security policy) will be allowed to pass. The firewall itself has to be immune to penetration (use of a trusted system with a secure operating system). There are 2 default policies:
 \begin{itemize}
 	\item \textbf{Default deny}: All what is not explicitly allowed is denied.
 	\item \textbf{Default permit}: All what is not explicitly denied is allowed.
@@ -2011,7 +2037,7 @@ Example of (explicit) policies:
 	\textbf{action} & \textbf{src} & \textbf{port} & \textbf{dest} & \textbf{dport} & \textbf{flags} & \textbf{comment} \\\hline\hline
 	deny &*& *& 192.168.2.0/24 & 22 & S & \thead{We do not allow remote\\ connections to local SSH servers} \\\hline
 \end{tabular} \medskip\\
-Do we actually need this? Yes, if default allow; no, if default deny. Notice that this is last in the list: the first rule that matches is used.
+Do we actually need this last rule? Yes, if default allow; no, if default deny. Notice that this is last in the list: the first rule that matches is used.
 
 \subsubsection*{Note of caution}
 Some protocols are easy to implement, with clear distinction between client and server. Other protocols are not as straightforward.
@@ -2079,7 +2105,7 @@ Example rule: allow all incoming traffic related to an existing connection
 	iptables -A INPUT -i eth0 -m state -state
 		ESTABLISHED,RELATED -j ACCEPT
 \end{lstlisting}
-Mixed rules also possible:
+Mixed rules also possible (! for different, -P default policy):
 \begin{lstlisting}
 	iptables -A INPUT -i ! eth1 -j ACCEPT
 	iptables -A INPUT -m state -state
@@ -2128,10 +2154,10 @@ Proxy connects any client on the internet to any server on the internet: clients
 \begin{center}
 	\includegraphics[scale=0.25]{img/netsec46d.png}
 \end{center}
-Enables the user to achieve some level of anonymity on the network (\textit{Anonymous proxies}). Servers should not be able to collect source IP: some techniques exist to overcome this, like force the client to communicate its IP through third party services or plugins (e.g. flash). Trust issues come from the fact that all trust is put on the proxy service: this may or may not be sufficient depending on application. It is OK to bypass organisation’s blacklist (e.g. block facebook.com), probably not trustworthy for more sensible Internet traffic (confidential exchange of information). It may be used as a malware distribution server, where the malicious proxy embeds malware in response packet.
+Enables the user to achieve some level of anonymity on the network (\textit{Anonymous proxies}), hiding IP, location and other information. Servers should not be able to collect source IP: some techniques exist to overcome this, like force the client to communicate its IP through third party services or plugins (e.g. flash). Trust issues come from the fact that all trust is put on the proxy service: this may or may not be sufficient depending on application. It is OK to bypass organisation’s blacklist (e.g. block facebook.com), probably not trustworthy for more sensible Internet traffic (confidential exchange of information). It may be used as a malware distribution server, where the malicious proxy embeds malware in response packet.
 
 \subsubsection*{Reverse Proxy}
-Mediates connection between Internet clients and servers on an internal network it protects. It can embed firewalling capabilities; may sit on border router. Client talks directly to Proxy; Proxy forward to internal servers; neither internal servers or clients know real origin/destination of packet.
+Mediates connection between Internet clients and servers on an internal network it protects. It can embed firewalling capabilities; may sit on border router. Client talks directly to the Proxy, which forwards to internal servers. Neither internal servers or clients know real origin/destination of packet.
 \begin{center}
 	\includegraphics[scale=0.25]{img/netsec46e.png}
 \end{center}
@@ -2148,7 +2174,7 @@ Pros (by not permitting application traffic directly to internal hosts):
 	\item Can limit capabilities within an application;
 	\item Robust authentication and logging: application traffic can be pre-authenticated before reaching host and can be logged;
 	\item Cost effective: third-party software and hardware for authentication and logging only on gateway;
-	\item Less-complex filtering rules for packet filtering routers; easier stateful firewall implementations;
+	\item Less-complex filtering rules for packet filtering routers, easier stateful firewall implementations;
 	\item More secure.
 \end{itemize}
 Cons:
@@ -2305,19 +2331,19 @@ A single command/pattern cannot represent an attack, but a chain of commands spo
 Example: if (traffic contains “\lstinline|x90+de[^\r\n]{30}|”) then “attack detected”. The advantage is that it is mostly accurate (no false positives), but it can't detect new attacks.
 
 \subsubsection*{Anomaly detection}
-Assumes the intruder behaviour differs from a legitimate profile. Building a legitimate profile may be an issue: it depends on data used for profiling (e.g. sampled vs whole dataset) and a profile can evolve, making the new “legitimate activity” looks suspicious.
+Assumes the intruder behaviour differs from a legitimate profile (unrelated from what the attack does, so can block unknown threats). Building a legitimate profile may be an issue: it depends on data used for profiling (e.g. sampled vs whole dataset) and a profile can evolve, making the new “legitimate activity” looks suspicious. A lot of FP are to be expected, it should be more precise applied on simple systems.\\
 It can be used both for \textbf{HIDS} (syscall, system file hashing, system states, ...) and \textbf{NIDS} (protocol analysis, similar to application proxy, using monitoring as opposed to filtering). There exists different approaches:
 \begin{itemize}
 	\item \textbf{threshold detection}: checks excessive event occurrences over time. Alone is a crude and ineffective intruder detector. Both thresholds and time intervals must be determined;
 	\item \textbf{profile based}: characterize past behavior of users/groups, then detect significant deviations. It is based on analysis of audit records: it gathers metrics (counter, guage, interval timer, resource utilization), analyzes (mean and standard deviation, multivariate, markov process, time series, operational model) and model as a classification problem (machine learning classifiers).
 \end{itemize}
 \begin{center}
-	\includegraphics[scale=0.3]{img/netsec49c.png}
+	\includegraphics[scale=0.25]{img/netsec49c.png}
 \end{center}
 Defines a profile describing “normal” behavior, then detects deviations; thus can detect potential new attacks. A problem, however, is that it has relatively high false positive rates. Anomalies can just be new normal activities, and be caused by other element faults (e.g., router failure or misconfiguration, P2P misconfig). Which method will detect DDoS SYN flooding?
 
 \subsubsection*{Specification-based detection}
-Manually develop specifications that capture legitimate (not only previous seen) system behavior: any deviation from it is an attack. Pros is that it can avoid false-positive since the specification and capture all legitimate behavior. However it is hard to develop a complete and detailed specification (may be feasible for simple and specific protocols), and it is error-prone. Approaches:
+Basically a rigorous way of implementing anomaly detection (on protocols). Specifications that capture legitimate (not only previous seen) system behavior are manually developed: any deviation from it is an attack. Pros is that it can avoid false-positive since the specification and capture all legitimate behavior. However it is hard to develop a complete and detailed specification (may be feasible for simple and specific protocols), and it is error-prone. Approaches:
 \begin{itemize}
 	\item state machine, extended finite state automata (EFSA)
 	\item augment FSA with state variables
@@ -2361,7 +2387,7 @@ Host-based IDS (HIDS) use OS auditing and monitoring/analysis mechanisms to find
 \subsubsection*{Network-Based IDS}
 Network-based IDS (NIDS) monitor traffic at selected points on a network in (near) real time to detect intrusion patterns. They may examine network, transport and/or application level protocol activity directed toward systems. A NIDS comprises a number of sensors, inline (possibly as part of other net device) and passive (monitors copy of traffic).
 \begin{center}
-	\includegraphics[scale=0.35]{img/netsec49g.png}
+	\includegraphics[scale=0.3]{img/netsec49g.png}
 \end{center}
 There are usually not just one but more sensors deployed at strategic locations (e.g., packet sniffing via tcpdump at routers). 
 A sensor inspecting network traffic watches for violations of protocols and unusual connection patterns, and rarely look into the packet payload for malicious code. A big limitation is that it is not possible to execute the payload or do any code analysis; even DPI gives limited application-level semantic information. Huge amount of traffic is recorded and processed, so the performance can be easily impacted. NIDS may also be easily defeated by encryption, but this can be mitigated with encryption only at the gateway/prox.
@@ -2372,7 +2398,7 @@ In any setting is more probable to have a combination of the two systems because
 \subsubsection*{Architectural aspects}
 \begin{itemize}
 	\item External NIDS: analysis of all set of incoming traffic. Only general signatures are possible, with high incidence of FP. All detected “attempted attacks” are logged, and "normal" Internet traffic may generate many alarms;
-	\item Internal NIDS: analysis of traffic allowed by the firewall. More specific signatures are possible (e.g. based on services behind firewall, subnet characteristics, ...). It says nothing about attacks attempted but blocked by firewall.
+	\item Internal NIDS: analysis of traffic allowed by the firewall. More specific signatures are possible (e.g. based on services behind firewall, subnet characteristics, ...). It says nothing about attacks attempted but blocked by firewall (it does if joined with an external).
 \end{itemize}
 \begin{center}
 	\includegraphics[scale=0.25]{img/netsec50.png}
@@ -2569,7 +2595,7 @@ Collect compact amounts of high value information, discover new Tools and Tactic
 An important aspect for honeypots is where they should be placed.\\
 \begin{minipage}{0.45\textwidth}
 	\begin{enumerate}
-		\item \textbf{Outside the external firewall}: it is useful for tracking attempts to connect to unused IP addresses with the scope of the network. However, being outside, it does not decrease the risk for the network and has also the disdadvantage that it has little to no ability to trap internal attackers, since it sees only external traffic, especially if the firewall filters traffic in both directions;
+		\item \textbf{Outside the external firewall}: it is useful for tracking attempts to connect to unused IP addresses with the scope of the network. However, being outside, it does not decrease the risk for the network and has also the disadvantage that it has little to no ability to trap internal attackers: it sees only external traffic, especially if the firewall filters traffic in both directions;
 		\item \textbf{Inside the DMZ}: the security administrator has to be sure that the other systems in the DMZ are secured against the activity generated by the honeypot. A disadvantage is that tipically the DMZ is not fully accessible and the firewall blocks traffic to the DMZ that attempts unneeded services. Removing those restrictions in the firewall might be dangerous;
  	\end{enumerate}
 \end{minipage}\hfill
@@ -2630,7 +2656,7 @@ Other domains can be contacted by the server on behalf of the client (e.g. third
 \end{center}
 
 \subsubsection*{Tracking: a persistent case}
-Almost anybody as a Facebook account. When you visit \lstinline|www.facebook.com|, FB sets cookies on the browser. That’s however now persistent behavior among majority of domains. In a web page with "share on FB" tools, even without owning a FB account, 3rd party cookies are set anyway when loading those page elements that are not on the requested domain, making tracking still possible.
+Almost anybody as a Facebook account. When you visit \lstinline|www.facebook.com|, FB sets cookies on the browser. That’s however now persistent behavior among majority of domains. In a web page with "share on FB" tools, even without owning a FB account, 3rd party cookies are set anyway when loading those page elements that are not on the requested domain, making tracking still possible. Another example is Captcha by Google, which is offered for free but also enables tracking over different domains.
 
 \subsubsection*{Supercookies}
 Supercookies are not limited to a single domain, but rather to a first level domain; they can be stored in the cache. They are usually set by proprietary plugins (e.g. Flash, Silverlight), so the browser cookie deletion procedure does not affect them. Because of this, they are permanent (no expiration date), contain more info (<100KB vs <4KB of standard cookies) and are saved also when using “private browsing mode”. Now Flash API permits deletion of supercookies from the browser interface.
@@ -2687,7 +2713,7 @@ The tool is now able to use all the collected information to understand behaviou
 The source of a connection is a type of identification, which one may want to hide. Different tools exist to do so.
 
 \subsubsection*{VPN services / Secure proxies}
-With a VPN service, users can decide to trust a proxy for his/her connection and send all traffic to it, since the ISP or the destination server may not be fully trusted. This way, the ISP sees only traffic toward VPN and does not know the final destination. Moreover the final destination does not know the real origin of a request.
+With a VPN (Virtual Private Network) service, users can decide to trust a proxy for his/her connection and send all traffic to it, since the ISP or the destination server may not be fully trusted. This way, the ISP sees only traffic toward VPN and does not know the final destination. Moreover the final destination does not know the real origin of a request.
 \begin{center}
 	\includegraphics[scale=0.3]{img/netsec55.png}
 \end{center}
